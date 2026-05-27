@@ -509,8 +509,6 @@ button.is-pressing {
   place-items: center;
   width: 62px;
   height: 62px;
-  border-radius: 18px;
-  overflow: hidden;
 }
 
 .quick-action:hover .quick-icon::after {
@@ -971,6 +969,62 @@ button.is-pressing {
 
 .my-drawer.is-closing {
   animation: drawerSlideDown 260ms ease forwards;
+}
+
+.event-drawer {
+  width: min(100%, 95%);
+  height: min(92vh, 100vh);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 30px 30px 0 0;
+  border: 1px solid rgba(255, 221, 136, 0.16);
+  background:
+    radial-gradient(circle at 50% -6%, rgba(255, 223, 151, 0.18), transparent 32%),
+    radial-gradient(circle at 80% 0%, rgba(120, 77, 28, 0.16), transparent 26%),
+    linear-gradient(180deg, rgba(44, 37, 30, 0.98), rgba(23, 20, 19, 0.99) 34%, rgba(16, 15, 16, 0.995) 100%);
+  box-shadow:
+    0 -16px 42px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 248, 224, 0.08),
+    inset 0 0 0 1px rgba(255, 232, 176, 0.03);
+  animation: drawerSlideUp 280ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.event-drawer.is-closing {
+  animation: drawerSlideDown 260ms ease forwards;
+}
+
+.event-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 10px;
+  flex-shrink: 0;
+}
+
+.event-drawer-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #e2ce87;
+  letter-spacing: 0.5px;
+}
+
+.event-drawer-close {
+  background: none;
+  border: none;
+  color: rgba(225, 215, 178, 0.5);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.event-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 16px 120px;
 }
 
 .drawer-handle {
@@ -1735,7 +1789,7 @@ button.is-pressing {
   height: 75px;
 }
 
-.ledger-page-row-hand_win::before {
+.ledger-page-row-hand_win::before, .ledger-page-row-win::before {
   content: "";
   position: absolute;
   left: 0;
@@ -1747,7 +1801,7 @@ button.is-pressing {
   height: 75px;
 }
 
-.ledger-page-row-hand_loss::before {
+.ledger-page-row-hand_loss::before,.ledger-page-row-loss::before {
   content: "";
   position: absolute;
   left: 0;
@@ -2498,7 +2552,7 @@ button.is-pressing {
 /* ── 浮動按鈕 ── */
 .float-btn {
   position: fixed;
-  z-index: 800;
+  z-index: 2;
   padding: 0;
   background: none;
   border: 0;
@@ -2741,7 +2795,6 @@ button.is-pressing {
   .quick-icon {
     width: 58px;
     height: 58px;
-    border-radius: 17px;
   }
 
   .section-bar {

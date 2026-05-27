@@ -6,6 +6,7 @@ import EnterGameModal from '../components/EnterGameModal'
 import CheckInModal from '../components/CheckInModal'
 import GuestBanner from '../components/GuestBanner'
 import BottomNav from '../components/BottomNav'
+import EventDrawer from '../components/EventDrawer'
 import FavoritesDrawer from '../components/FavoritesDrawer'
 import GameModal from '../components/GameModal'
 import GameSection from '../components/GameSection'
@@ -39,6 +40,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
   const [pendingGame, setPendingGame] = useState(null)
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false)
   const [isMyDrawerOpen, setIsMyDrawerOpen] = useState(false)
+  const [isEventDrawerOpen, setIsEventDrawerOpen] = useState(false)
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
   const { games, featuredGames } = useGames()
   const [minBuyIn, setMinBuyIn] = useState(2000)
@@ -58,7 +60,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
   })
 
   useEffect(() => {
-    preload(['uiClick', 'lobbyBgm'])
+    preload(['uiClick', 'uiWhoosh', 'lobbyBgm'])
   }, [preload])
 
   useEffect(() => {
@@ -109,7 +111,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
 
   return (
     <div
-      className={`app-shell ${isFavoritesOpen || isMyDrawerOpen ? 'has-favorites-open' : ''}`}
+      className={`app-shell ${isFavoritesOpen || isMyDrawerOpen || isEventDrawerOpen ? 'has-favorites-open' : ''}`}
     >
       <div className="phone-frame">
         <NoticeTicker text={noticeText} isMuted={isMuted} onToggleMute={toggleMute} />
@@ -151,7 +153,10 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
         <PromoSection items={promoCards} />
         <BottomNav
           items={navItems}
-          onLeftClick={() => navigate('/event')}
+          onLeftClick={() => {
+              setIsMyDrawerOpen(false)
+              setIsEventDrawerOpen((current) => !current)
+            }}
           onCenterClick={onCenterLogoClick}
           onRightClick={() => {
             if (!auth.isAuthenticated) {
@@ -160,6 +165,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
             }
 
             setIsFavoritesOpen(false)
+            setIsEventDrawerOpen(false)
             setIsMyDrawerOpen((current) => !current)
           }}
         />
@@ -171,6 +177,11 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
         games={games}
         favoriteIds={favoriteIds}
         onToggleFavorite={toggleFavorite}
+      />
+
+      <EventDrawer
+        isOpen={isEventDrawerOpen}
+        onClose={() => setIsEventDrawerOpen(false)}
       />
 
       <MyDrawer
