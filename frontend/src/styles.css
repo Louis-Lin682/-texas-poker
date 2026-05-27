@@ -16,6 +16,8 @@
 
 * {
   box-sizing: border-box;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html,
@@ -507,21 +509,8 @@ button.is-pressing {
   place-items: center;
   width: 62px;
   height: 62px;
-}
-
-.quick-icon::after {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%) scaleX(0.72);
-  width: 46px;
-  height: 9px;
-  border-radius: 999px;
-  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.50) 0%, transparent 70%);
-  filter: blur(5px);
-  pointer-events: none;
-  transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1), opacity 0.22s ease;
+  border-radius: 18px;
+  overflow: hidden;
 }
 
 .quick-action:hover .quick-icon::after {
@@ -588,7 +577,6 @@ button.is-pressing {
     drop-shadow(0 6px 10px rgba(0, 0, 0, 0.48))
     drop-shadow(0 0 16px var(--quick-accent-soft, rgba(226, 206, 135, 0.28)));
   transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1), filter 0.22s ease;
-  filter: brightness(1.2) drop-shadow(0 0 10px #ff00ff);
 }
 
 .quick-action:hover .quick-icon-image {
@@ -5250,6 +5238,7 @@ button.is-pressing {
   flex-direction: column;
   width: 100%;
   max-width: 450px;
+  height: 100vh;
   height: 100dvh;
   margin: 0 auto;
   /* Casino ceiling-lamp atmosphere: warm amber spill from top, deep felt glow in centre */
@@ -5355,6 +5344,7 @@ button.is-pressing {
   align-items: center;
   justify-content: center;
   min-width: 0;
+  overflow: hidden;
 }
 /* Felt atmosphere behind the table image */
 .pt-table-center::before {
