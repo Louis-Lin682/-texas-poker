@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.local
+
+# sensitive backend data — never commit
+backend/export*.sql
+backend/data/users*.json
+backend/data/sessions*.json
+backend/data/favorites*.json

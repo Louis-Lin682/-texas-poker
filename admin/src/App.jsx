@@ -1,0 +1,65 @@
+import { App as AntApp, ConfigProvider, theme } from 'antd'
+import zhTW from 'antd/locale/zh_TW'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { AdminAuthProvider, useAdminAuth } from './context/AdminAuthContext'
+import AdminLayout from './layouts/AdminLayout'
+import LoginPage from './pages/LoginPage'
+import MemberDetailPage from './pages/MemberDetailPage'
+import MemberLedgerPage from './pages/MemberLedgerPage'
+import MembersPage from './pages/MembersPage'
+import PlaceholderPage from './pages/PlaceholderPage'
+import ReportsPage from './pages/ReportsPage'
+
+function RequireAuth({ children }) {
+  const { admin, loading } = useAdminAuth()
+  if (loading) return null
+  return admin ? children : <Navigate to="/login" replace />
+}
+
+function AppRoutes() {
+  const { admin } = useAdminAuth()
+  return (
+    <Routes>
+      <Route path="/login" element={admin ? <Navigate to="/members" replace /> : <LoginPage />} />
+      <Route element={<RequireAuth><AdminLayout /></RequireAuth>}>
+        <Route index element={<Navigate to="/members" replace />} />
+        <Route path="/members"     element={<MembersPage />} />
+        <Route path="/members/:id" element={<MemberDetailPage />} />
+        <Route path="/members/:id/ledger" element={<MemberLedgerPage />} />
+        <Route path="/reports"     element={<ReportsPage />} />
+        <Route path="/events"      element={<PlaceholderPage title="限時活動" />} />
+        <Route path="/news"        element={<PlaceholderPage title="最新消息" />} />
+        <Route path="/quests"      element={<PlaceholderPage title="任務管理" />} />
+        <Route path="/support"     element={<PlaceholderPage title="客服中心" />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/members" replace />} />
+    </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <ConfigProvider
+      locale={zhTW}
+      theme={{
+        algorithm: theme.darkAlgorithm,
+        token: {
+          colorPrimary: '#c49010',
+          colorBgBase: '#16161f',
+          colorBgContainer: '#16161f',
+          colorBgElevated: '#1e1e2e',
+          colorBorder: '#2a2a3a',
+          colorText: '#e0e0e0',
+          borderRadius: 6,
+          fontFamily: '"Noto Sans TC", sans-serif',
+        },
+      }}
+    >
+      <AntApp>
+        <AdminAuthProvider>
+          <AppRoutes />
+        </AdminAuthProvider>
+      </AntApp>
+    </ConfigProvider>
+  )
+}
