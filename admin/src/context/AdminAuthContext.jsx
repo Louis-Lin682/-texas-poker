@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { adminApi, clearToken, getToken, setToken } from '../services/adminApi'
+import { adminApi, clearToken, getToken, setToken, BASE } from '../services/adminApi'
 
 const Ctx = createContext(null)
 
@@ -10,7 +10,7 @@ export function AdminAuthProvider({ children }) {
   useEffect(() => {
     const token = getToken()
     if (!token) { setLoading(false); return }
-    fetch('/admin/auth/me', {
+    fetch(`${BASE}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async r => {

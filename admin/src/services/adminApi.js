@@ -1,4 +1,4 @@
-const BASE = (import.meta.env.VITE_API_URL ?? '') + '/admin'
+export const BASE = (import.meta.env.VITE_API_URL ?? '') + '/admin'
 const TOKEN_KEY = 'admin_token'
 
 export function getToken() { return localStorage.getItem(TOKEN_KEY) }
