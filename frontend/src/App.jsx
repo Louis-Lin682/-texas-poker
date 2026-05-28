@@ -12,6 +12,7 @@ import RankPage from './pages/RankPage'
 import ThunderJokerPage from './pages/ThunderJokerPage'
 import { useAuth } from './hooks/useAuth'
 import { useGlobalButtonFeedback } from './hooks/useGlobalButtonFeedback'
+import { useIdleTimeout } from './hooks/useIdleTimeout'
 import FloatingButtons from './components/FloatingButtons'
 
 function ScrollToTop() {
@@ -26,6 +27,7 @@ function ScrollToTop() {
 function App() {
   useGlobalButtonFeedback()
   const auth = useAuth()
+  useIdleTimeout(12 * 60 * 60 * 1000, auth.logout, 'idle_frontend')
   const navigate = useNavigate()
   const location = useLocation()
   const [hasEnteredLobby, setHasEnteredLobby] = useState(

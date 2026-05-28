@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { adminApi, clearToken, getToken, setToken, BASE } from '../services/adminApi'
+import { useIdleTimeout } from '../hooks/useIdleTimeout'
 
 const Ctx = createContext(null)
 
@@ -36,6 +37,8 @@ export function AdminAuthProvider({ children }) {
     clearToken()
     setAdmin(null)
   }, [])
+
+  useIdleTimeout(6 * 60 * 60 * 1000, logout, 'idle_admin')
 
   return (
     <Ctx.Provider value={{ admin, loading, login, logout }}>
