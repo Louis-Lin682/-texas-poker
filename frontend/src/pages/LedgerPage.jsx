@@ -79,6 +79,11 @@ function fmt(n) {
   return new Intl.NumberFormat('en-US').format(Math.abs(n))
 }
 
+function fmtDate(iso) {
+  if (!iso) return '年/月/日'
+  return iso.replace(/-/g, '/')
+}
+
 function entryNote(e) {
   const game = e.game ? (GAME_LABEL[e.game] ?? e.game) : null
   if (e.type === 'buy_in')   return `帶入 ${fmt(Math.abs(e.amount))} 籌碼${game ? `・${game}` : ''}`
@@ -248,11 +253,11 @@ function LedgerPage() {
 
         {/* ── 自訂日期範圍 ── */}
         <div className="ledger-daterange-row">
-          <div
-            className="ledger-daterange-field"
-            onClick={() => dateFromRef.current?.showPicker?.()}
-          >
+          <div className="ledger-daterange-field">
             <span className="ledger-daterange-label">從</span>
+            <span className={`ledger-date-value${!customFrom ? ' is-empty' : ''}`}>
+              {fmtDate(customFrom)}
+            </span>
             <input
               ref={dateFromRef}
               type="date"
@@ -261,15 +266,14 @@ function LedgerPage() {
               min={ONE_MONTH_AGO}
               max={TODAY}
               onChange={e => setCustomFrom(e.target.value)}
-              onClick={e => e.stopPropagation()}
             />
           </div>
           <span className="ledger-daterange-sep">—</span>
-          <div
-            className="ledger-daterange-field"
-            onClick={() => dateToRef.current?.showPicker?.()}
-          >
+          <div className="ledger-daterange-field">
             <span className="ledger-daterange-label">至</span>
+            <span className={`ledger-date-value${!customTo ? ' is-empty' : ''}`}>
+              {fmtDate(customTo)}
+            </span>
             <input
               ref={dateToRef}
               type="date"
@@ -278,14 +282,13 @@ function LedgerPage() {
               min={ONE_MONTH_AGO}
               max={TODAY}
               onChange={e => setCustomTo(e.target.value)}
-              onClick={e => e.stopPropagation()}
             />
+            {hasCustom && (
+              <button type="button" className="ledger-dateclear" onClick={e => { e.stopPropagation(); clearCustom() }}>
+                ✕
+              </button>
+            )}
           </div>
-          {hasCustom && (
-            <button type="button" className="ledger-dateclear" onClick={clearCustom}>
-              ✕
-            </button>
-          )}
         </div>
 
         {/* ── 遊戲種類 ── */}

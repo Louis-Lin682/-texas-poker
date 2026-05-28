@@ -1023,7 +1023,7 @@ button.is-pressing {
 }
 
 .event-drawer-title {
-  font-size: 17px;
+  font-size: 24px;
   font-weight: 700;
   color: #e2ce87;
   letter-spacing: 0.5px;
@@ -1032,10 +1032,14 @@ button.is-pressing {
 .event-drawer-close {
   background: none;
   border: none;
-  color: rgba(225, 215, 178, 0.5);
-  font-size: 18px;
   cursor: pointer;
-  padding: 4px 8px;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 50%;
+  color: rgba(241, 230, 193, 0.92);
+  font-size: 24px;
   line-height: 1;
 }
 
@@ -1184,13 +1188,12 @@ button.is-pressing {
   height: 34px;
   flex-shrink: 0;
   padding: 0;
-  border-radius: 50%;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 34%),
-    linear-gradient(180deg, rgba(58, 49, 37, 0.96), rgba(22, 20, 18, 0.98));
+  background: none;
+  border: none;
   color: rgba(241, 230, 193, 0.92);
   font-size: 24px;
   line-height: 1;
+  
 }
 
 .favorites-summary-card {
@@ -1545,6 +1548,8 @@ button.is-pressing {
 
 .ledger-daterange-field {
   flex: 1;
+  min-width: 0;
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1554,6 +1559,7 @@ button.is-pressing {
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
+  overflow: hidden;
 }
 
 .ledger-daterange-field:hover {
@@ -1574,17 +1580,31 @@ button.is-pressing {
   pointer-events: none;
 }
 
-.ledger-dateinput {
+.ledger-date-value {
   flex: 1;
   min-width: 0;
-  background: transparent;
-  border: none;
-  color: rgba(241, 230, 193, 0.9);
   font-size: 13px;
-  font-family: inherit;
-  outline: none;
-  color-scheme: dark;
+  color: rgba(241, 230, 193, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  pointer-events: none;
+}
+
+.ledger-date-value.is-empty {
+  color: rgba(225, 215, 178, 0.35);
+}
+
+.ledger-dateinput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
   cursor: pointer;
+  color-scheme: dark;
+  z-index: 0;
 }
 
 .ledger-daterange-sep {
@@ -1594,6 +1614,8 @@ button.is-pressing {
 }
 
 .ledger-dateclear {
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
   width: 26px;
   height: 26px;
@@ -1618,7 +1640,7 @@ button.is-pressing {
   .ledger-daterange-label {
     font-size: 10px;
   }
-  .ledger-dateinput {
+  .ledger-date-value {
     font-size: 12px;
   }
   .ledger-daterange-sep {
