@@ -41,21 +41,25 @@ export function useAudio(initialMuted = false) {
     const shouldMute = config.bgm ? isMutedRef.current : false
 
     try {
-      if (!audio.paused && !hasOverrides) return true
-
-      audio.pause()
-
-      if (hasOverrides) {
-        applyAudioSettings(audio, config, overrides, shouldMute)
+      if (config.bgm) {
+        if (!audio.paused && !hasOverrides) return true
+        audio.pause()
+        if (hasOverrides) {
+          applyAudioSettings(audio, config, overrides, shouldMute)
+        } else {
+          audio.loop   = config.loop ?? false
+          audio.volume = shouldMute ? 0 : config.volume ?? 1
+          audio.muted  = shouldMute
+          audio.currentTime = 0
+        }
+        await audio.play()
       } else {
-        // Don't reset audio.src — resetting triggers reload and causes play() to fail
-        audio.loop   = config.loop ?? false
-        audio.volume = shouldMute ? 0 : config.volume ?? 1
-        audio.muted  = shouldMute
-        audio.currentTime = 0
+        // UI sounds: cloneNode avoids iOS seek delay from currentTime reset
+        const clone = audio.cloneNode()
+        clone.volume = shouldMute ? 0 : (overrides.volume ?? config.volume ?? 1)
+        clone.muted  = shouldMute
+        await clone.play()
       }
-
-      await audio.play()
       return true
     } catch {
       return false

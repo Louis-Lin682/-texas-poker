@@ -511,6 +511,21 @@ button.is-pressing {
   height: 62px;
 }
 
+.quick-icon::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0.72);
+  width: 46px;
+  height: 9px;
+  border-radius: 999px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.50) 0%, transparent 70%);
+  filter: blur(5px);
+  pointer-events: none;
+  transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1), opacity 0.22s ease;
+}
+
 .quick-action:hover .quick-icon::after {
   transform: translateX(-50%) scaleX(0.50);
   opacity: 0.6;

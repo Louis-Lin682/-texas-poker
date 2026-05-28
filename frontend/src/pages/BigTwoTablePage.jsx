@@ -126,8 +126,8 @@ function WaitingView({ gameState, myId, onReady, onLeaveRoom }) {
         ))}
       </div>
       <p className="pt-wait-hint">
-        {players.length < 2
-          ? `還需要 ${2 - players.length} 名玩家`
+        {players.length < 3
+          ? `還需要 ${3 - players.length} 名玩家`
           : players.every(p => p.ready)
             ? '所有人已準備，即將開始…'
             : '等待所有人準備'}

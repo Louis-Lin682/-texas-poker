@@ -112,7 +112,7 @@ export function btBeats(newCls, newLen, pileCls, pileLen) {
 const RESULT_DELAY_MS = 5_000
 
 export class BigTwoGame {
-  constructor({ roomId, maxPlayers = 4, betUnit = 10, gameSlug = 'big-two', minPlayers = 2 } = {}) {
+  constructor({ roomId, maxPlayers = 4, betUnit = 10, gameSlug = 'big-two', minPlayers = 3 } = {}) {
     this.roomId     = roomId
     this.gameSlug   = gameSlug
     this.maxPlayers = maxPlayers
