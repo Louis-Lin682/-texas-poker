@@ -41,11 +41,6 @@ export default function FloatingButtons({ hidden = false }) {
     // second click: action not yet implemented
   }
 
-  const handleTopClick = () => {
-    document.querySelector('.phone-frame')?.scrollTo({ top: 0, behavior: 'smooth' })
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
   return (
     <>
       <button
@@ -56,15 +51,6 @@ export default function FloatingButtons({ hidden = false }) {
         aria-label="客服"
       >
         <img src="/service.png" alt="" />
-      </button>
-
-      <button
-        type="button"
-        className="float-btn float-top"
-        onClick={handleTopClick}
-        aria-label="回頂部"
-      >
-        <img src="/top.png" alt="" />
       </button>
     </>
   )

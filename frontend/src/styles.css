@@ -2593,7 +2593,7 @@ button.is-pressing {
 /* ── 浮動按鈕 ── */
 .float-btn {
   position: fixed;
-  z-index: 2;
+  z-index: 5;
   padding: 0;
   background: none;
   border: 0;

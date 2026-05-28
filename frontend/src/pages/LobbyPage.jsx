@@ -117,11 +117,23 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
         }
       : item,
   )
+    const handleTopClick = () => {
+    document.querySelector('.phone-frame')?.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   return (
     <div
       className={`app-shell ${isFavoritesOpen || isMyDrawerOpen || isEventDrawerOpen ? 'has-favorites-open' : ''}`}
     >
+      <button
+        type="button"
+        className="float-btn float-top"
+        onClick={handleTopClick}
+        aria-label="回頂部"
+      >
+        <img src="/top.png" alt="" />
+      </button>
       <div className="phone-frame">
         <NoticeTicker text={noticeText} isMuted={isMuted} onToggleMute={toggleMute} />
         {auth.isAuthenticated ? (
