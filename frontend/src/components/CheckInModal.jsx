@@ -91,9 +91,6 @@ function CheckInModal({ isOpen, onClose, token, isAuthenticated, onBalanceUpdate
             {checkedToday ? '今日已簽到' : loading ? '處理中...' : `領取 ${fmt(todayReward)} 籌碼`}
           </button>
         </div>
-        <div className="ci-bottom-img">
-          <img src="/public/SignIn_icon.png" alt="" />
-        </div>
       </div>
     </div>
   )
