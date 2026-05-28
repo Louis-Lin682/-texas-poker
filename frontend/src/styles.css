@@ -21,6 +21,11 @@
 }
 
 html,
+body {
+  touch-action: pan-x pan-y;
+}
+
+html,
 body,
 #root {
   min-height: 100%;
@@ -5412,7 +5417,6 @@ button.is-pressing {
   align-items: center;
   justify-content: center;
   min-width: 0;
-  overflow: hidden;
 }
 /* Felt atmosphere behind the table image */
 .pt-table-center::before {
