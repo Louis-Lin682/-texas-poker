@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import PageShell from '../components/PageShell'
+import VipPageHeader from '../components/VipPageHeader'
 
 const DAILY = [
   { id: 'd1', title: '完成一局遊戲', current: 0, total: 1, reward: 500 },
@@ -59,7 +60,8 @@ function QuestPage() {
     ))
 
   return (
-    <PageShell title="任務中心" accent="#ffb58a">
+    <PageShell title="" accent="#ffb58a">
+      <VipPageHeader title="任務中心" eyebrow="MISSION CENTER" />
       <div className="quest-section-header">
         <span className="quest-section-title">每日任務</span>
         <span className="quest-reset-time">重置 18:22:05</span>

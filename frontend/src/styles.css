@@ -110,7 +110,7 @@ button.is-pressing {
   position: relative;
   width: 100%;
   max-width: 450px;
-  padding: 12px 12px 108px;
+  padding: 0px 12px 108px;
 }
 
 .top-notice,
@@ -4078,10 +4078,16 @@ button.is-pressing {
   z-index: 50;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 14px 16px 12px;
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 221, 136, 0.08);
+  position: absolute;
+  top: 10px;
+}
+
+.event-page-vip-banner {
+  position: relative;
+  overflow: hidden;
+  margin: -20px -16px 16px;
+  padding: 22px 16px 20px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12);
 }
 
 .sub-page-back {

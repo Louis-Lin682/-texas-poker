@@ -28,7 +28,7 @@ function BottomNav({ items, onCenterClick, onLeftClick, onRightClick }) {
           onClick={onLeftClick}
         >
           <div className="nav-item-icon">
-            <img src="/event.png" alt="" />
+            <img src="/event2.png" alt="" />
             <span>{leftItem.label}</span>
           </div>
         </button>

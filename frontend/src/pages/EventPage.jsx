@@ -1,4 +1,5 @@
 import PageShell from '../components/PageShell'
+import VipPageHeader from '../components/VipPageHeader'
 
 const EVENTS = [
   {
@@ -33,7 +34,8 @@ const EVENTS = [
 
 function EventPage() {
   return (
-    <PageShell title="限時活動" accent="#57d46f">
+    <PageShell title="" accent="#d4af37">
+      <VipPageHeader title="優惠活動" eyebrow="VIP EXCLUSIVE EVENT" />
       <div className="event-list">
         {EVENTS.map((ev) => (
           <div key={ev.id} className={`event-card ${ev.hot ? 'is-hot' : ''}`} style={{ '--ev-color': ev.tagColor }}>

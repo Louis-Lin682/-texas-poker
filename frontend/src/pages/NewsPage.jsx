@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import PageShell from '../components/PageShell'
+import VipPageHeader from '../components/VipPageHeader'
 
 const NEWS = [
   {
@@ -52,7 +53,8 @@ function NewsPage() {
   }, {})
 
   return (
-    <PageShell title="最新消息" accent="#4fd0ff">
+    <PageShell title="" accent="#4fd0ff">
+      <VipPageHeader title="最新消息" eyebrow="LATEST NEWS" />
       {Object.entries(grouped).map(([date, items]) => (
         <div key={date} className="news-group">
           <div className="news-date-divider">

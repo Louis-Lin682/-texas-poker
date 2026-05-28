@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import PageShell from '../components/PageShell'
+import VipPageHeader from '../components/VipPageHeader'
 import { useAuth } from '../hooks/useAuth'
 import { getRank } from '../services/gamesApi'
 
@@ -63,7 +64,8 @@ function RankPage() {
   const hasPodium = list.length >= 3
 
   return (
-    <PageShell title="排行榜" accent="#f0c96b" bodyClassName="rk-body" titleLeft>
+    <PageShell title="" accent="#f0c96b" bodyClassName="rk-body">
+      <VipPageHeader title="排行榜" eyebrow="LEADERBOARD" />
 
       {/* ── 固定：tabs + 頒獎台 ── */}
       <div className="rk-static">
