@@ -12,8 +12,8 @@ function applyAudioSettings(audio, config, overrides = {}, muted = false) {
 }
 
 const MUTED_KEY = 'audio_muted'
-// module-level: survives component remount; sessionStorage backs it across refresh
-let _globalMuted = sessionStorage.getItem(MUTED_KEY) === '1'
+// Always start unmuted on page load — the welcome modal is the audio unlock gate
+let _globalMuted = false
 
 export function useAudio(initialMuted = false) {
   const audioRegistryRef = useRef(new Map())
@@ -43,14 +43,14 @@ export function useAudio(initialMuted = false) {
     try {
       if (config.bgm) {
         if (!audio.paused && !hasOverrides) return true
-        audio.pause()
+        if (!audio.paused) audio.pause()  // only pause if actually playing
         if (hasOverrides) {
           applyAudioSettings(audio, config, overrides, shouldMute)
         } else {
           audio.loop   = config.loop ?? false
           audio.volume = shouldMute ? 0 : config.volume ?? 1
           audio.muted  = shouldMute
-          audio.currentTime = 0
+          if (audio.currentTime > 0.05) audio.currentTime = 0  // skip seek if already at start
         }
         await audio.play()
       } else {
