@@ -472,7 +472,7 @@ const server = http.createServer(async (request, response) => {
         ),
         query(
           `SELECT COUNT(*) AS total,
-                  COALESCE(SUM(amount), 0) AS net,
+                  COALESCE(SUM(CASE WHEN type IN ('buy_in','cash_out') THEN amount ELSE 0 END), 0) AS net,
                   COALESCE(SUM(CASE WHEN type = 'buy_in'   THEN ABS(amount) ELSE 0 END), 0) AS total_buy_in,
                   COALESCE(SUM(CASE WHEN type = 'cash_out' THEN amount      ELSE 0 END), 0) AS total_cash_out
            FROM ledger WHERE ${whereStr}`,
@@ -834,9 +834,9 @@ const server = http.createServer(async (request, response) => {
         )
         const { rows: cnt }    = await query(`SELECT COUNT(*) FROM ledger ${where}`, vals)
         const { rows: netRows } = await query(
-          `SELECT SUM(amount) AS net,
-             SUM(CASE WHEN amount > 0 THEN  amount ELSE 0 END) AS total_wins,
-             SUM(CASE WHEN amount < 0 THEN -amount ELSE 0 END) AS total_losses,
+          `SELECT SUM(CASE WHEN type IN ('buy_in','cash_out') THEN amount ELSE 0 END) AS net,
+             SUM(CASE WHEN type = 'cash_out' THEN amount        ELSE 0 END) AS total_wins,
+             SUM(CASE WHEN type = 'buy_in'   THEN ABS(amount)   ELSE 0 END) AS total_losses,
              COUNT(*)::int AS count
            FROM ledger ${where}`,
           vals

@@ -176,8 +176,8 @@ export default function MemberLedgerPage() {
       {summary && (
         <div style={{ display: 'flex', gap: 24, marginBottom: 16, padding: '10px 16px', background: '#1e1e2e', borderRadius: 6, border: '1px solid #2a2a3a' }}>
           <span>共 <strong style={{ color: '#e0e0e0' }}>{total}</strong> 筆</span>
-          <span>收入 <strong style={{ color: '#52c41a' }}>+{Number(summary.total_wins || 0).toLocaleString()}</strong></span>
-          <span>支出 <strong style={{ color: '#ff4d4f' }}>-{Number(summary.total_losses || 0).toLocaleString()}</strong></span>
+          <span>帶出 <strong style={{ color: '#52c41a' }}>+{Number(summary.total_wins || 0).toLocaleString()}</strong></span>
+          <span>帶入 <strong style={{ color: '#ff4d4f' }}>-{Number(summary.total_losses || 0).toLocaleString()}</strong></span>
           <span>淨額 <strong style={{ color: Number(summary.net || 0) >= 0 ? '#52c41a' : '#ff4d4f' }}>
             {Number(summary.net || 0) >= 0 ? '+' : ''}{Number(summary.net || 0).toLocaleString()}
           </strong></span>
