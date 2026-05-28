@@ -69,12 +69,11 @@ function AllGamesSection({ items, favoriteIds, onToggleFavorite, play, onGameCli
                 data-no-global-click="true"
                 className={`game-filter-segment-button ${isActive ? 'is-active' : ''}`}
                 aria-pressed={isActive}
+                onPointerDown={() => {
+                  if (filter.id !== activeFilter) play('uiWhoosh')
+                }}
                 onClick={() => {
-                  if (filter.id !== activeFilter) {
-                    play('uiWhoosh')
-                    setAnimateBatchFrom(null)
-                  }
-
+                  if (filter.id !== activeFilter) setAnimateBatchFrom(null)
                   setActiveFilter(filter.id)
                   setVisibleCounts((current) => ({
                     ...current,
