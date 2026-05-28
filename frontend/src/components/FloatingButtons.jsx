@@ -32,7 +32,7 @@ export default function FloatingButtons({ hidden = false }) {
     }
   }, [serviceOpen])
 
-  if (HIDE_ROUTES.includes(pathname) || hidden) return null
+  if (pathname !== '/' || hidden) return null
 
   const handleServiceClick = () => {
     if (!serviceOpen) {

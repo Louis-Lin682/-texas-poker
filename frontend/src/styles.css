@@ -1599,12 +1599,12 @@ button.is-pressing {
 .ledger-dateinput {
   position: absolute;
   inset: 0;
-  opacity: 0;
+  opacity: 0.01;
   width: 100%;
   height: 100%;
   cursor: pointer;
   color-scheme: dark;
-  z-index: 0;
+  z-index: 1;
 }
 
 .ledger-daterange-sep {
@@ -1615,7 +1615,7 @@ button.is-pressing {
 
 .ledger-dateclear {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   flex-shrink: 0;
   width: 26px;
   height: 26px;
