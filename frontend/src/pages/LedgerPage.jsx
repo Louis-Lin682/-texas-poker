@@ -283,12 +283,12 @@ function LedgerPage() {
               max={TODAY}
               onChange={e => setCustomTo(e.target.value)}
             />
-            {hasCustom && (
-              <button type="button" className="ledger-dateclear" onClick={e => { e.stopPropagation(); clearCustom() }}>
-                ✕
-              </button>
-            )}
           </div>
+          {hasCustom && (
+            <button type="button" className="ledger-dateclear" onClick={clearCustom}>
+              ✕
+            </button>
+          )}
         </div>
 
         {/* ── 遊戲種類 ── */}

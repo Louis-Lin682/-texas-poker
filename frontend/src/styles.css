@@ -1544,6 +1544,7 @@ button.is-pressing {
   align-items: center;
   gap: 8px;
   justify-content: center;
+  overflow: hidden;
 }
 
 .ledger-daterange-field {
@@ -1614,8 +1615,6 @@ button.is-pressing {
 }
 
 .ledger-dateclear {
-  position: relative;
-  z-index: 2;
   flex-shrink: 0;
   width: 26px;
   height: 26px;
