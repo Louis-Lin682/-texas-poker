@@ -1015,18 +1015,155 @@ button.is-pressing {
 }
 
 .event-drawer-header {
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 14px 18px 10px;
   flex-shrink: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
-.event-drawer-title {
+/* ── Ambient stage layer ── */
+.event-header-stage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.event-header-glow-orb {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  height: 180px;
+  background: radial-gradient(ellipse at center,
+    rgba(212, 175, 55, 0.22) 0%,
+    rgba(180, 120, 20, 0.08) 45%,
+    transparent 70%
+  );
+  animation: eventOrbPulse 5s ease-in-out infinite;
+}
+
+.event-header-particles {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(212, 175, 55, 0.28) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 240, 180, 0.14) 1px, transparent 1px);
+  background-size: 50px 50px, 32px 32px;
+  background-position: 6px 9px, 22px 24px;
+  opacity: 0.38;
+}
+
+/* ── Title content ── */
+.event-header-content {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 18px;
+  z-index: 1;
+  animation: eventContentEnter 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.event-drawer-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  color: rgba(241, 230, 193, 0.92);
   font-size: 24px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-header-eyebrow {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 9px;
+  letter-spacing: 0.34em;
+  color: rgba(212, 175, 55, 0.46);
+  text-transform: uppercase;
+  margin: 0 0 8px;
+  font-weight: 400;
+}
+
+/* ── Title row with flanking taper lines ── */
+.event-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0 12px;
+}
+
+.event-header-title-line {
+  flex: 1;
+  height: 1px;
+  box-shadow: 0 0 4px rgba(212, 175, 55, 0.28);
+}
+
+.event-header-title-line:first-child {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(212, 175, 55, 0.18) 30%,
+    rgba(230, 185, 55, 0.68) 100%
+  );
+}
+
+.event-header-title-line:last-child {
+  background: linear-gradient(90deg,
+    rgba(230, 185, 55, 0.68) 0%,
+    rgba(212, 175, 55, 0.18) 70%,
+    transparent 100%
+  );
+}
+
+.event-header-title {
+  margin: 0;
+  font-family: Georgia, 'Noto Serif TC', '宋体', serif;
+  font-size: 27px;
   font-weight: 700;
-  color: #e2ce87;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.2em;
+  line-height: 1.2;
+  white-space: nowrap;
+  background: linear-gradient(180deg,
+    #fff8e7 0%,
+    #f7d060 26%,
+    #d4950a 62%,
+    #9a6010 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: eventGoldPulse 4.5s ease-in-out infinite;
+}
+
+/* ── Keyframes ── */
+@keyframes eventContentEnter {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes eventOrbPulse {
+  0%, 100% { opacity: 1;   transform: translateX(-50%) scale(1);    }
+  50%       { opacity: 0.6; transform: translateX(-50%) scale(1.12); }
+}
+
+@keyframes eventGoldPulse {
+  0%, 100% { filter: drop-shadow(0 0 8px  rgba(212, 175, 55, 0.38)); }
+  50%       { filter: drop-shadow(0 0 16px rgba(212, 175, 55, 0.65)); }
 }
 
 .event-drawer-close {
@@ -1041,6 +1178,9 @@ button.is-pressing {
   color: rgba(241, 230, 193, 0.92);
   font-size: 24px;
   line-height: 1;
+  position: absolute;
+  right: 0;
+  top: 0;
 }
 
 .event-drawer-body {

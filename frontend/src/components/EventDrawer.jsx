@@ -70,8 +70,19 @@ function EventDrawer({ isOpen, onClose }) {
       >
         <div className="drawer-handle" aria-hidden="true" />
         <div className="event-drawer-header">
-          <span className="event-drawer-title">限時活動</span>
-          <button type="button" className="event-drawer-close" onClick={onClose} aria-label="關閉">✕</button>
+          <div className="event-header-stage" aria-hidden="true">
+            <div className="event-header-glow-orb" />
+            <div className="event-header-particles" />
+          </div>
+          <div className="event-header-content">
+            <button type="button" className="event-drawer-close" onClick={onClose} aria-label="關閉">✕</button>
+            <span className="event-header-eyebrow">VIP EXCLUSIVE EVENT</span>
+            <div className="event-header-title-row">
+              <span className="event-header-title-line" aria-hidden="true" />
+              <h2 className="event-header-title">優惠活動</h2>
+              <span className="event-header-title-line" aria-hidden="true" />
+            </div>
+          </div>
         </div>
         <div className="event-drawer-body">
           <div className="event-list">
