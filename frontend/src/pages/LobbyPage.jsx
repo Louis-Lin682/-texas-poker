@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AllGamesSection from '../components/AllGamesSection'
 import AuthPromptModal from '../components/AuthPromptModal'
@@ -31,6 +31,7 @@ import { getConfig } from '../services/gamesApi'
 
 function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnterLobby }) {
   const { isMuted, pause, play, preload, toggleMute } = useAudio(false)
+  const bgmStartedByUserRef = useRef(false)
   const navigate = useNavigate()
   const [selectedGame, setSelectedGame] = useState(null)
   const [isCheckInOpen, setIsCheckInOpen] = useState(false)
@@ -70,11 +71,19 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
   useEffect(() => {
     if (!hasEnteredLobby) {
       pause('lobbyBgm')
+      bgmStartedByUserRef.current = false
       return
     }
 
     if (isMuted) {
       pause('lobbyBgm')
+      return
+    }
+
+    // If onEnter already called play() in the user gesture context, skip here
+    // to avoid a second audio.pause() racing against the pending play promise
+    if (bgmStartedByUserRef.current) {
+      bgmStartedByUserRef.current = false
       return
     }
 
@@ -255,6 +264,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
       <LobbyIntroModal
         isOpen={!hasEnteredLobby}
         onEnter={() => {
+          bgmStartedByUserRef.current = true
           onEnterLobby()
           play('lobbyBgm')
         }}
