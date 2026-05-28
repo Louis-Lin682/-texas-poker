@@ -58,7 +58,7 @@ function App() {
   return (
     <>
     <ScrollToTop />
-    <FloatingButtons />
+    <FloatingButtons hidden={!hasEnteredLobby} />
     <Routes>
       <Route
         path="/auth"

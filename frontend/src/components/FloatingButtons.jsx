@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 
 const HIDE_ROUTES = ['/table', '/big-two', '/thunder-joker', '/auth']
 
-export default function FloatingButtons() {
+export default function FloatingButtons({ hidden = false }) {
   const { pathname } = useLocation()
   const [serviceOpen, setServiceOpen] = useState(false)
   const serviceRef = useRef(null)
@@ -32,7 +32,7 @@ export default function FloatingButtons() {
     }
   }, [serviceOpen])
 
-  if (HIDE_ROUTES.includes(pathname)) return null
+  if (HIDE_ROUTES.includes(pathname) || hidden) return null
 
   const handleServiceClick = () => {
     if (!serviceOpen) {
