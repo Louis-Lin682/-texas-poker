@@ -30,15 +30,12 @@ function App() {
   useIdleTimeout(12 * 60 * 60 * 1000, auth.logout, 'idle_frontend')
   const navigate = useNavigate()
   const location = useLocation()
-  const [hasEnteredLobby, setHasEnteredLobby] = useState(
-    () => sessionStorage.getItem('lobby_entered') === '1'
-  )
+  const [hasEnteredLobby, setHasEnteredLobby] = useState(false)
 
-  // Any route other than / or /auth means the user has already passed the intro
+  // Any route other than / or /auth means the user navigated past the intro
   useEffect(() => {
     if (hasEnteredLobby) return
     if (location.pathname === '/' || location.pathname === '/auth') return
-    sessionStorage.setItem('lobby_entered', '1')
     setHasEnteredLobby(true)
   }, [location.pathname, hasEnteredLobby])
 
@@ -83,10 +80,7 @@ function App() {
             onGoLogin={enterMain}
             onCenterLogoClick={enterMain}
             hasEnteredLobby={hasEnteredLobby}
-            onEnterLobby={() => {
-              sessionStorage.setItem('lobby_entered', '1')
-              setHasEnteredLobby(true)
-            }}
+            onEnterLobby={() => setHasEnteredLobby(true)}
           />
         }
       />
