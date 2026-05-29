@@ -7,33 +7,59 @@ import {
   TrophyOutlined,
   NotificationOutlined,
 } from '@ant-design/icons'
-import { Layout, Menu, Typography, theme } from 'antd'
-import { useMemo } from 'react'
+import { Badge, Layout, Menu, Typography, theme } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAdminAuth } from '../context/AdminAuthContext'
+import { adminApi } from '../services/adminApi'
 
 const { Sider, Content, Header } = Layout
 const { Text } = Typography
-
-const NAV_ITEMS = [
-  { key: '/members',  icon: <TeamOutlined />,            label: <Link to="/members">會員管理</Link> },
-  { key: '/reports',  icon: <BarChartOutlined />,         label: <Link to="/reports">遊戲報表</Link> },
-  { key: '/events',   icon: <AlertOutlined />,            label: <Link to="/events">限時活動</Link> },
-  { key: '/news',     icon: <NotificationOutlined />,     label: <Link to="/news">最新消息</Link> },
-  { key: '/quests',   icon: <TrophyOutlined />,           label: <Link to="/quests">任務管理</Link> },
-  { key: '/support',  icon: <CustomerServiceOutlined />,  label: <Link to="/support">客服中心</Link> },
-]
 
 export default function AdminLayout() {
   const { admin, logout } = useAdminAuth()
   const navigate  = useNavigate()
   const location  = useLocation()
   const { token } = theme.useToken()
+  const [supportUnread, setSupportUnread] = useState(0)
+
+  useEffect(() => {
+    function fetchUnread() {
+      adminApi.getSupportUnread().then(d => setSupportUnread(d.count)).catch(() => {})
+    }
+    fetchUnread()
+    const id = setInterval(fetchUnread, 30000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Clear badge when on support page
+  useEffect(() => {
+    if (location.pathname.startsWith('/support')) setSupportUnread(0)
+  }, [location.pathname])
+
+  const NAV_ITEMS = useMemo(() => [
+    { key: '/members',  icon: <TeamOutlined />,            label: <Link to="/members">會員管理</Link> },
+    { key: '/reports',  icon: <BarChartOutlined />,         label: <Link to="/reports">遊戲報表</Link> },
+    { key: '/events',   icon: <AlertOutlined />,            label: <Link to="/events">限時活動</Link> },
+    { key: '/news',     icon: <NotificationOutlined />,     label: <Link to="/news">最新消息</Link> },
+    { key: '/quests',   icon: <TrophyOutlined />,           label: <Link to="/quests">任務管理</Link> },
+    {
+      key: '/support',
+      icon: <CustomerServiceOutlined />,
+      label: (
+        <Link to="/support">
+          <Badge count={supportUnread} size="small" offset={[6, 0]} style={{ fontSize: 10 }}>
+            客服中心
+          </Badge>
+        </Link>
+      ),
+    },
+  ], [supportUnread])
 
   const selected = useMemo(() => {
     const match = NAV_ITEMS.find(i => location.pathname.startsWith(i.key))
     return match ? [match.key] : []
-  }, [location.pathname])
+  }, [location.pathname, NAV_ITEMS])
 
   async function handleLogout() {
     await logout()

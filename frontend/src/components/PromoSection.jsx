@@ -1,6 +1,6 @@
 import SectionHeader from './SectionHeader'
 
-function PromoSection({ items }) {
+function PromoSection({ items, onPromoClick }) {
   return (
     <section className="promos">
       <SectionHeader title="精彩活動" />
@@ -16,7 +16,7 @@ function PromoSection({ items }) {
               <h3>{promo.title}</h3>
               <p>{promo.text}</p>
             </div>
-            <button type="button" className="promo-cta">
+            <button type="button" className="promo-cta" onClick={() => onPromoClick?.(promo)}>
               {promo.action}
             </button>
           </article>

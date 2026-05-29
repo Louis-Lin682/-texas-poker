@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import PlayingCard from '../components/PlayingCard'
 import { usePokerSocket } from '../hooks/usePokerSocket'
-import { useAudio } from '../hooks/useAudio'
+import { useAudio, getAudioSettings } from '../hooks/useAudio'
 import { getConfig } from '../services/gamesApi'
 
 const CHIP_IMGS = ['/chip-red.png', '/chip-gold.png', '/chip-purple.png', '/chip-blackgold.png']
@@ -369,13 +369,15 @@ function GameTablePage({ auth }) {
   const { play } = useAudio()
 
   // ── Game BGM (completely independent from lobby) ───────────
-  const [isGameMuted, setIsGameMuted] = useState(false)
+  const [isGameMuted, setIsGameMuted] = useState(() => getAudioSettings().bgmMuted)
   const bgmRef = useRef(null)
 
   useEffect(() => {
+    const { bgmMuted, bgmVolume } = getAudioSettings()
     const audio = new Audio('/audio/game/gameBgSound.mp3')
     audio.loop   = true
-    audio.volume = 0.28
+    audio.muted  = bgmMuted
+    audio.volume = bgmMuted ? 0 : 0.28 * bgmVolume
     bgmRef.current = audio
 
     const tryPlay = () => {
@@ -396,8 +398,9 @@ function GameTablePage({ auth }) {
 
   useEffect(() => {
     if (!bgmRef.current) return
+    const { bgmVolume } = getAudioSettings()
     bgmRef.current.muted  = isGameMuted
-    bgmRef.current.volume = isGameMuted ? 0 : 0.28
+    bgmRef.current.volume = isGameMuted ? 0 : 0.28 * bgmVolume
   }, [isGameMuted])
 
   const toggleGameMute = () => setIsGameMuted(m => !m)

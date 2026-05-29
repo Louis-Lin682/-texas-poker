@@ -95,27 +95,37 @@ export async function initDb() {
     );
 
     CREATE TABLE IF NOT EXISTS events (
-      id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      title      TEXT NOT NULL,
-      image_url  TEXT,
-      content    TEXT,
-      start_at   TIMESTAMPTZ,
-      end_at     TIMESTAMPTZ,
-      is_active  BOOLEAN NOT NULL DEFAULT true,
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      title       TEXT NOT NULL,
+      image_url   TEXT,
+      content     TEXT,
+      description TEXT,
+      tag         VARCHAR(50) NOT NULL DEFAULT '限時',
+      tag_color   VARCHAR(20) NOT NULL DEFAULT '#57d46f',
+      is_hot      BOOLEAN NOT NULL DEFAULT false,
+      start_at    TIMESTAMPTZ,
+      end_at      TIMESTAMPTZ,
+      is_active   BOOLEAN NOT NULL DEFAULT true,
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS description TEXT;
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS tag       VARCHAR(50) NOT NULL DEFAULT '限時';
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS tag_color VARCHAR(20) NOT NULL DEFAULT '#57d46f';
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS is_hot    BOOLEAN NOT NULL DEFAULT false;
 
     CREATE TABLE IF NOT EXISTS news (
       id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       title        TEXT NOT NULL,
       content      TEXT,
       image_url    TEXT,
+      category     VARCHAR(20) NOT NULL DEFAULT '公告',
       published_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       is_active    BOOLEAN NOT NULL DEFAULT true,
       sort_order   INTEGER NOT NULL DEFAULT 0,
       created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE news ADD COLUMN IF NOT EXISTS category VARCHAR(20) NOT NULL DEFAULT '公告';
 
     CREATE TABLE IF NOT EXISTS quests (
       id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -128,6 +138,31 @@ export async function initDb() {
       sort_order  INTEGER NOT NULL DEFAULT 0,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS quest_definitions (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      category    VARCHAR(20) NOT NULL,
+      action_type VARCHAR(50) NOT NULL,
+      title       TEXT NOT NULL,
+      description TEXT,
+      target      INTEGER NOT NULL,
+      reward      INTEGER NOT NULL,
+      tier        INTEGER NOT NULL DEFAULT 1,
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      is_active   BOOLEAN NOT NULL DEFAULT true,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS user_quests (
+      id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      quest_id   UUID NOT NULL REFERENCES quest_definitions(id) ON DELETE CASCADE,
+      period_key TEXT NOT NULL,
+      claimed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE(user_id, quest_id, period_key)
+    );
+    CREATE INDEX IF NOT EXISTS idx_user_quests ON user_quests (user_id, period_key);
 
     CREATE TABLE IF NOT EXISTS support_tickets (
       id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -148,6 +183,17 @@ export async function initDb() {
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
     CREATE INDEX IF NOT EXISTS idx_smsg_ticket ON support_messages (ticket_id, created_at ASC);
+    ALTER TABLE support_tickets  ADD COLUMN IF NOT EXISTS category           TEXT    NOT NULL DEFAULT '一般問題';
+    ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS is_read             BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE support_tickets  ADD COLUMN IF NOT EXISTS is_deleted_by_user BOOLEAN NOT NULL DEFAULT FALSE;
+    CREATE SEQUENCE IF NOT EXISTS support_ticket_seq START WITH 1000;
+    ALTER TABLE support_tickets  ADD COLUMN IF NOT EXISTS ticket_number      BIGINT;
+    UPDATE support_tickets SET ticket_number = nextval('support_ticket_seq') WHERE ticket_number IS NULL;
+    CREATE TABLE IF NOT EXISTS support_config (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+    INSERT INTO support_config (key, value) VALUES ('auto_close_days', '7') ON CONFLICT DO NOTHING;
   `)
 }
 

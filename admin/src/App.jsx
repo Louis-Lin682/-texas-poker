@@ -7,7 +7,11 @@ import LoginPage from './pages/LoginPage'
 import MemberDetailPage from './pages/MemberDetailPage'
 import MemberLedgerPage from './pages/MemberLedgerPage'
 import MembersPage from './pages/MembersPage'
+import AdminNewsPage from './pages/AdminNewsPage'
+import EventsPage from './pages/EventsPage'
+import AdminSupportPage from './pages/AdminSupportPage'
 import PlaceholderPage from './pages/PlaceholderPage'
+import QuestsPage from './pages/QuestsPage'
 import ReportsPage from './pages/ReportsPage'
 
 function RequireAuth({ children }) {
@@ -27,10 +31,10 @@ function AppRoutes() {
         <Route path="/members/:id" element={<MemberDetailPage />} />
         <Route path="/members/:id/ledger" element={<MemberLedgerPage />} />
         <Route path="/reports"     element={<ReportsPage />} />
-        <Route path="/events"      element={<PlaceholderPage title="限時活動" />} />
-        <Route path="/news"        element={<PlaceholderPage title="最新消息" />} />
-        <Route path="/quests"      element={<PlaceholderPage title="任務管理" />} />
-        <Route path="/support"     element={<PlaceholderPage title="客服中心" />} />
+        <Route path="/events"      element={<EventsPage />} />
+        <Route path="/news"        element={<AdminNewsPage />} />
+        <Route path="/quests"      element={<QuestsPage />} />
+        <Route path="/support"     element={<AdminSupportPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/members" replace />} />
     </Routes>

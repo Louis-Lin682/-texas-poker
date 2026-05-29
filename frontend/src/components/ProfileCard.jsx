@@ -36,8 +36,16 @@ function AccountDoorIcon() {
   )
 }
 
-function ProfileCard({ profile, isAuthenticated, isRefreshingBalance, onAccountAction }) {
+import { useNavigate } from 'react-router-dom'
+
+function ProfileCard({ profile, isAuthenticated, isRefreshingBalance, onAccountAction, supportUnread = 0, onSupportRead }) {
+  const navigate = useNavigate()
   const avatarText = profile.account ? profile.account.slice(0, 1).toUpperCase() : 'G'
+
+  function handleMessageClick() {
+    onSupportRead?.()
+    navigate('/support')
+  }
 
   return (
     <section className="profile-bar">
@@ -61,8 +69,11 @@ function ProfileCard({ profile, isAuthenticated, isRefreshingBalance, onAccountA
             <button type="button" className="balance-add-button" aria-label="add chips">
               +
             </button>
-            <button type="button" className="round-icon" aria-label="open messages">
+            <button type="button" className="round-icon cs-msg-btn" aria-label="客服訊息" onClick={handleMessageClick}>
               <MessageIcon />
+              {supportUnread > 0 && (
+                <span className="cs-msg-badge">{supportUnread > 9 ? '9+' : supportUnread}</span>
+              )}
             </button>
             <button
               type="button"

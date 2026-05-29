@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { apiRequest } from '../services/apiClient'
 import { useSlotSounds } from '../hooks/useSlotSounds'
+import { getAudioSettings } from '../hooks/useAudio'
 import { CoinLayer } from '../components/CoinLayer'
 
 // ── Symbol definitions ──────────────────────────────────────────────────────
@@ -208,7 +209,7 @@ export default function ThunderJokerPage({ auth }) {
   const [inFreeSpins,  setInFreeSpins]  = useState(false)
   const [scene,        setScene]        = useState('base')
   const [isAuto,       setIsAuto]       = useState(false)
-  const [isMuted,      setIsMuted]      = useState(false)
+  const [isMuted,      setIsMuted]      = useState(() => getAudioSettings().sfxMuted)
   const [lightning,    setLightning]    = useState(null)
   const [jokerMult,    setJokerMult]    = useState(1)
   const [jokerFlash,   setJokerFlash]   = useState(null)

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AllGamesSection from '../components/AllGamesSection'
 import AuthPromptModal from '../components/AuthPromptModal'
@@ -24,14 +24,11 @@ import {
   promoCards,
   quickActions,
 } from '../data/lobbyData'
-import { useAudio } from '../hooks/useAudio'
 import { useFavorites } from '../hooks/useFavorites'
 import { useGames } from '../hooks/useGames'
 import { getConfig } from '../services/gamesApi'
 
-function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnterLobby }) {
-  const { isMuted, pause, play, preload, toggleMute } = useAudio(false)
-  const bgmStartedByUserRef = useRef(false)
+function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnterLobby, play, pause, isMuted, toggleMute, supportUnread, onSupportRead }) {
   const navigate = useNavigate()
   const [selectedGame, setSelectedGame] = useState(null)
   const [isCheckInOpen, setIsCheckInOpen] = useState(false)
@@ -61,34 +58,8 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
   })
 
   useEffect(() => {
-    preload(['uiClick', 'uiWhoosh', 'lobbyBgm'])
-  }, [preload])
-
-  useEffect(() => {
     if (auth.isAuthenticated) auth.refreshUser()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!hasEnteredLobby) {
-      pause('lobbyBgm')
-      bgmStartedByUserRef.current = false
-      return
-    }
-
-    if (isMuted) {
-      pause('lobbyBgm')
-      return
-    }
-
-    // If onEnter already called play() in the user gesture context, skip here
-    // to avoid a second audio.pause() racing against the pending play promise
-    if (bgmStartedByUserRef.current) {
-      bgmStartedByUserRef.current = false
-      return
-    }
-
-    play('lobbyBgm')
-  }, [hasEnteredLobby, isMuted, pause, play])
 
   const handlePlayGame = (game) => {
     if (!game?.route) return
@@ -134,13 +105,15 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
       >
         <img src="/top.png" alt="" />
       </button>
-      <div className="phone-frame">
+      <div className="phone-frame phone-frame-lobby">
         <NoticeTicker text={noticeText} isMuted={isMuted} onToggleMute={toggleMute} />
         {auth.isAuthenticated ? (
           <ProfileCard
             profile={profile}
             isAuthenticated={auth.isAuthenticated}
             isRefreshingBalance={auth.isRefreshingBalance}
+            supportUnread={supportUnread}
+            onSupportRead={onSupportRead}
             onAccountAction={() => {
               setIsLogoutConfirmOpen(true)
             }}
@@ -171,7 +144,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
           play={play}
           onGameClick={setSelectedGame}
         />
-        <PromoSection items={promoCards} />
+        <PromoSection items={promoCards} onPromoClick={() => navigate('/quest')} />
         <BottomNav
           items={navItems}
           onLeftClick={() => {
@@ -275,11 +248,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
 
       <LobbyIntroModal
         isOpen={!hasEnteredLobby}
-        onEnter={() => {
-          bgmStartedByUserRef.current = true
-          onEnterLobby()
-          play('lobbyBgm')
-        }}
+        onEnter={onEnterLobby}
       />
     </div>
   )

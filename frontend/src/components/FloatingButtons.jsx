@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const HIDE_ROUTES = ['/table', '/big-two', '/thunder-joker', '/auth']
 
 export default function FloatingButtons({ hidden = false }) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const [serviceOpen, setServiceOpen] = useState(false)
   const serviceRef = useRef(null)
   const autoCloseRef = useRef(null)
@@ -35,10 +36,8 @@ export default function FloatingButtons({ hidden = false }) {
   if (pathname !== '/' || hidden) return null
 
   const handleServiceClick = () => {
-    if (!serviceOpen) {
-      setServiceOpen(true)
-    }
-    // second click: action not yet implemented
+    if (!serviceOpen) { setServiceOpen(true); return }
+    navigate('/support')
   }
 
   return (

@@ -6,6 +6,7 @@ function toDateStr(d) {
 const TODAY = toDateStr(new Date())
 const ONE_MONTH_AGO = toDateStr(new Date(new Date().setMonth(new Date().getMonth() - 1)))
 import PageShell from '../components/PageShell'
+import VipPageHeader from '../components/VipPageHeader'
 import { getGames } from '../services/gamesApi'
 import { getLedger } from '../services/ledgerApi'
 
@@ -13,13 +14,14 @@ const TOKEN_KEY = 'texas_holdem_auth_token'
 const PAGE_SIZE = 10
 
 const TYPE_LABEL = {
-  buy_in:    '進場',
-  cash_out:  '出場',
-  hand_win:  '贏牌',
-  hand_loss: '輸牌',
-  win:       '贏分',
-  loss:      '扣分',
-  checkin:   '簽到',
+  buy_in:       '進場',
+  cash_out:     '出場',
+  hand_win:     '贏牌',
+  hand_loss:    '輸牌',
+  win:          '贏分',
+  loss:         '扣分',
+  checkin:      '簽到',
+  quest_reward: '任務獎勵',
 }
 
 const GAME_LABEL = {
@@ -90,7 +92,8 @@ function entryNote(e) {
   if (e.type === 'cash_out') return `帶出 ${fmt(e.amount)} 籌碼${game ? `・${game}` : ''}`
   if ((e.type === 'hand_win' || e.type === 'hand_loss') && e.bet > 0)
     return `投注 ${fmt(e.bet)}`
-  if (e.type === 'checkin')  return `每日簽到獎勵 +${fmt(e.amount)} 籌碼`
+  if (e.type === 'checkin')      return `每日簽到獎勵 +${fmt(e.amount)} 籌碼`
+  if (e.type === 'quest_reward') return `任務獎勵 +${fmt(e.amount)} 籌碼`
   return null
 }
 
@@ -234,7 +237,8 @@ function LedgerPage() {
   }
 
   return (
-    <PageShell title="帳務明細" accent="#66dd88">
+    <PageShell title="" accent="#66dd88">
+      <VipPageHeader title="帳務明細" eyebrow="LEDGER" />
 
       {/* ── 日期快選 ── */}
       <div className="ledger-filters">

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { Howl, Howler } from 'howler'
+import { getAudioSettings } from './useAudio'
 
 const G = '/audio/game/'
 
@@ -43,6 +44,11 @@ export function useSlotSounds(isMuted) {
       howls.current = {}
       loopIds.current = {}
     }
+  }, [])
+
+  useEffect(() => {
+    const { sfxVolume } = getAudioSettings()
+    Howler.volume(sfxVolume)
   }, [])
 
   useEffect(() => { Howler.mute(isMuted) }, [isMuted])

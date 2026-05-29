@@ -192,6 +192,42 @@ async function getAdminFromToken(request) {
   return rows[0] ?? null
 }
 
+async function getUserQuestStats(userId) {
+  const { rows } = await query(`
+    WITH ls AS (
+      SELECT
+        COUNT(*)                          FILTER (WHERE type='cash_out')::int                                                         AS games_all,
+        COUNT(*)                          FILTER (WHERE type='cash_out' AND DATE(created_at)=CURRENT_DATE)::int                       AS games_today,
+        COUNT(*)                          FILTER (WHERE type='cash_out' AND created_at>=DATE_TRUNC('week',NOW()))::int                 AS games_week,
+        COALESCE(SUM(ABS(amount))         FILTER (WHERE type='buy_in'), 0)::bigint                                                   AS wagered_all,
+        COALESCE(SUM(ABS(amount))         FILTER (WHERE type='buy_in' AND DATE(created_at)=CURRENT_DATE), 0)::bigint                  AS wagered_today,
+        COALESCE(SUM(ABS(amount))         FILTER (WHERE type='buy_in' AND created_at>=DATE_TRUNC('week',NOW())), 0)::bigint           AS wagered_week,
+        COALESCE(SUM(amount)              FILTER (WHERE type='hand_win'), 0)::bigint                                                 AS won_all,
+        COALESCE(SUM(amount)              FILTER (WHERE type='hand_win' AND DATE(created_at)=CURRENT_DATE), 0)::bigint                AS won_today,
+        COALESCE(SUM(amount)              FILTER (WHERE type='hand_win' AND created_at>=DATE_TRUNC('week',NOW())), 0)::bigint         AS won_week
+      FROM ledger WHERE user_id=$1
+    )
+    SELECT ls.*,
+      COALESCE(ci.streak, 0) AS checkin_streak,
+      (SELECT COUNT(*)::int FROM favorites WHERE user_id=$1) AS favorites_count
+    FROM ls LEFT JOIN check_ins ci ON ci.user_id=$1
+  `, [userId])
+  return rows[0]
+}
+
+function calcQuestProgress(stats, actionType, category) {
+  const s = stats
+  switch (actionType) {
+    case 'login':          return 1
+    case 'games_played':   return category==='daily' ? s.games_today   : category==='weekly' ? s.games_week   : s.games_all
+    case 'chips_wagered':  return category==='daily' ? Number(s.wagered_today) : category==='weekly' ? Number(s.wagered_week) : Number(s.wagered_all)
+    case 'chips_won':      return category==='daily' ? Number(s.won_today)     : category==='weekly' ? Number(s.won_week)     : Number(s.won_all)
+    case 'checkin_streak': return s.checkin_streak
+    case 'add_favorite':   return s.favorites_count
+    default: return 0
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   if (!request.url) {
     sendJson(response, 404, { message: 'Not found' })
@@ -282,6 +318,28 @@ const server = http.createServer(async (request, response) => {
         return
       }
       sendJson(response, 200, toPublicUser(user))
+      return
+    }
+
+    if (request.method === 'POST' && pathname === '/auth/change-password') {
+      const user = await getSessionUser(request)
+      if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }); return }
+      const body = await getRequestBody(request)
+      const current = String(body.current_password || '')
+      const next    = String(body.new_password    || '')
+      if (!current || !next) {
+        sendJson(response, 400, { message: '請填寫目前密碼與新密碼。' }); return
+      }
+      if (next.length < 6) {
+        sendJson(response, 400, { message: '新密碼至少需要 6 個字元。' }); return
+      }
+      const { rows } = await query('SELECT password_hash FROM users WHERE id=$1', [user.id])
+      if (!(await bcrypt.compare(current, rows[0].password_hash))) {
+        sendJson(response, 401, { message: '目前密碼不正確。' }); return
+      }
+      const hash = await bcrypt.hash(next, 12)
+      await query('UPDATE users SET password_hash=$1 WHERE id=$2', [hash, user.id])
+      sendJson(response, 200, { ok: true })
       return
     }
 
@@ -702,6 +760,157 @@ const server = http.createServer(async (request, response) => {
       return
     }
 
+    // ── 最新消息 (public) ──
+    if (request.method === 'GET' && pathname === '/news') {
+      const { rows } = await query(`
+        SELECT id, title, content, category, published_at
+        FROM news
+        WHERE is_active = true
+        ORDER BY published_at DESC, sort_order ASC
+      `)
+      sendJson(response, 200, { news: rows }, effectiveCors)
+      return
+    }
+
+    // ── 活動列表 (public) ──
+    if (request.method === 'GET' && pathname === '/events') {
+      const { rows } = await query(`
+        SELECT id, title, description, image_url, tag, tag_color, is_hot, start_at, end_at, sort_order
+        FROM events
+        WHERE is_active = true
+          AND (start_at IS NULL OR start_at <= NOW())
+          AND (end_at   IS NULL OR end_at   >= NOW())
+        ORDER BY sort_order ASC, created_at DESC
+      `)
+      sendJson(response, 200, { events: rows }, effectiveCors)
+      return
+    }
+
+    // ── 任務中心 ──
+    if (request.method === 'GET' && pathname === '/quests') {
+      const user = await getSessionUser(request)
+      if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }, effectiveCors); return }
+
+      const { rows: defs } = await query(
+        `SELECT id,category,action_type,title,description,target,reward,tier,sort_order
+         FROM quest_definitions WHERE is_active=true ORDER BY category,sort_order ASC,tier ASC`
+      )
+      const stats = await getUserQuestStats(user.id)
+      const { rows: pkRow } = await query(`SELECT CURRENT_DATE::text AS dk, TO_CHAR(NOW(),'IYYY"-W"IW') AS wk`)
+      const { dk, wk } = pkRow[0]
+
+      const { rows: claimedRows } = await query(
+        `SELECT quest_id FROM user_quests WHERE user_id=$1 AND claimed_at IS NOT NULL
+         AND period_key IN ($2,$3,'all')`,
+        [user.id, dk, wk]
+      )
+      const claimedIds = new Set(claimedRows.map(r => r.quest_id))
+
+      const mapQuest = (cat) => (d) => {
+        const progress  = calcQuestProgress(stats, d.action_type, cat)
+        const claimed   = claimedIds.has(d.id)
+        return { ...d, progress, claimed, claimable: !claimed && progress >= d.target }
+      }
+
+      const daily   = defs.filter(d => d.category==='daily').map(mapQuest('daily'))
+      const weekly  = defs.filter(d => d.category==='weekly').map(mapQuest('weekly'))
+
+      const achDefs = defs.filter(d => d.category==='achievement')
+      const achMap  = {}
+      for (const d of achDefs) {
+        if (!achMap[d.action_type]) achMap[d.action_type] = []
+        achMap[d.action_type].push(d)
+      }
+      const achievements = Object.values(achMap).map(tiers => {
+        const progress = calcQuestProgress(stats, tiers[0].action_type, 'achievement')
+        let prevClaimed = true
+        return {
+          action_type: tiers[0].action_type,
+          title: tiers[0].title,
+          progress,
+          tiers: tiers.map(t => {
+            const claimed  = claimedIds.has(t.id)
+            const locked   = !prevClaimed
+            const claimable = !locked && !claimed && progress >= t.target
+            if (!locked) prevClaimed = claimed
+            return { id: t.id, tier: t.tier, target: t.target, reward: t.reward,
+                     progress, claimed, locked, claimable }
+          }),
+        }
+      })
+
+      sendJson(response, 200, { daily, weekly, achievements }, effectiveCors); return
+    }
+
+    const claimMatch = pathname.match(/^\/quests\/([^/]+)\/claim$/)
+    if (claimMatch && request.method === 'POST') {
+      const user = await getSessionUser(request)
+      if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }, effectiveCors); return }
+
+      const questId = claimMatch[1]
+      const { rows: defs } = await query(
+        'SELECT * FROM quest_definitions WHERE id=$1 AND is_active=true', [questId]
+      )
+      const quest = defs[0]
+      if (!quest) { sendJson(response, 404, { message: 'Quest not found.' }, effectiveCors); return }
+
+      const { rows: pkRow } = await query(`SELECT CURRENT_DATE::text AS dk, TO_CHAR(NOW(),'IYYY"-W"IW') AS wk`)
+      const periodKey = quest.category==='daily' ? pkRow[0].dk
+                      : quest.category==='weekly' ? pkRow[0].wk
+                      : 'all'
+
+      const { rows: already } = await query(
+        'SELECT id FROM user_quests WHERE user_id=$1 AND quest_id=$2 AND period_key=$3 AND claimed_at IS NOT NULL',
+        [user.id, questId, periodKey]
+      )
+      if (already.length > 0) { sendJson(response, 409, { message: '已領取。' }, effectiveCors); return }
+
+      if (quest.category==='achievement' && quest.tier > 1) {
+        const { rows: prevRows } = await query(
+          `SELECT id FROM quest_definitions WHERE action_type=$1 AND category='achievement' AND tier=$2`,
+          [quest.action_type, quest.tier - 1]
+        )
+        if (prevRows.length > 0) {
+          const { rows: prevClaimed } = await query(
+            `SELECT id FROM user_quests WHERE user_id=$1 AND quest_id=$2 AND period_key='all' AND claimed_at IS NOT NULL`,
+            [user.id, prevRows[0].id]
+          )
+          if (prevClaimed.length === 0) {
+            sendJson(response, 400, { message: '請先完成前一階成就。' }, effectiveCors); return
+          }
+        }
+      }
+
+      const stats    = await getUserQuestStats(user.id)
+      const progress = calcQuestProgress(stats, quest.action_type, quest.category)
+      if (progress < quest.target) {
+        sendJson(response, 400, { message: '尚未達成條件。' }, effectiveCors); return
+      }
+
+      const client = await pool.connect()
+      try {
+        await client.query('BEGIN')
+        await client.query(
+          `INSERT INTO user_quests (user_id,quest_id,period_key,claimed_at)
+           VALUES ($1,$2,$3,NOW())
+           ON CONFLICT (user_id,quest_id,period_key) DO UPDATE SET claimed_at=NOW()`,
+          [user.id, questId, periodKey]
+        )
+        const { rows: updated } = await client.query(
+          'UPDATE users SET balance=balance+$1 WHERE id=$2 RETURNING balance',
+          [quest.reward, user.id]
+        )
+        await client.query(
+          'INSERT INTO ledger (user_id,type,amount) VALUES ($1,$2,$3)',
+          [user.id, 'quest_reward', quest.reward]
+        )
+        await client.query('COMMIT')
+        sendJson(response, 200, { ok: true, reward: quest.reward, balance: updated[0].balance }, effectiveCors)
+      } catch (err) { await client.query('ROLLBACK'); throw err }
+      finally { client.release() }
+      return
+    }
+
     // ── Admin routes ─────────────────────────────────────────────────────────
 
     if (pathname === '/admin/auth/login' && request.method === 'POST') {
@@ -883,7 +1092,396 @@ const server = http.createServer(async (request, response) => {
         sendJson(response, 200, { rows, summary }, effectiveCors); return
       }
 
+      // ── Admin 任務管理 ──
+      if (pathname === '/admin/quests' && request.method === 'GET') {
+        const { rows } = await query(
+          `SELECT id,category,action_type,title,description,target,reward,tier,sort_order,is_active,created_at
+           FROM quest_definitions ORDER BY category,sort_order ASC,tier ASC`
+        )
+        sendJson(response, 200, { quests: rows }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/quests' && request.method === 'POST') {
+        const body = await getRequestBody(request)
+        const { category, action_type, title, description, target, reward, tier, sort_order, is_active } = body
+        if (!title?.trim() || !category || !action_type || !target || !reward) {
+          sendJson(response, 400, { message: '必填欄位不完整' }, effectiveCors); return
+        }
+        const { rows } = await query(
+          `INSERT INTO quest_definitions (category,action_type,title,description,target,reward,tier,sort_order,is_active)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+          [category, action_type, title.trim(), description||null, Number(target), Number(reward),
+           Number(tier||1), Number(sort_order||0), is_active!==false]
+        )
+        sendJson(response, 201, { quest: rows[0] }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/quests/reorder' && request.method === 'PATCH') {
+        const { orders } = await getRequestBody(request)
+        if (!Array.isArray(orders)) { sendJson(response, 400, { message: 'Invalid' }, effectiveCors); return }
+        const client = await pool.connect()
+        try {
+          await client.query('BEGIN')
+          for (const { id, sort_order } of orders) {
+            await client.query('UPDATE quest_definitions SET sort_order=$1 WHERE id=$2', [sort_order, id])
+          }
+          await client.query('COMMIT')
+        } catch (err) { await client.query('ROLLBACK'); throw err }
+        finally { client.release() }
+        sendJson(response, 200, { ok: true }, effectiveCors); return
+      }
+
+      const qMatch = pathname.match(/^\/admin\/quests\/([^/]+)$/)
+      if (qMatch) {
+        const qId = qMatch[1]
+        if (request.method === 'PUT') {
+          const body = await getRequestBody(request)
+          const { category, action_type, title, description, target, reward, tier, sort_order, is_active } = body
+          if (!title?.trim()) { sendJson(response, 400, { message: '標題為必填' }, effectiveCors); return }
+          const { rows } = await query(
+            `UPDATE quest_definitions SET category=$1,action_type=$2,title=$3,description=$4,
+             target=$5,reward=$6,tier=$7,sort_order=$8,is_active=$9 WHERE id=$10 RETURNING *`,
+            [category, action_type, title.trim(), description||null, Number(target), Number(reward),
+             Number(tier||1), Number(sort_order||0), Boolean(is_active), qId]
+          )
+          if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+          sendJson(response, 200, { quest: rows[0] }, effectiveCors); return
+        }
+        if (request.method === 'DELETE') {
+          await query('DELETE FROM user_quests WHERE quest_id=$1', [qId])
+          const { rows } = await query('DELETE FROM quest_definitions WHERE id=$1 RETURNING id', [qId])
+          if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+          sendJson(response, 200, { ok: true }, effectiveCors); return
+        }
+      }
+
+      const qToggleMatch = pathname.match(/^\/admin\/quests\/([^/]+)\/toggle$/)
+      if (qToggleMatch && request.method === 'PATCH') {
+        const { rows } = await query(
+          'UPDATE quest_definitions SET is_active=NOT is_active WHERE id=$1 RETURNING *',
+          [qToggleMatch[1]]
+        )
+        if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+        sendJson(response, 200, { quest: rows[0] }, effectiveCors); return
+      }
+
+      // ── Admin 活動管理 ──
+      if (pathname === '/admin/events' && request.method === 'GET') {
+        const { rows } = await query(
+          `SELECT id, title, description, image_url, tag, tag_color, is_hot, is_active, start_at, end_at, sort_order, created_at
+           FROM events ORDER BY sort_order ASC, created_at DESC`
+        )
+        sendJson(response, 200, { events: rows }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/events' && request.method === 'POST') {
+        const body = await getRequestBody(request)
+        const { title, description, image_url, tag, tag_color, is_hot, is_active, start_at, end_at, sort_order } = body
+        if (!title?.trim()) { sendJson(response, 400, { message: '標題為必填' }, effectiveCors); return }
+        const { rows } = await query(
+          `INSERT INTO events (title, description, image_url, tag, tag_color, is_hot, is_active, start_at, end_at, sort_order)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+          [title.trim(), description || null, image_url || null, tag || '限時', tag_color || '#57d46f',
+           Boolean(is_hot), is_active !== false, start_at || null, end_at || null, sort_order ?? 0]
+        )
+        sendJson(response, 201, { event: rows[0] }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/events/reorder' && request.method === 'PATCH') {
+        const body = await getRequestBody(request)
+        const { orders } = body
+        if (!Array.isArray(orders)) { sendJson(response, 400, { message: 'Invalid' }, effectiveCors); return }
+        const client = await pool.connect()
+        try {
+          await client.query('BEGIN')
+          for (const { id, sort_order } of orders) {
+            await client.query('UPDATE events SET sort_order=$1 WHERE id=$2', [sort_order, id])
+          }
+          await client.query('COMMIT')
+        } catch (err) { await client.query('ROLLBACK'); throw err }
+        finally { client.release() }
+        sendJson(response, 200, { ok: true }, effectiveCors); return
+      }
+
+      const evtMatch = pathname.match(/^\/admin\/events\/([^/]+)$/)
+      if (evtMatch) {
+        const evtId = evtMatch[1]
+        if (request.method === 'PUT') {
+          const body = await getRequestBody(request)
+          const { title, description, image_url, tag, tag_color, is_hot, is_active, start_at, end_at, sort_order } = body
+          if (!title?.trim()) { sendJson(response, 400, { message: '標題為必填' }, effectiveCors); return }
+          const { rows } = await query(
+            `UPDATE events SET title=$1,description=$2,image_url=$3,tag=$4,tag_color=$5,is_hot=$6,
+             is_active=$7,start_at=$8,end_at=$9,sort_order=$10 WHERE id=$11 RETURNING *`,
+            [title.trim(), description || null, image_url || null, tag || '限時', tag_color || '#57d46f',
+             Boolean(is_hot), Boolean(is_active), start_at || null, end_at || null, sort_order ?? 0, evtId]
+          )
+          if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+          sendJson(response, 200, { event: rows[0] }, effectiveCors); return
+        }
+        if (request.method === 'DELETE') {
+          const { rows } = await query('DELETE FROM events WHERE id=$1 RETURNING id', [evtId])
+          if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+          sendJson(response, 200, { ok: true }, effectiveCors); return
+        }
+      }
+
+      const evtToggleMatch = pathname.match(/^\/admin\/events\/([^/]+)\/toggle$/)
+      if (evtToggleMatch && request.method === 'PATCH') {
+        const { rows } = await query(
+          'UPDATE events SET is_active = NOT is_active WHERE id=$1 RETURNING *',
+          [evtToggleMatch[1]]
+        )
+        if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+        sendJson(response, 200, { event: rows[0] }, effectiveCors); return
+      }
+
+      // ── Admin 消息管理 ──
+      if (pathname === '/admin/news' && request.method === 'GET') {
+        const { rows } = await query(
+          `SELECT id, title, content, category, published_at, is_active, sort_order, created_at
+           FROM news ORDER BY published_at DESC, sort_order ASC`
+        )
+        sendJson(response, 200, { news: rows }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/news' && request.method === 'POST') {
+        const body = await getRequestBody(request)
+        const { title, content, category, published_at, sort_order, is_active } = body
+        if (!title?.trim()) { sendJson(response, 400, { message: '標題為必填' }, effectiveCors); return }
+        const { rows } = await query(
+          `INSERT INTO news (title,content,category,published_at,sort_order,is_active)
+           VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+          [title.trim(), content || null, category || '公告',
+           published_at ? new Date(published_at) : new Date(),
+           sort_order ?? 0, is_active !== false]
+        )
+        sendJson(response, 201, { news: rows[0] }, effectiveCors); return
+      }
+
+      const newsIdMatch = pathname.match(/^\/admin\/news\/([^/]+)$/)
+      if (newsIdMatch) {
+        const nId = newsIdMatch[1]
+        if (request.method === 'PUT') {
+          const body = await getRequestBody(request)
+          const { title, content, category, published_at, sort_order, is_active } = body
+          if (!title?.trim()) { sendJson(response, 400, { message: '標題為必填' }, effectiveCors); return }
+          const { rows } = await query(
+            `UPDATE news SET title=$1,content=$2,category=$3,published_at=$4,sort_order=$5,is_active=$6
+             WHERE id=$7 RETURNING *`,
+            [title.trim(), content || null, category || '公告',
+             published_at ? new Date(published_at) : new Date(),
+             sort_order ?? 0, is_active !== false, nId]
+          )
+          if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+          sendJson(response, 200, { news: rows[0] }, effectiveCors); return
+        }
+        if (request.method === 'DELETE') {
+          await query('DELETE FROM news WHERE id=$1', [nId])
+          sendJson(response, 200, { ok: true }, effectiveCors); return
+        }
+      }
+
+      const newsToggleMatch = pathname.match(/^\/admin\/news\/([^/]+)\/toggle$/)
+      if (newsToggleMatch && request.method === 'PATCH') {
+        const { rows } = await query(
+          'UPDATE news SET is_active=NOT is_active WHERE id=$1 RETURNING *',
+          [newsToggleMatch[1]]
+        )
+        if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+        sendJson(response, 200, { news: rows[0] }, effectiveCors); return
+      }
+
+      // ── Admin Support ────────────────────────────────────────────────────────
+      if (pathname === '/admin/support/unread' && request.method === 'GET') {
+        const { rows } = await query(
+          `SELECT COUNT(*) FROM support_messages WHERE sender_type = 'user' AND is_read = FALSE`
+        )
+        sendJson(response, 200, { count: parseInt(rows[0].count) }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/support/config' && request.method === 'GET') {
+        const { rows } = await query(`SELECT value FROM support_config WHERE key = 'auto_close_days'`)
+        sendJson(response, 200, { auto_close_days: parseInt(rows[0]?.value ?? '7') }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/support/config' && request.method === 'PATCH') {
+        const { auto_close_days } = await getRequestBody(request)
+        const days = parseInt(auto_close_days)
+        if (!Number.isFinite(days) || days < 0) { sendJson(response, 400, { message: 'Invalid' }, effectiveCors); return }
+        await query(
+          `INSERT INTO support_config (key, value) VALUES ('auto_close_days', $1) ON CONFLICT (key) DO UPDATE SET value = $1`,
+          [String(days)]
+        )
+        sendJson(response, 200, { auto_close_days: days }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/support/tickets' && request.method === 'GET') {
+        const status    = url.searchParams.get('status')        || null
+        const ticketNum = url.searchParams.get('ticket_number') || null
+        const conditions = []
+        const params     = []
+        if (status)    { params.push(status);              conditions.push(`t.status = $${params.length}`) }
+        if (ticketNum) { params.push(parseInt(ticketNum)); conditions.push(`t.ticket_number = $${params.length}`) }
+        const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : ''
+        const { rows } = await query(
+          `SELECT t.*, u.username,
+            (SELECT content FROM support_messages WHERE ticket_id = t.id ORDER BY created_at DESC LIMIT 1) AS last_message,
+            (SELECT COUNT(*) FROM support_messages WHERE ticket_id = t.id AND sender_type = 'user' AND is_read = FALSE) AS unread_count
+           FROM support_tickets t
+           JOIN users u ON t.user_id = u.id
+           ${where}
+           ORDER BY t.updated_at DESC LIMIT 100`,
+          params
+        )
+        sendJson(response, 200, { tickets: rows }, effectiveCors); return
+      }
+
+      const adminTicketMsg = pathname.match(/^\/admin\/support\/tickets\/([^/]+)\/messages$/)
+      if (adminTicketMsg) {
+        const ticketId = adminTicketMsg[1]
+
+        if (request.method === 'GET') {
+          await query(
+            `UPDATE support_messages SET is_read = TRUE
+             WHERE ticket_id = $1 AND sender_type = 'user' AND is_read = FALSE`,
+            [ticketId]
+          )
+          const { rows: msgs } = await query(
+            `SELECT * FROM support_messages WHERE ticket_id = $1 ORDER BY created_at ASC`, [ticketId]
+          )
+          const { rows: [ticket] } = await query(
+            `SELECT t.*, u.username FROM support_tickets t JOIN users u ON t.user_id = u.id WHERE t.id = $1`,
+            [ticketId]
+          )
+          sendJson(response, 200, { messages: msgs, ticket }, effectiveCors); return
+        }
+
+        if (request.method === 'POST') {
+          const body = await getRequestBody(request)
+          const { content } = body
+          if (!content?.trim()) { sendJson(response, 400, { message: 'Missing content' }, effectiveCors); return }
+          const { rows: [ticket] } = await query(`SELECT * FROM support_tickets WHERE id = $1`, [ticketId])
+          if (!ticket) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+          const { rows: [msg] } = await query(
+            `INSERT INTO support_messages (ticket_id, sender_type, content) VALUES ($1, 'admin', $2) RETURNING *`,
+            [ticketId, content.trim()]
+          )
+          await query(`UPDATE support_tickets SET updated_at = NOW() WHERE id = $1`, [ticketId])
+          notifySupportUser(ticket.user_id, { type: 'new_message', ticketId, message: msg })
+          sendJson(response, 201, { message: msg }, effectiveCors); return
+        }
+      }
+
+      const adminTicketStatus = pathname.match(/^\/admin\/support\/tickets\/([^/]+)\/status$/)
+      if (adminTicketStatus && request.method === 'PATCH') {
+        const ticketId = adminTicketStatus[1]
+        const { status } = await getRequestBody(request)
+        const { rows: [ticket] } = await query(
+          `UPDATE support_tickets SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+          [status, ticketId]
+        )
+        sendJson(response, 200, { ticket }, effectiveCors); return
+      }
+
       sendJson(response, 404, { message: 'Admin route not found.' }, effectiveCors); return
+    }
+
+    // ── Support (user) ───────────────────────────────────────────────────────
+    if (pathname === '/support/unread') {
+      const user = await getSessionUser(request)
+      if (!user) { sendJson(response, 401, { message: 'Unauthorized' }); return }
+      const { rows } = await query(
+        `SELECT COUNT(*) FROM support_messages sm
+         JOIN support_tickets st ON sm.ticket_id = st.id
+         WHERE st.user_id = $1 AND sm.sender_type = 'admin' AND sm.is_read = FALSE`,
+        [user.id]
+      )
+      sendJson(response, 200, { count: parseInt(rows[0].count) }); return
+    }
+
+    if (pathname === '/support/tickets' && request.method === 'GET') {
+      const user = await getSessionUser(request)
+      if (!user) { sendJson(response, 401, { message: 'Unauthorized' }); return }
+      const { rows } = await query(
+        `SELECT t.*, (
+           SELECT content FROM support_messages WHERE ticket_id = t.id ORDER BY created_at DESC LIMIT 1
+         ) AS last_message,
+         (SELECT COUNT(*) FROM support_messages WHERE ticket_id = t.id AND sender_type = 'admin' AND is_read = FALSE) AS unread_count
+         FROM support_tickets t WHERE t.user_id = $1 AND t.is_deleted_by_user = FALSE ORDER BY t.updated_at DESC`,
+        [user.id]
+      )
+      sendJson(response, 200, { tickets: rows }); return
+    }
+
+    if (pathname === '/support/tickets' && request.method === 'POST') {
+      const user = await getSessionUser(request)
+      if (!user) { sendJson(response, 401, { message: 'Unauthorized' }); return }
+      const body = await getRequestBody(request)
+      const { category, subject, content } = body
+      if (!category || !content?.trim()) { sendJson(response, 400, { message: 'Missing fields' }); return }
+      const { rows: [ticket] } = await query(
+        `INSERT INTO support_tickets (user_id, category, subject, status, ticket_number)
+         VALUES ($1, $2, $3, 'open', nextval('support_ticket_seq')) RETURNING *`,
+        [user.id, category, subject || category]
+      )
+      await query(
+        `INSERT INTO support_messages (ticket_id, sender_type, content) VALUES ($1, 'user', $2)`,
+        [ticket.id, content.trim()]
+      )
+      sendJson(response, 201, { ticket }); return
+    }
+
+    const supportTicketDel = pathname.match(/^\/support\/tickets\/([^/]+)$/)
+    if (supportTicketDel && request.method === 'DELETE') {
+      const ticketId = supportTicketDel[1]
+      const user = await getSessionUser(request)
+      if (!user) { sendJson(response, 401, { message: 'Unauthorized' }); return }
+      const { rows: [ticket] } = await query(
+        `UPDATE support_tickets SET is_deleted_by_user = TRUE
+         WHERE id = $1 AND user_id = $2 RETURNING id`,
+        [ticketId, user.id]
+      )
+      if (!ticket) { sendJson(response, 404, { message: 'Not found' }); return }
+      sendJson(response, 200, { ok: true }); return
+    }
+
+    const supportTicketMsg = pathname.match(/^\/support\/tickets\/([^/]+)\/messages$/)
+    if (supportTicketMsg) {
+      const ticketId = supportTicketMsg[1]
+      const user = await getSessionUser(request)
+      if (!user) { sendJson(response, 401, { message: 'Unauthorized' }); return }
+      // Verify ownership
+      const { rows: [ticket] } = await query(
+        `SELECT * FROM support_tickets WHERE id = $1 AND user_id = $2`, [ticketId, user.id]
+      )
+      if (!ticket) { sendJson(response, 404, { message: 'Not found' }); return }
+
+      if (request.method === 'GET') {
+        // Mark admin messages as read
+        await query(
+          `UPDATE support_messages SET is_read = TRUE
+           WHERE ticket_id = $1 AND sender_type = 'admin' AND is_read = FALSE`,
+          [ticketId]
+        )
+        const { rows } = await query(
+          `SELECT * FROM support_messages WHERE ticket_id = $1 ORDER BY created_at ASC`, [ticketId]
+        )
+        sendJson(response, 200, { messages: rows, ticket }); return
+      }
+
+      if (request.method === 'POST') {
+        if (ticket.status === 'closed') { sendJson(response, 400, { message: 'Ticket is closed' }); return }
+        const body = await getRequestBody(request)
+        const { content } = body
+        if (!content?.trim()) { sendJson(response, 400, { message: 'Missing content' }); return }
+        const { rows: [msg] } = await query(
+          `INSERT INTO support_messages (ticket_id, sender_type, content) VALUES ($1, 'user', $2) RETURNING *`,
+          [ticketId, content.trim()]
+        )
+        await query(`UPDATE support_tickets SET updated_at = NOW() WHERE id = $1`, [ticketId])
+        sendJson(response, 201, { message: msg }); return
+      }
     }
 
     sendJson(response, 404, { message: 'Not found.' })
@@ -902,6 +1500,31 @@ const botManager  = new BotManager(pool)
 roomManager.botManager = botManager
 
 const wss = new WebSocketServer({ noServer: true })
+
+// ── WebSocket (support chat) ──────────────────────────────────────────────────
+
+const supportClients = new Map()  // userId → ws
+const supportWss = new WebSocketServer({ noServer: true })
+
+function notifySupportUser(userId, data) {
+  const ws = supportClients.get(userId)
+  if (ws?.readyState === 1) ws.send(JSON.stringify(data))
+}
+
+supportWss.on('connection', async (ws, _request, user) => {
+  supportClients.set(user.id, ws)
+  try {
+    const { rows } = await query(
+      `SELECT COUNT(*) FROM support_messages sm
+       JOIN support_tickets st ON sm.ticket_id = st.id
+       WHERE st.user_id = $1 AND sm.sender_type = 'admin' AND sm.is_read = FALSE`,
+      [user.id]
+    )
+    ws.send(JSON.stringify({ type: 'unread_count', count: parseInt(rows[0].count) }))
+  } catch {}
+  ws.on('close', () => supportClients.delete(user.id))
+  ws.on('error', () => supportClients.delete(user.id))
+})
 
 wss.on('connection', async (ws, request, user) => {
   roomManager.registerClient(ws, { userId: user.id, username: user.username })
@@ -922,7 +1545,6 @@ wss.on('connection', async (ws, request, user) => {
 })
 
 server.on('upgrade', async (request, socket, head) => {
-  // Authenticate via token in query string: ws://host/poker?token=xxx
   try {
     const url = new URL(request.url, `http://${request.headers.host}`)
     const token = url.searchParams.get('token')
@@ -935,9 +1557,15 @@ server.on('upgrade', async (request, socket, head) => {
     const user = rows[0]
     if (!user) { socket.destroy(); return }
 
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit('connection', ws, request, user)
-    })
+    if (url.pathname === '/support') {
+      supportWss.handleUpgrade(request, socket, head, (ws) => {
+        supportWss.emit('connection', ws, request, user)
+      })
+    } else {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request, user)
+      })
+    }
   } catch {
     socket.destroy()
   }
@@ -976,12 +1604,60 @@ initDbWithRetry()
       console.log('Admin seeded: admin / aaa123')
     }
   })
+  .then(async () => {
+    const { rows: qCount } = await query('SELECT COUNT(*) FROM quest_definitions')
+    if (Number(qCount[0].count) > 0) return
+    const seeds = [
+      ['daily','login',       '登入大廳',         '每天登入即可領取獎勵', 1,    200,  1, 0],
+      ['daily','games_played','完成一局遊戲',      null,                  1,    500,  1, 1],
+      ['daily','chips_wagered','累計下注 10,000 籌碼', null,             10000,1000, 1, 2],
+      ['daily','add_favorite','收藏一款遊戲',      null,                  1,    300,  1, 3],
+      ['weekly','games_played','完成 20 局遊戲',   null,                 20,   5000, 1, 0],
+      ['weekly','chips_won',  '累計贏得 50,000 籌碼', null,             50000,8000, 1, 1],
+      ['weekly','checkin_streak','連續簽到 7 天',  null,                  7,  10000, 1, 2],
+      ['achievement','games_played','遊戲達人', '累計完成局數',  10,    500, 1, 0],
+      ['achievement','games_played','遊戲達人', '累計完成局數',  50,   2000, 2, 0],
+      ['achievement','games_played','遊戲達人', '累計完成局數', 200,   8000, 3, 0],
+      ['achievement','games_played','遊戲達人', '累計完成局數', 500,  20000, 4, 0],
+      ['achievement','chips_won',   '籌碼大師', '累計贏得籌碼',  10000,  500, 1, 1],
+      ['achievement','chips_won',   '籌碼大師', '累計贏得籌碼', 100000, 3000, 2, 1],
+      ['achievement','chips_won',   '籌碼大師', '累計贏得籌碼', 500000,15000, 3, 1],
+      ['achievement','checkin_streak','簽到達人','連續簽到天數',  7,   1000, 1, 2],
+      ['achievement','checkin_streak','簽到達人','連續簽到天數', 30,   5000, 2, 2],
+      ['achievement','checkin_streak','簽到達人','連續簽到天數',100,  20000, 3, 2],
+    ]
+    for (const [cat, act, title, desc, target, reward, tier, sort] of seeds) {
+      await query(
+        `INSERT INTO quest_definitions (category,action_type,title,description,target,reward,tier,sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [cat, act, title, desc, target, reward, tier, sort]
+      )
+    }
+    console.log('Default quests seeded.')
+  })
   .then(() => {
     dbReady = true
     console.log('Database ready.')
 
     // Keep Neon from autosuspending (free tier sleeps after 5 min of no queries)
     setInterval(() => query('SELECT 1').catch(() => {}), 4 * 60 * 1000)
+
+    // Auto-close inactive support tickets
+    async function autoCloseTickets() {
+      try {
+        const { rows } = await query(`SELECT value FROM support_config WHERE key = 'auto_close_days'`)
+        const days = parseInt(rows[0]?.value ?? '7')
+        if (days <= 0) return
+        const { rowCount } = await query(
+          `UPDATE support_tickets SET status = 'closed', updated_at = NOW()
+           WHERE status = 'open' AND updated_at < NOW() - ($1 || ' days')::INTERVAL`,
+          [String(days)]
+        )
+        if (rowCount > 0) console.log(`Auto-closed ${rowCount} inactive ticket(s).`)
+      } catch (err) { console.error('Auto-close error:', err.message) }
+    }
+    autoCloseTickets()
+    setInterval(autoCloseTickets, 60 * 60 * 1000)
 
     // Seed pre-existing rooms so the lobby looks active on startup
     const r1 = roomManager.createRoom({ smallBlind: 10, bigBlind: 20, maxPlayers: 6 })

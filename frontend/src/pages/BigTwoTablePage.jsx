@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import PlayingCard from '../components/PlayingCard'
 import { useBigTwoSocket } from '../hooks/useBigTwoSocket'
-import { useAudio } from '../hooks/useAudio'
+import { useAudio, getAudioSettings } from '../hooks/useAudio'
 import { getConfig } from '../services/gamesApi'
 
 function fmt(n) {
@@ -597,13 +597,15 @@ function BigTwoTablePage({ auth }) {
 
   // ── BGM ──
   const { play } = useAudio()
-  const [isGameMuted, setIsGameMuted] = useState(false)
+  const [isGameMuted, setIsGameMuted] = useState(() => getAudioSettings().bgmMuted)
   const bgmRef = useRef(null)
 
   useEffect(() => {
+    const { bgmMuted, bgmVolume } = getAudioSettings()
     const audio = new Audio('/audio/game/bigTwoGameBg.mp3')
     audio.loop   = true
-    audio.volume = 0.28
+    audio.muted  = bgmMuted
+    audio.volume = bgmMuted ? 0 : 0.28 * bgmVolume
     bgmRef.current = audio
 
     const tryPlay = () => {
@@ -624,8 +626,9 @@ function BigTwoTablePage({ auth }) {
 
   useEffect(() => {
     if (!bgmRef.current) return
+    const { bgmVolume } = getAudioSettings()
     bgmRef.current.muted  = isGameMuted
-    bgmRef.current.volume = isGameMuted ? 0 : 0.28
+    bgmRef.current.volume = isGameMuted ? 0 : 0.28 * bgmVolume
   }, [isGameMuted])
 
   const toggleGameMute = () => setIsGameMuted(m => !m)

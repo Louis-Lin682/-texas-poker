@@ -117,8 +117,8 @@ function MyDrawer({ isOpen, onClose, profile, onLogout }) {
 
             <div className="my-action-grid">
               <ActionTile label="儲值紀錄" onClick={() => {}} />
-              <ActionTile label="任務中心" onClick={() => {}} />
-              <ActionTile label="最新消息" onClick={() => {}} />
+              <ActionTile label="任務中心" onClick={() => goTo('/quest')} />
+              <ActionTile label="最新消息" onClick={() => goTo('/news')} />
             </div>
 
             <div className="my-menu-list" style={{ marginTop: 10 }}>
@@ -132,8 +132,8 @@ function MyDrawer({ isOpen, onClose, profile, onLogout }) {
             </div>
 
             <div className="my-menu-list">
-              <MenuRow label="設定" onClick={() => {}} />
-              <MenuRow label="客服" onClick={() => {}} />
+              <MenuRow label="設定" onClick={() => goTo('/settings')} />
+              <MenuRow label="客服" onClick={() => goTo('/support')} />
               <MenuRow label="登出" danger onClick={onLogout} />
             </div>
           </section>

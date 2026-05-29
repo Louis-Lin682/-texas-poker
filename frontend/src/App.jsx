@@ -9,11 +9,17 @@ import LobbyPage from './pages/LobbyPage'
 import NewsPage from './pages/NewsPage'
 import QuestPage from './pages/QuestPage'
 import RankPage from './pages/RankPage'
+import SettingsPage from './pages/SettingsPage'
 import ThunderJokerPage from './pages/ThunderJokerPage'
 import { useAuth } from './hooks/useAuth'
+import { useAudio } from './hooks/useAudio'
 import { useGlobalButtonFeedback } from './hooks/useGlobalButtonFeedback'
 import { useIdleTimeout } from './hooks/useIdleTimeout'
+import { useSupportWs } from './hooks/useSupportWs'
 import FloatingButtons from './components/FloatingButtons'
+import SupportPage from './pages/SupportPage'
+
+const GAME_ROUTES = ['/table', '/big-two', '/thunder-joker']
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -31,6 +37,23 @@ function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const [hasEnteredLobby, setHasEnteredLobby] = useState(false)
+
+  const { play, pause, bgmMuted, isMuted, toggleMute, preload } = useAudio()
+  const { unreadCount: supportUnread, resetUnread: resetSupportUnread } = useSupportWs({ token: auth.token })
+
+  useEffect(() => {
+    preload(['uiClick', 'uiWhoosh', 'lobbyBgm'])
+  }, [preload])
+
+  // Play lobby BGM on all non-game pages once the user has entered
+  useEffect(() => {
+    if (!hasEnteredLobby) return
+    if (GAME_ROUTES.includes(location.pathname) || bgmMuted) {
+      pause('lobbyBgm')
+    } else {
+      play('lobbyBgm')
+    }
+  }, [location.pathname, hasEnteredLobby, bgmMuted, pause, play])
 
   // Any route other than / or /auth means the user navigated past the intro
   useEffect(() => {
@@ -71,7 +94,9 @@ function App() {
       <Route path="/rank" element={<RankPage />} />
       <Route path="/event" element={<EventPage />} />
       <Route path="/quest" element={<QuestPage />} />
-      <Route path="/news" element={<NewsPage />} />
+      <Route path="/news"     element={<NewsPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/support"  element={<SupportPage onUnreadChange={resetSupportUnread} />} />
       <Route
         path="/*"
         element={
@@ -80,7 +105,16 @@ function App() {
             onGoLogin={enterMain}
             onCenterLogoClick={enterMain}
             hasEnteredLobby={hasEnteredLobby}
-            onEnterLobby={() => setHasEnteredLobby(true)}
+            onEnterLobby={() => {
+              setHasEnteredLobby(true)
+              play('lobbyBgm')
+            }}
+            play={play}
+            pause={pause}
+            isMuted={isMuted}
+            toggleMute={toggleMute}
+            supportUnread={supportUnread}
+            onSupportRead={resetSupportUnread}
           />
         }
       />

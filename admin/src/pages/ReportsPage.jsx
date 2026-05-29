@@ -16,7 +16,7 @@ const GAME_OPTIONS = [
 
 const TYPE_LABEL = {
   buy_in: '進場', cash_out: '出場', hand_win: '贏牌', hand_loss: '輸牌',
-  win: '贏分', loss: '扣分', checkin: '簽到',
+  win: '贏分', loss: '扣分', checkin: '簽到', quest_reward: '任務獎勵',
 }
 
 export default function ReportsPage() {

@@ -40,4 +40,32 @@ export const adminApi = {
     const p = Object.fromEntries(Object.entries(params).filter(([, v]) => v != null && v !== ''))
     return req('/reports?' + new URLSearchParams(p))
   },
+
+  getEvents:     ()           => req('/events'),
+  createEvent:   (body)       => req('/events',              { method: 'POST',   body }),
+  updateEvent:   (id, body)   => req(`/events/${id}`,        { method: 'PUT',    body }),
+  deleteEvent:   (id)         => req(`/events/${id}`,        { method: 'DELETE' }),
+  toggleEvent:   (id)         => req(`/events/${id}/toggle`, { method: 'PATCH'  }),
+  reorderEvents: (orders)     => req('/events/reorder',      { method: 'PATCH',  body: { orders } }),
+
+  getQuests:     ()           => req('/quests'),
+  createQuest:   (body)       => req('/quests',              { method: 'POST',   body }),
+  updateQuest:   (id, body)   => req(`/quests/${id}`,        { method: 'PUT',    body }),
+  deleteQuest:   (id)         => req(`/quests/${id}`,        { method: 'DELETE' }),
+  toggleQuest:   (id)         => req(`/quests/${id}/toggle`, { method: 'PATCH'  }),
+  reorderQuests: (orders)     => req('/quests/reorder',      { method: 'PATCH',  body: { orders } }),
+
+  getNews:     ()           => req('/news'),
+  createNews:  (body)       => req('/news',              { method: 'POST',   body }),
+  updateNews:  (id, body)   => req(`/news/${id}`,        { method: 'PUT',    body }),
+  deleteNews:  (id)         => req(`/news/${id}`,        { method: 'DELETE' }),
+  toggleNews:  (id)         => req(`/news/${id}/toggle`, { method: 'PATCH'  }),
+
+  getSupportUnread:   ()            => req('/support/unread'),
+  getSupportConfig:   ()            => req('/support/config'),
+  updateSupportConfig:(body)        => req('/support/config', { method: 'PATCH', body }),
+  getSupportTickets: (params = {}) => req('/support/tickets?' + new URLSearchParams(params)),
+  getSupportMessages:(id)          => req(`/support/tickets/${id}/messages`),
+  replySupportTicket:(id, content) => req(`/support/tickets/${id}/messages`, { method: 'POST', body: { content } }),
+  setSupportStatus:  (id, status)  => req(`/support/tickets/${id}/status`,   { method: 'PATCH', body: { status } }),
 }

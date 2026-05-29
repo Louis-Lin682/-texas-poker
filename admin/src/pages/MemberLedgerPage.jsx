@@ -17,16 +17,17 @@ const TYPE_OPTIONS = [
   { value: 'hand_loss', label: '輸牌' },
   { value: 'win',       label: '贏分' },
   { value: 'loss',      label: '扣分' },
-  { value: 'checkin',   label: '簽到' },
+  { value: 'checkin',      label: '簽到' },
+  { value: 'quest_reward', label: '任務獎勵' },
 ]
 
 const TYPE_LABEL = {
   buy_in: '進場', cash_out: '出場', hand_win: '贏牌', hand_loss: '輸牌',
-  win: '贏分', loss: '扣分', checkin: '簽到',
+  win: '贏分', loss: '扣分', checkin: '簽到', quest_reward: '任務獎勵',
 }
 const TYPE_COLOR = {
   buy_in: 'orange', cash_out: 'blue', hand_win: 'green', hand_loss: 'red',
-  win: 'green', loss: 'red', checkin: 'purple',
+  win: 'green', loss: 'red', checkin: 'purple', quest_reward: 'geekblue',
 }
 
 const PAGE_SIZE = 50
