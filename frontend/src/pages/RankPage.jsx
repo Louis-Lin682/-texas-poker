@@ -3,6 +3,7 @@ import PageShell from '../components/PageShell'
 import VipPageHeader from '../components/VipPageHeader'
 import { useAuth } from '../hooks/useAuth'
 import { getRank } from '../services/gamesApi'
+import { usePageReady } from '../hooks/usePageReady'
 
 const MEDAL = {
   1: { color: '#f0c96b', glow: 'rgba(240,201,107,0.75)', label: 'gold'   },
@@ -48,6 +49,7 @@ function RankPage() {
   const [list, setList] = useState([])
   const [myRank, setMyRank] = useState(null)
   const [loading, setLoading] = useState(true)
+  usePageReady(!loading)
 
   useEffect(() => {
     setLoading(true)

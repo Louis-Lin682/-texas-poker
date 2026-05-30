@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import AuthEntryPage from './pages/AuthEntryPage'
 import BigTwoTablePage from './pages/BigTwoTablePage'
@@ -11,15 +11,21 @@ import QuestPage from './pages/QuestPage'
 import RankPage from './pages/RankPage'
 import SettingsPage from './pages/SettingsPage'
 import ThunderJokerPage from './pages/ThunderJokerPage'
+import SupportPage from './pages/SupportPage'
 import { useAuth } from './hooks/useAuth'
 import { useAudio } from './hooks/useAudio'
 import { useGlobalButtonFeedback } from './hooks/useGlobalButtonFeedback'
 import { useIdleTimeout } from './hooks/useIdleTimeout'
 import { useSupportWs } from './hooks/useSupportWs'
 import FloatingButtons from './components/FloatingButtons'
-import SupportPage from './pages/SupportPage'
+import LoadingOverlay from './components/LoadingOverlay'
+import { LoadingProvider, useLoading } from './context/LoadingContext'
 
-const GAME_ROUTES = ['/table', '/big-two', '/thunder-joker']
+const GAME_ROUTES    = ['/table', '/big-two', '/thunder-joker']
+const NON_LOBBY_PATHS = [
+  '/auth', '/table', '/big-two', '/thunder-joker',
+  '/ledger', '/rank', '/event', '/quest', '/news', '/settings', '/support',
+]
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -27,6 +33,23 @@ function ScrollToTop() {
     document.querySelector('.phone-frame')?.scrollTo(0, 0)
     window.scrollTo(0, 0)
   }, [pathname])
+  return null
+}
+
+function RouteChangeWatcher() {
+  const location  = useLocation()
+  const { show }  = useLoading()
+  const prevPath  = useRef(null)
+
+  useEffect(() => {
+    const path = location.pathname
+    // Navigating TO lobby is instant (keep-alive), no loading needed
+    if (path !== '/' && prevPath.current !== path) {
+      show()
+    }
+    prevPath.current = path
+  }, [location.pathname, show])
+
   return null
 }
 
@@ -38,16 +61,20 @@ function App() {
   const location = useLocation()
   const [hasEnteredLobby, setHasEnteredLobby] = useState(false)
 
-  const { play, pause, bgmMuted, isMuted, toggleMute, preload } = useAudio()
+  const { play, pause, bgmMuted, isMuted, toggleMute, preload, setBgmMuted } = useAudio()
   const { unreadCount: supportUnread, resetUnread: resetSupportUnread } = useSupportWs({ token: auth.token })
+  const skipBgmEffect = useRef(false)
+
+  const isLobby = !NON_LOBBY_PATHS.some(p => location.pathname === p || location.pathname.startsWith(p + '/'))
 
   useEffect(() => {
     preload(['uiClick', 'uiWhoosh', 'lobbyBgm'])
   }, [preload])
 
-  // Play lobby BGM on all non-game pages once the user has entered
   useEffect(() => {
     if (!hasEnteredLobby) return
+    // Skip when triggered by the Enter button click — that handler already called play()
+    if (skipBgmEffect.current) { skipBgmEffect.current = false; return }
     if (GAME_ROUTES.includes(location.pathname) || bgmMuted) {
       pause('lobbyBgm')
     } else {
@@ -55,21 +82,17 @@ function App() {
     }
   }, [location.pathname, hasEnteredLobby, bgmMuted, pause, play])
 
-  // Any route other than / or /auth means the user navigated past the intro
   useEffect(() => {
     if (hasEnteredLobby) return
     if (location.pathname === '/' || location.pathname === '/auth') return
     setHasEnteredLobby(true)
   }, [location.pathname, hasEnteredLobby])
 
-  const openAuthPage = () => navigate('/auth')
+  const openAuthPage  = () => navigate('/auth')
   const openLobbyPage = () => navigate('/')
 
   const enterMain = () => {
-    if (auth.isAuthenticated) {
-      openLobbyPage()
-      return
-    }
+    if (auth.isAuthenticated) { openLobbyPage(); return }
     openAuthPage()
   }
 
@@ -79,47 +102,52 @@ function App() {
   }
 
   return (
-    <>
-    <ScrollToTop />
-    <FloatingButtons hidden={!hasEnteredLobby} />
-    <Routes>
-      <Route
-        path="/auth"
-        element={<AuthEntryPage onBack={openLobbyPage} onAuthSuccess={handleAuthSuccess} />}
-      />
-      <Route path="/table" element={<GameTablePage auth={auth} />} />
-      <Route path="/big-two" element={<BigTwoTablePage auth={auth} />} />
-      <Route path="/thunder-joker" element={<ThunderJokerPage auth={auth} />} />
-      <Route path="/ledger" element={<LedgerPage />} />
-      <Route path="/rank" element={<RankPage />} />
-      <Route path="/event" element={<EventPage />} />
-      <Route path="/quest" element={<QuestPage />} />
-      <Route path="/news"     element={<NewsPage />} />
-      <Route path="/settings" element={<SettingsPage />} />
-      <Route path="/support"  element={<SupportPage onUnreadChange={resetSupportUnread} />} />
-      <Route
-        path="/*"
-        element={
-          <LobbyPage
-            auth={auth}
-            onGoLogin={enterMain}
-            onCenterLogoClick={enterMain}
-            hasEnteredLobby={hasEnteredLobby}
-            onEnterLobby={() => {
-              setHasEnteredLobby(true)
-              play('lobbyBgm')
-            }}
-            play={play}
-            pause={pause}
-            isMuted={isMuted}
-            toggleMute={toggleMute}
-            supportUnread={supportUnread}
-            onSupportRead={resetSupportUnread}
-          />
-        }
-      />
-    </Routes>
-    </>
+    <LoadingProvider>
+      <ScrollToTop />
+      <RouteChangeWatcher />
+      <FloatingButtons hidden={!hasEnteredLobby} />
+
+      {/* Always-mounted lobby — hidden via display:none when on other routes */}
+      <div style={{ display: isLobby ? 'block' : 'none', height: '100%' }}>
+        <LobbyPage
+          auth={auth}
+          onGoLogin={enterMain}
+          onCenterLogoClick={enterMain}
+          hasEnteredLobby={hasEnteredLobby}
+          onEnterLobby={() => {
+            skipBgmEffect.current = true  // prevent BGM effect from firing pause()
+            setBgmMuted(false)            // always start with sound on entry
+            setHasEnteredLobby(true)
+            play('lobbyBgm')
+          }}
+          play={play}
+          pause={pause}
+          isMuted={isMuted}
+          toggleMute={toggleMute}
+          supportUnread={supportUnread}
+          onSupportRead={resetSupportUnread}
+        />
+      </div>
+
+      {/* All other routes — unmount when leaving */}
+      {!isLobby && (
+        <Routes>
+          <Route path="/auth"          element={<AuthEntryPage onBack={openLobbyPage} onAuthSuccess={handleAuthSuccess} />} />
+          <Route path="/table"         element={<GameTablePage auth={auth} />} />
+          <Route path="/big-two"       element={<BigTwoTablePage auth={auth} />} />
+          <Route path="/thunder-joker" element={<ThunderJokerPage auth={auth} />} />
+          <Route path="/ledger"        element={<LedgerPage />} />
+          <Route path="/rank"          element={<RankPage />} />
+          <Route path="/event"         element={<EventPage />} />
+          <Route path="/quest"         element={<QuestPage />} />
+          <Route path="/news"          element={<NewsPage />} />
+          <Route path="/settings"      element={<SettingsPage />} />
+          <Route path="/support"       element={<SupportPage onUnreadChange={resetSupportUnread} />} />
+        </Routes>
+      )}
+
+      <LoadingOverlay />
+    </LoadingProvider>
   )
 }
 

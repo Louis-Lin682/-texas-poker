@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { usePageReady } from '../hooks/usePageReady'
 
 function toDateStr(d) {
   return d.toISOString().slice(0, 10)
@@ -123,6 +124,7 @@ function LedgerPage() {
   const [hasMore,     setHasMore]     = useState(true)
   const [loading,     setLoading]     = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  usePageReady(!loading)
   const [error,       setError]       = useState(null)
 
   const sentinelRef  = useRef(null)

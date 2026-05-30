@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import PageShell from '../components/PageShell'
 import VipPageHeader from '../components/VipPageHeader'
 import { createTicket, deleteTicket, getMessages, getTickets, sendMessage } from '../services/supportApi'
+import { usePageReady } from '../hooks/usePageReady'
 
 const TOKEN_KEY = 'texas_holdem_auth_token'
 
@@ -251,10 +252,12 @@ export default function SupportPage({ onUnreadChange }) {
   const isAuth = Boolean(localStorage.getItem(TOKEN_KEY))
   const [view, setView] = useState('list')
   const [tickets, setTickets] = useState([])
+  const [loaded, setLoaded] = useState(false)
   const [activeTicket, setActiveTicket] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [pendingDeleteId, setPendingDeleteId] = useState(null)
   const [swipeCloseSignal, setSwipeCloseSignal] = useState(0)
+  usePageReady(loaded || !isAuth)
   const location = useLocation()
 
   async function confirmDelete() {
@@ -273,7 +276,7 @@ export default function SupportPage({ onUnreadChange }) {
 
   useEffect(() => {
     if (!isAuth) return
-    getTickets().then(d => setTickets(d.tickets)).catch(() => {})
+    getTickets().then(d => setTickets(d.tickets)).catch(() => {}).finally(() => setLoaded(true))
   }, [isAuth])
 
   useEffect(() => {

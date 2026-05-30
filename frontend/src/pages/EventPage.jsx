@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import PageShell from '../components/PageShell'
 import VipPageHeader from '../components/VipPageHeader'
 import { getEvents } from '../services/eventApi'
+import { usePageReady } from '../hooks/usePageReady'
 
 function fmtCountdown(end_at) {
   if (!end_at) return null
@@ -21,6 +22,7 @@ function EventPage() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [tick, setTick] = useState(0)
+  usePageReady(!loading)
 
   useEffect(() => {
     getEvents()

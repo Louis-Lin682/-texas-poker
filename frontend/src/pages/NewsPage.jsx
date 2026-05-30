@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import PageShell from '../components/PageShell'
 import VipPageHeader from '../components/VipPageHeader'
 import { getNews } from '../services/newsApi'
+import { usePageReady } from '../hooks/usePageReady'
 
 const CATEGORY_COLOR = {
   活動: '#57d46f',
@@ -28,6 +29,7 @@ function NewsPage() {
   const [news,     setNews]     = useState([])
   const [loading,  setLoading]  = useState(true)
   const [expanded, setExpanded] = useState(null)
+  usePageReady(!loading)
 
   useEffect(() => {
     getNews()

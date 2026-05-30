@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import PageShell from '../components/PageShell'
 import VipPageHeader from '../components/VipPageHeader'
 import { claimQuest, getQuests } from '../services/questApi'
+import { usePageReady } from '../hooks/usePageReady'
 
 const TOKEN_KEY = 'texas_holdem_auth_token'
 
@@ -145,6 +146,7 @@ function QuestPage() {
   const [claiming, setClaiming] = useState(null)
   const [tick, setTick]       = useState(0)
   const isAuth = Boolean(localStorage.getItem(TOKEN_KEY))
+  usePageReady(!loading)
 
   useEffect(() => {
     if (!isAuth) { setLoading(false); return }
