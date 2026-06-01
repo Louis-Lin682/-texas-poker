@@ -1,6 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const WS_BASE = (import.meta.env.VITE_WS_URL ?? 'ws://localhost:4000/poker').replace(/\/[^/]+$/, '')
+function _makeWsBase() {
+  const raw = import.meta.env.VITE_WS_URL ?? 'ws://localhost:4000/poker'
+  const upgraded = raw.startsWith('ws://') && window.location.protocol === 'https:'
+    ? raw.replace('ws://', 'wss://')
+    : raw
+  try {
+    const u = new URL(upgraded)
+    return `${u.protocol}//${u.host}`
+  } catch {
+    return 'ws://localhost:4000'
+  }
+}
+const WS_BASE = _makeWsBase()
 
 export function useSupportWs({ token, onNewMessage }) {
   const [unreadCount, setUnreadCount] = useState(0)
