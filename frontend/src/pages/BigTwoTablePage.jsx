@@ -720,6 +720,12 @@ function BigTwoTablePage({ auth }) {
         </div>
       )}
 
+      {(status === 'disconnected' || status === 'error') && (
+        <div className="pt-connecting-overlay">
+          <span className="pt-connecting-text" style={{color:'#f06060'}}>連線中斷，請重新整理頁面</span>
+        </div>
+      )}
+
       {!roomId && status === 'connected' && (
         <LobbyView
           status={status}

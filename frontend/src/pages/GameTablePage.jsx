@@ -632,6 +632,13 @@ function GameTablePage({ auth }) {
         </div>
       )}
 
+      {/* ── Disconnected overlay ── */}
+      {(status === 'disconnected' || status === 'error') && (
+        <div className="pt-connecting-overlay">
+          <span className="pt-connecting-text" style={{color:'#f06060'}}>連線中斷，請重新整理頁面</span>
+        </div>
+      )}
+
       {/* ── Lobby ── */}
       {!roomId && status === 'connected' && (
         <LobbyView

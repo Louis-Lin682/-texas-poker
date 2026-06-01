@@ -116,6 +116,13 @@ export class BotManager {
     }
 
     if (publicState.phase === 'waiting') {
+      // Free bots silently removed from game (e.g. balance hit 0 in _startHand)
+      for (const [id, info] of this.bots) {
+        if (info.roomId === game.roomId && !game.players.some(p => p.id === id)) {
+          this._cancelTimer(id)
+          info.roomId = null
+        }
+      }
       const hasHuman = publicState.players.some(p => !this.isBot(p.id))
       if (!hasHuman) return
       for (const p of publicState.players) {
@@ -174,6 +181,13 @@ export class BotManager {
     // Only auto-ready if at least one human is in the room — bots should not start
     // games among themselves, which would block humans from joining mid-game.
     if (publicState.phase === 'waiting') {
+      // Free bots silently removed from game (e.g. balance hit 0 in _resetGame)
+      for (const [id, info] of this.bots) {
+        if (info.roomId === game.roomId && !game.players.some(p => p.id === id)) {
+          this._cancelTimer(id)
+          info.roomId = null
+        }
+      }
       const hasHuman = publicState.players.some(p => !this.isBot(p.id))
       if (!hasHuman) return
       for (const p of publicState.players) {
