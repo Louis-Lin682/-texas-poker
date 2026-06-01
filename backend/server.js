@@ -551,11 +551,29 @@ const server = http.createServer(async (request, response) => {
       const user = await getSessionUser(request)
       if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }); return }
       const { rows } = await query(
-        'SELECT free_spins_left, joker_mult FROM slot_sessions WHERE user_id = $1',
+        'SELECT free_spins_left, joker_mult, buy_in_amount, buy_in_start_balance FROM slot_sessions WHERE user_id = $1',
         [user.id]
       )
-      const freeSpinsLeft = rows.length > 0 ? rows[0].free_spins_left : 0
-      const jokerMult     = rows.length > 0 ? rows[0].joker_mult      : 1
+      const freeSpinsLeft  = rows.length > 0 ? rows[0].free_spins_left        : 0
+      const jokerMult      = rows.length > 0 ? rows[0].joker_mult             : 1
+      const buyInAmount    = rows.length > 0 ? rows[0].buy_in_amount          : null
+      const buyInStartBal  = rows.length > 0 ? rows[0].buy_in_start_balance   : null
+
+      // Auto-close incomplete buy-in session caused by game crash
+      if (buyInAmount != null && buyInStartBal != null) {
+        const { rows: urows } = await query('SELECT balance FROM users WHERE id = $1', [user.id])
+        const currentBalance = Number(urows[0].balance)
+        const cashOutAmount  = Math.max(0, buyInAmount + (currentBalance - buyInStartBal))
+        await query(
+          `INSERT INTO ledger (user_id, type, amount, game) VALUES ($1, 'cash_out', $2, 'thunder-joker')`,
+          [user.id, cashOutAmount]
+        )
+        await query(
+          `UPDATE slot_sessions SET buy_in_amount = NULL, buy_in_start_balance = NULL WHERE user_id = $1`,
+          [user.id]
+        )
+      }
+
       sendJson(response, 200, { freeSpinsLeft, jokerMult })
       return
     }
@@ -686,6 +704,22 @@ const server = http.createServer(async (request, response) => {
         `INSERT INTO ledger (user_id, type, amount, game) VALUES ($1, $2, $3, $4)`,
         [user.id, type, amount, 'thunder-joker'],
       )
+      if (type === 'buy_in') {
+        const { rows: urows } = await query('SELECT balance FROM users WHERE id = $1', [user.id])
+        const startBalance = Number(urows[0].balance)
+        await query(
+          `INSERT INTO slot_sessions (user_id, free_spins_left, joker_mult, buy_in_amount, buy_in_start_balance, updated_at)
+           VALUES ($1, 0, 1, $2, $3, NOW())
+           ON CONFLICT (user_id) DO UPDATE
+             SET buy_in_amount = $2, buy_in_start_balance = $3, updated_at = NOW()`,
+          [user.id, Math.abs(amount), startBalance]
+        )
+      } else {
+        await query(
+          `UPDATE slot_sessions SET buy_in_amount = NULL, buy_in_start_balance = NULL WHERE user_id = $1`,
+          [user.id]
+        )
+      }
       sendJson(response, 200, { ok: true })
       return
     }

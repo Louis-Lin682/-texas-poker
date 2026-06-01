@@ -461,6 +461,15 @@ export default function ThunderJokerPage({ auth }) {
             jokerMultRef.current = 1; setJokerMult(1)
             fsSessionWinRef.current = 0; setFsSessionWin(0)
             setScene('base')
+            if (autoRef.current) {
+              if (balRef.current >= betRef.current) {
+                const at = setTimeout(() => spinRef.current?.(), 800)
+                tmRefs.current.push(at)
+              } else {
+                autoRef.current = false; setIsAuto(false)
+                autoCountRef.current = null; setAutoCount(null)
+              }
+            }
           }, 800 + 2500 + 800)
           tmRefs.current.push(tc)
         }
@@ -558,6 +567,11 @@ export default function ThunderJokerPage({ auth }) {
     }
 
     function stopReelVisual(r) {
+      if (!resultRef.current) {
+        // API not back yet — keep spinning until result arrives, then stop
+        waitForResult(() => stopReelVisual(r))
+        return
+      }
       clearInterval(ivs[r])
       ivRefs.current = ivRefs.current.filter(i => i !== ivs[r])
       setReelSpin(prev => { const n = [...prev]; n[r] = 0; return n })

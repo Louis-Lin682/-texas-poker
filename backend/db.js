@@ -80,6 +80,8 @@ export async function initDb() {
       joker_mult      INTEGER NOT NULL DEFAULT 1,
       updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE slot_sessions ADD COLUMN IF NOT EXISTS buy_in_amount        INTEGER;
+    ALTER TABLE slot_sessions ADD COLUMN IF NOT EXISTS buy_in_start_balance INTEGER;
 
     CREATE TABLE IF NOT EXISTS admins (
       id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
