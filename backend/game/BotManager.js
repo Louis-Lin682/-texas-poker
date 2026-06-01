@@ -115,6 +115,22 @@ export class BotManager {
       return
     }
 
+    if (publicState.phase === 'waiting') {
+      const hasHuman = publicState.players.some(p => !this.isBot(p.id))
+      if (!hasHuman) return
+      for (const p of publicState.players) {
+        if (!this.isBot(p.id) || p.ready) continue
+        this._cancelTimer(p.id)
+        const delay = 1200 + Math.random() * 2000
+        const t = setTimeout(() => {
+          this._timers.delete(p.id)
+          try { game.setReady(p.id) } catch {}
+        }, delay)
+        this._timers.set(p.id, t)
+      }
+      return
+    }
+
     const actingId = publicState.actingPlayerId
     if (!actingId || !this.isBot(actingId)) return
 

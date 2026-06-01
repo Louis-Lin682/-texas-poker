@@ -6349,6 +6349,9 @@ button.is-pressing {
   position: relative;
   z-index: 3;
 }
+.pt-side-col:has(.is-acting) {
+  z-index: 5;
+}
 
 .pt-table-center {
   flex: 1;
@@ -6609,6 +6612,8 @@ button.is-pressing {
   justify-content: center;
   padding: 3px 0 2px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 4;
 }
 
 /* ── Deal animation ─────────────────────────────────────── */

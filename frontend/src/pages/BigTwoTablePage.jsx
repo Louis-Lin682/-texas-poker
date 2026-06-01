@@ -355,7 +355,7 @@ function getHint(hand, pile) {
 // ── Deal sound ────────────────────────────────────────────────────────────────
 
 // ── Game view ─────────────────────────────────────────────────────────────────
-const CARD_W = 38   // sm card width
+const CARD_W = 50   // pcard-md width
 const PIVOT_Y = 180 // pivot distance below card bottom
 
 const AFK_SECS = 30
@@ -388,7 +388,7 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
   const oppLeft  = opponents[2] ?? null
 
   const n        = myHand.length
-  const SPREAD   = Math.min(90, Math.max(24, n * 5.5))
+  const SPREAD   = Math.min(60, Math.max(24, n * 5.5))
   const halfCard = CARD_W / 2
   const fanH     = 80   // fan container height
 
