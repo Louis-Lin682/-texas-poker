@@ -646,14 +646,17 @@ function BigTwoTablePage({ auth }) {
 
   const handleBack = () => {
     if (isPlaying) { setShowLeaveConfirm(true); return }
-    if (roomId) leaveRoom()
-    navigate('/')
+    if (roomId) {
+      leaveRoom()   // roomId → null → lobby view shows automatically
+    } else {
+      navigate('/')
+    }
   }
 
   const confirmLeave = () => {
     setShowLeaveConfirm(false)
     leaveRoom()
-    navigate('/')
+    // stay on page — lobby view shows when roomId becomes null
   }
 
   return (

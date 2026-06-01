@@ -520,7 +520,6 @@ function GameTablePage({ auth }) {
 
   const handleBack = () => {
     if (isDisconnected) {
-      // Already disconnected — just go home
       navigate('/')
       return
     }
@@ -528,14 +527,17 @@ function GameTablePage({ auth }) {
       setShowLeaveConfirm(true)
       return
     }
-    if (roomId) leaveRoom()
-    navigate('/')
+    if (roomId) {
+      leaveRoom()   // roomId → null → lobby view shows automatically
+    } else {
+      navigate('/')
+    }
   }
 
   const confirmLeave = () => {
     setShowLeaveConfirm(false)
     if (roomId) leaveRoom()
-    navigate('/')
+    // stay on page — lobby view shows when roomId becomes null
   }
 
   const handleRebuy = (chips) => {
@@ -547,7 +549,7 @@ function GameTablePage({ auth }) {
       setTimeout(() => joinRoom(currentRoomId, chips), 300)
     } else {
       leaveRoom()
-      navigate('/')
+      // stay on page — lobby view shows when roomId becomes null
     }
   }
 
