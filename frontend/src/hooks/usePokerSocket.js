@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:4000/poker'
+const _wsBase = import.meta.env.VITE_WS_URL ?? 'ws://localhost:4000/poker'
+const WS_URL  = _wsBase.startsWith('ws://') && window.location.protocol === 'https:'
+  ? _wsBase.replace('ws://', 'wss://')
+  : _wsBase
 const TOKEN_KEY = 'texas_holdem_auth_token'
 const ROOM_KEY  = 'texas_holdem_room'
 
@@ -72,6 +75,7 @@ export function usePokerSocket({ minBuyIn = 2000 } = {}) {
           break
         case 'state_update':
           setGameState(msg.state)
+          if (msg.myId) setMyId(msg.myId)
           break
         case 'hole_cards':
           setGameState(prev => prev ? { ...prev, myHoleCards: msg.cards } : prev)

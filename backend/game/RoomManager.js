@@ -254,6 +254,7 @@ export class RoomManager {
       for (const [ws, info] of roomClients) {
         this._send(ws, {
           type: 'state_update',
+          myId: info.userId,
           state: game.stateForPlayer(info.userId),
         })
       }

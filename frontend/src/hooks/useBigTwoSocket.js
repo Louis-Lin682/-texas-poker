@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const WS_URL   = import.meta.env.VITE_WS_URL ?? 'ws://localhost:4000/poker'
+const _wsBase = import.meta.env.VITE_WS_URL ?? 'ws://localhost:4000/poker'
+const WS_URL  = _wsBase.startsWith('ws://') && window.location.protocol === 'https:'
+  ? _wsBase.replace('ws://', 'wss://')
+  : _wsBase
 const TOKEN_KEY = 'texas_holdem_auth_token'
 const ROOM_KEY  = 'big_two_room'
 
@@ -63,6 +66,7 @@ export function useBigTwoSocket({ minBuyIn = 2000 } = {}) {
           break
         case 'state_update':
           setGameState(msg.state)
+          if (msg.myId) setMyId(msg.myId)
           if (msg.state?.phase === 'waiting') setGameResult(null)
           break
         case 'deal':

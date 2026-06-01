@@ -6346,6 +6346,7 @@ button.is-pressing {
   gap: 6px;
   padding: 6px 3px;
   flex: 0 0 25%;
+  position: relative;
   z-index: 3;
 }
 
