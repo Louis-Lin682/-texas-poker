@@ -25,78 +25,92 @@ export function useBigTwoSocket({ minBuyIn = 2000 } = {}) {
     const token = localStorage.getItem(TOKEN_KEY)
     if (!token) { setStatus('no_auth'); return }
 
-    let cancelled = false
-    setStatus('connecting')
-    const ws = new WebSocket(`${WS_URL}?token=${token}`)
+    let destroyed = false
+    let retryTimer = null
 
-    ws.onopen = () => {
-      if (cancelled) { ws.close(); return }
-      wsRef.current = ws
-      setStatus('connected')
-      setError(null)
-      ws.send(JSON.stringify({ type: 'list_rooms' }))
-      try {
-        const saved = sessionStorage.getItem(ROOM_KEY)
-        if (saved) {
-          const { roomId: id, buyIn } = JSON.parse(saved)
-          ws.send(JSON.stringify({ type: 'join_room', roomId: id, buyIn: buyIn ?? minBuyInRef.current }))
-        }
-      } catch {
-        sessionStorage.removeItem(ROOM_KEY)
-      }
-    }
+    function connect() {
+      if (destroyed) return
+      setStatus('connecting')
+      const ws = new WebSocket(`${WS_URL}?token=${token}`)
 
-    ws.onclose  = () => { if (!cancelled) { wsRef.current = null; setStatus('disconnected') } }
-    ws.onerror  = () => { if (!cancelled) { setStatus('error'); setError('連線失敗，請重新整理頁面') } }
-
-    ws.onmessage = ({ data }) => {
-      if (cancelled) return
-      let msg
-      try { msg = JSON.parse(data) } catch { return }
-
-      switch (msg.type) {
-        case 'room_list':
-          setRooms(msg.rooms.filter(r => r.gameType === 'big-two'))
-          break
-        case 'room_joined':
-          setRoomId(msg.roomId)
-          if (msg.myId)  setMyId(msg.myId)
-          if (msg.state) setGameState(msg.state)
-          setGameResult(null)
-          break
-        case 'state_update':
-          setGameState(msg.state)
-          if (msg.myId) setMyId(msg.myId)
-          if (msg.state?.phase === 'waiting') setGameResult(null)
-          break
-        case 'deal':
-          setGameState(prev => prev ? { ...prev, myHand: msg.hand ?? [] } : prev)
-          break
-        case 'player_action':
-          setLastAction({ playerId: msg.playerId, username: msg.username, action: msg.action, cards: msg.cards ?? [], handType: msg.handType })
-          setTimeout(() => setLastAction(null), 2500)
-          break
-        case 'game_result':
-          setGameResult({ winners: msg.winners, scores: msg.scores, isPackage: msg.isPackage })
-          break
-        case 'balance_update':
-          setCashoutBalance(msg.balance)
-          break
-        case 'error':
-          setError(msg.message)
-          setTimeout(() => setError(null), 3500)
-          if (msg.message === '房間不存在') {
-            sessionStorage.removeItem(ROOM_KEY)
-            setRoomId(null)
+      ws.onopen = () => {
+        if (destroyed) { ws.close(); return }
+        wsRef.current = ws
+        setStatus('connected')
+        setError(null)
+        ws.send(JSON.stringify({ type: 'list_rooms' }))
+        try {
+          const saved = sessionStorage.getItem(ROOM_KEY)
+          if (saved) {
+            const { roomId: id, buyIn } = JSON.parse(saved)
+            ws.send(JSON.stringify({ type: 'join_room', roomId: id, buyIn: buyIn ?? minBuyInRef.current }))
           }
-          break
+        } catch {
+          sessionStorage.removeItem(ROOM_KEY)
+        }
+      }
+
+      ws.onclose = () => {
+        if (destroyed) return
+        wsRef.current = null
+        setStatus('connecting')
+        retryTimer = setTimeout(connect, 3000)
+      }
+
+      ws.onerror = () => ws.close()
+
+      ws.onmessage = ({ data }) => {
+        if (destroyed) return
+        let msg
+        try { msg = JSON.parse(data) } catch { return }
+
+        switch (msg.type) {
+          case 'room_list':
+            setRooms(msg.rooms.filter(r => r.gameType === 'big-two'))
+            break
+          case 'room_joined':
+            setRoomId(msg.roomId)
+            if (msg.myId)  setMyId(msg.myId)
+            if (msg.state) setGameState(msg.state)
+            setGameResult(null)
+            break
+          case 'state_update':
+            setGameState(msg.state)
+            if (msg.myId) setMyId(msg.myId)
+            if (msg.state?.phase === 'waiting') setGameResult(null)
+            break
+          case 'deal':
+            setGameState(prev => prev ? { ...prev, myHand: msg.hand ?? [] } : prev)
+            break
+          case 'player_action':
+            setLastAction({ playerId: msg.playerId, username: msg.username, action: msg.action, cards: msg.cards ?? [], handType: msg.handType })
+            setTimeout(() => setLastAction(null), 2500)
+            break
+          case 'game_result':
+            setGameResult({ winners: msg.winners, scores: msg.scores, isPackage: msg.isPackage })
+            break
+          case 'balance_update':
+            setCashoutBalance(msg.balance)
+            break
+          case 'error':
+            setError(msg.message)
+            setTimeout(() => setError(null), 3500)
+            if (msg.message.includes('遊戲進行中') || msg.message === '房間不存在') {
+              sessionStorage.removeItem(ROOM_KEY)
+              setRoomId(null)
+            }
+            break
+        }
       }
     }
+
+    connect()
 
     return () => {
-      cancelled = true
+      destroyed = true
+      clearTimeout(retryTimer)
+      wsRef.current?.close()
       wsRef.current = null
-      ws.close()
     }
   }, [])
 
