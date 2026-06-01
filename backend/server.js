@@ -1546,6 +1546,8 @@ function notifySupportUser(userId, data) {
 }
 
 supportWss.on('connection', async (ws, _request, user) => {
+  ws.isAlive = true
+  ws.on('pong', () => { ws.isAlive = true })
   supportClients.set(user.id, ws)
   try {
     const { rows } = await query(
@@ -1561,6 +1563,9 @@ supportWss.on('connection', async (ws, _request, user) => {
 })
 
 wss.on('connection', async (ws, request, user) => {
+  ws.isAlive = true
+  ws.on('pong', () => { ws.isAlive = true })
+
   roomManager.registerClient(ws, { userId: user.id, username: user.username })
 
   ws.on('message', async (raw) => {
@@ -1577,6 +1582,20 @@ wss.on('connection', async (ws, request, user) => {
   // Send current room list on connect
   ws.send(JSON.stringify({ type: 'room_list', rooms: roomManager.listRooms() }))
 })
+
+// Ping every 30s — keeps connections alive through proxies and cleans up dead clients
+setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) { ws.terminate(); return }
+    ws.isAlive = false
+    ws.ping()
+  })
+  supportWss.clients.forEach((ws) => {
+    if (ws.isAlive === false) { ws.terminate(); return }
+    ws.isAlive = false
+    ws.ping()
+  })
+}, 30_000)
 
 server.on('upgrade', async (request, socket, head) => {
   try {
