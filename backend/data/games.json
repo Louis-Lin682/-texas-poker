@@ -41,6 +41,7 @@
     "featured": true,
     "status": "playable",
     "badge": "HOT",
+    "route": "/blackjack",
     "imageUrl": "/games/poker/blackjack.png"
   },
   {

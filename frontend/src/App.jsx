@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import AuthEntryPage from './pages/AuthEntryPage'
 import BigTwoTablePage from './pages/BigTwoTablePage'
+import BlackjackTablePage from './pages/BlackjackTablePage'
 import EventPage from './pages/EventPage'
 import GameTablePage from './pages/GameTablePage'
 import LedgerPage from './pages/LedgerPage'
@@ -21,9 +22,9 @@ import FloatingButtons from './components/FloatingButtons'
 import LoadingOverlay from './components/LoadingOverlay'
 import { LoadingProvider, useLoading } from './context/LoadingContext'
 
-const GAME_ROUTES    = ['/table', '/big-two', '/thunder-joker']
+const GAME_ROUTES    = ['/table', '/big-two', '/blackjack', '/thunder-joker']
 const NON_LOBBY_PATHS = [
-  '/auth', '/table', '/big-two', '/thunder-joker',
+  '/auth', '/table', '/big-two', '/blackjack', '/thunder-joker',
   '/ledger', '/rank', '/event', '/quest', '/news', '/settings', '/support',
 ]
 
@@ -135,6 +136,7 @@ function App() {
           <Route path="/auth"          element={<AuthEntryPage onBack={openLobbyPage} onAuthSuccess={handleAuthSuccess} />} />
           <Route path="/table"         element={<GameTablePage auth={auth} />} />
           <Route path="/big-two"       element={<BigTwoTablePage auth={auth} />} />
+          <Route path="/blackjack"     element={<BlackjackTablePage auth={auth} />} />
           <Route path="/thunder-joker" element={<ThunderJokerPage auth={auth} />} />
           <Route path="/ledger"        element={<LedgerPage />} />
           <Route path="/rank"          element={<RankPage />} />

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { query as dbQuery } from '../db.js'
 import { PokerGame } from './PokerGame.js'
 import { BigTwoGame } from './BigTwoGame.js'
+import { BlackjackGame } from './BlackjackGame.js'
 import { decideBigTwo } from './BigTwoBotPlayer.js'
 
 export class RoomManager {
@@ -21,10 +22,13 @@ export class RoomManager {
 
   createRoom(options = {}) {
     const roomId  = randomUUID().slice(0, 8).toUpperCase()
-    const isBigTwo = options.gameType === 'big-two'
-    const game    = isBigTwo
+    const isBigTwo    = options.gameType === 'big-two'
+    const isBlackjack = options.gameType === 'blackjack'
+    const game = isBigTwo
       ? new BigTwoGame({ roomId, ...options })
-      : new PokerGame({ roomId, ...options })
+      : isBlackjack
+        ? new BlackjackGame({ roomId, ...options })
+        : new PokerGame({ roomId, ...options })
 
     game.onEvent = (event) => this._handleGameEvent(event)
 
@@ -125,6 +129,13 @@ export class RoomManager {
         } else {
           game.processAction(info.userId, payload.action, payload.amount ?? 0)
         }
+        return
+      }
+
+      if (type === 'place_bet') {
+        const game = this._roomOf(info)
+        if (!game) return this._sendError(ws, '尚未加入房間')
+        game.processAction(info.userId, 'bet', payload.amount ?? 0)
         return
       }
 
@@ -315,6 +326,23 @@ export class RoomManager {
         }
       }
       // Fall through to broadcast game_result to all room clients
+    }
+
+    if (type === 'round_result') {
+      // Blackjack round end: sync balances and write ledger entries
+      this.botManager?.syncBalances(game)
+      if (this.pool) {
+        for (const r of data.results) {
+          if (this.botManager?.isBot(r.id)) continue
+          const net = r.totalReturn - r.totalBet
+          const entryType = net >= 0 ? 'hand_win' : 'hand_loss'
+          dbQuery(
+            'INSERT INTO ledger (user_id, type, amount, bet, room_id, game) VALUES ($1, $2, $3, $4, $5, $6)',
+            [r.id, entryType, net, r.totalBet, roomId, game.gameSlug],
+          ).catch(err => console.error('[ledger blackjack]', err))
+        }
+      }
+      return  // no need to broadcast this event to clients
     }
 
     // All other events broadcast to everyone in the room

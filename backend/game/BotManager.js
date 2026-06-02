@@ -1,5 +1,7 @@
 import { decide } from './BotPlayer.js'
 import { decideBigTwo } from './BigTwoBotPlayer.js'
+import { decideBlackjack } from './BlackjackBotPlayer.js'
+import { cardFaceValue } from './BlackjackGame.js'
 import { query as dbQuery } from '../db.js'
 
 const THINK_MIN = 900
@@ -112,6 +114,10 @@ export class BotManager {
   onStateUpdate(game, publicState) {
     if (game.gameSlug === 'big-two') {
       this._handleBigTwoTurn(game, publicState)
+      return
+    }
+    if (game.gameSlug === 'blackjack') {
+      this._handleBlackjackTurn(game, publicState)
       return
     }
 
@@ -232,6 +238,87 @@ export class BotManager {
     }, delay)
 
     this._timers.set(actingId, timer)
+  }
+
+  _handleBlackjackTurn(game, publicState) {
+    if (publicState.phase === 'waiting') {
+      for (const [id, info] of this.bots) {
+        if (info.roomId === game.roomId && !game.players.some(p => p.id === id)) {
+          this._cancelTimer(id)
+          info.roomId = null
+        }
+      }
+      const hasHuman = publicState.players.some(p => !this.isBot(p.id))
+      if (!hasHuman) return
+      for (const p of publicState.players) {
+        if (!this.isBot(p.id) || p.ready) continue
+        this._cancelTimer(p.id)
+        const delay = 800 + Math.random() * 1500
+        const t = setTimeout(() => {
+          this._timers.delete(p.id)
+          try { game.setReady(p.id) } catch {}
+        }, delay)
+        this._timers.set(p.id, t)
+      }
+      return
+    }
+
+    if (publicState.phase === 'betting') {
+      for (const p of publicState.players) {
+        if (!this.isBot(p.id) || p.bet > 0) continue
+        this._cancelTimer(p.id)
+        const delay = 800 + Math.random() * 2000
+        const t = setTimeout(() => {
+          this._timers.delete(p.id)
+          const units = Math.floor(Math.random() * 3) + 1
+          const betAmt = units * game.betUnit
+          try { game.processAction(p.id, 'bet', betAmt) } catch {}
+        }, delay)
+        this._timers.set(p.id, t)
+      }
+      return
+    }
+
+    if (publicState.phase === 'playing') {
+      const actingId = publicState.currentActorId
+      if (!actingId || !this.isBot(actingId)) return
+      this._cancelTimer(actingId)
+
+      const delay = THINK_MIN + Math.random() * (THINK_MAX - THINK_MIN)
+      const t = setTimeout(() => {
+        this._timers.delete(actingId)
+        if (game.phase !== 'playing') return
+        if (game._roundPlayers[game._actorIdx]?.id !== actingId) return
+
+        const actor = game._roundPlayers[game._actorIdx]
+        if (!actor) return
+        const hand = actor.hands[actor.currentHandIdx]
+        if (!hand || hand.status !== 'active') return
+
+        const canDouble = hand.cards.length === 2 && actor.balance >= hand.bet
+        const canSplit = hand.cards.length === 2 &&
+          cardFaceValue(hand.cards[0]) === cardFaceValue(hand.cards[1]) &&
+          actor.balance >= hand.bet &&
+          actor.hands.length < 4
+
+        const { action } = decideBlackjack({
+          hand: hand.cards,
+          dealerUp: game.dealer.cards[0],
+          balance: actor.balance,
+          handBet: hand.bet,
+          canDouble,
+          canSplit,
+        })
+
+        try {
+          game.processAction(actingId, action, hand.bet)
+        } catch {
+          try { game.processAction(actingId, 'stand') } catch {}
+        }
+      }, delay)
+
+      this._timers.set(actingId, t)
+    }
   }
 
   // Sync in-game balances back to DB after each hand
