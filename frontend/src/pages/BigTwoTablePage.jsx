@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import PlayingCard from '../components/PlayingCard'
 import { useBigTwoSocket } from '../hooks/useBigTwoSocket'
 import { useAudio, getAudioSettings } from '../hooks/useAudio'
-import { getConfig } from '../services/gamesApi'
 
 function fmt(n) {
   const abs = Math.abs(n)
@@ -549,11 +548,7 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
 function BigTwoTablePage({ auth }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [minBuyIn, setMinBuyIn] = useState(location.state?.buyIn ?? 3000)
-  useEffect(() => {
-    getConfig().then(cfg => { if (cfg.minBuyIn) setMinBuyIn(cfg.minBuyIn) }).catch(() => {})
-  }, [])
-  const navBuyIn = location.state?.buyIn ?? minBuyIn
+  const minBuyIn = location.state?.buyIn ?? 3000
   const {
     status, rooms, roomId, myId, gameState, gameResult, lastAction,
     error, cashoutBalance,
@@ -730,7 +725,7 @@ function BigTwoTablePage({ auth }) {
         <LobbyView
           status={status}
           rooms={rooms}
-          buyIn={navBuyIn}
+          buyIn={minBuyIn}
           onCreateRoom={(opts) => createRoom(opts)}
           onJoinRoom={(id, buyIn) => joinRoom(id, buyIn)}
           onRefresh={refreshRooms}

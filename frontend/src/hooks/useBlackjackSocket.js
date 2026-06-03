@@ -79,6 +79,14 @@ export function useBlackjackSocket({ minBuyIn = 2000 } = {}) {
           case 'balance_update':
             setCashoutBalance(msg.balance)
             break
+          case 'kicked_from_room':
+            sessionStorage.removeItem(ROOM_KEY)
+            setRoomId(null)
+            setMyId(null)
+            setGameState(null)
+            setError(msg.message ?? '已離開房間')
+            setTimeout(() => setError(null), 5000)
+            break
           case 'error':
             setError(msg.message)
             setTimeout(() => setError(null), 3500)
@@ -109,7 +117,7 @@ export function useBlackjackSocket({ minBuyIn = 2000 } = {}) {
 
   const createRoom = useCallback((opts = {}) => send({
     type: 'create_room', gameType: 'blackjack', gameSlug: 'blackjack',
-    betUnit: 50, maxPlayers: 6, buyIn: minBuyInRef.current, ...opts,
+    betUnit: 50, maxPlayers: 5, buyIn: minBuyInRef.current, ...opts,
   }), [send])
 
   const joinRoom = useCallback((id, buyIn) => {

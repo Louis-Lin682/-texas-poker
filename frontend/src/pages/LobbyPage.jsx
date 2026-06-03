@@ -40,7 +40,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
   const [isMyDrawerOpen, setIsMyDrawerOpen] = useState(false)
   const [isEventDrawerOpen, setIsEventDrawerOpen] = useState(false)
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
-  const { games, featuredGames } = useGames()
+  const { games, featuredGames, isLoadingGames } = useGames()
   const [minBuyIn, setMinBuyIn] = useState(2000)
 
   useEffect(() => {
@@ -133,12 +133,14 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
         />
         <GameSection
           items={featuredGames}
+          isLoading={isLoadingGames}
           favoriteIds={favoriteIds}
           onToggleFavorite={toggleFavorite}
           onGameClick={setSelectedGame}
         />
         <AllGamesSection
           items={games}
+          isLoading={isLoadingGames}
           favoriteIds={favoriteIds}
           onToggleFavorite={toggleFavorite}
           play={play}

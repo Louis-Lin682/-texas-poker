@@ -51,6 +51,7 @@ export class RoomManager {
       smallBlind:  game.smallBlind  ?? null,
       bigBlind:    game.bigBlind    ?? null,
       betUnit:     game.betUnit     ?? null,
+      maxBet:      game.maxBet      ?? null,
     }))
   }
 
@@ -90,6 +91,7 @@ export class RoomManager {
           betUnit:    payload.betUnit,
           maxPlayers: payload.maxPlayers,
           gameSlug:   payload.gameSlug,
+          maxBet:     payload.maxBet,
         })
         await this._joinRoom(ws, info, roomId, payload.buyIn ?? 1000)
         const game = this.rooms.get(roomId)
@@ -343,6 +345,36 @@ export class RoomManager {
         }
       }
       return  // no need to broadcast this event to clients
+    }
+
+    if (type === 'players_removed') {
+      // Return remaining chips to DB for players kicked due to insufficient balance
+      for (const p of data.players) {
+        if (this.botManager?.isBot(p.id)) continue
+        const entry = [...this.clients.entries()]
+          .find(([, info]) => info.userId === p.id && info.roomId === roomId)
+        if (entry) {
+          const [ws, info] = entry
+          info.roomId = null
+          this._send(ws, { type: 'kicked_from_room', message: '籌碼不足，已離開房間' })
+        }
+        if (this.pool && p.balance > 0) {
+          const userId = p.id
+          const gameSlug = game.gameSlug
+          dbQuery(
+            'UPDATE users SET balance = balance + $1 WHERE id = $2 RETURNING balance',
+            [p.balance, userId],
+          ).then(({ rows }) => {
+            if (entry) this._send(entry[0], { type: 'balance_update', balance: rows[0]?.balance })
+          }).catch(err => console.error('[kick return chips]', err))
+          dbQuery(
+            'INSERT INTO ledger (user_id, type, amount, room_id, game) VALUES ($1, $2, $3, $4, $5)',
+            [userId, 'cash_out', p.balance, roomId, gameSlug],
+          ).catch(err => console.error('[ledger kick]', err))
+        }
+      }
+      this._broadcastRoomList()
+      return
     }
 
     // All other events broadcast to everyone in the room

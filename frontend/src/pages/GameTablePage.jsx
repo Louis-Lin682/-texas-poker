@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import PlayingCard from '../components/PlayingCard'
 import { usePokerSocket } from '../hooks/usePokerSocket'
 import { useAudio, getAudioSettings } from '../hooks/useAudio'
-import { getConfig } from '../services/gamesApi'
 
 const CHIP_IMGS = ['/chip-red.png', '/chip-gold.png', '/chip-purple.png', '/chip-blackgold.png']
 const TURN_TIME  = 30
@@ -340,10 +339,7 @@ function GameTablePage({ auth }) {
   const location = useLocation()
   const defaultGameSlug = location.state?.gameSlug ?? 'texas-holdem'
 
-  const [minBuyIn, setMinBuyIn] = useState(location.state?.buyIn ?? 3000)
-  useEffect(() => {
-    getConfig().then(cfg => { if (cfg.minBuyIn) setMinBuyIn(cfg.minBuyIn) }).catch(() => {})
-  }, [])
+  const minBuyIn = location.state?.buyIn ?? 3000
 
   const {
     status, rooms, roomId, myId, gameState, winInfo, error, cashoutBalance,

@@ -228,6 +228,7 @@ export default function ThunderJokerPage({ auth }) {
   const [autoCount,         setAutoCount]         = useState(null)   // null = ∞
   const [showAutoMenu,      setShowAutoMenu]      = useState(false)
   const [showLeaveConfirm,  setShowLeaveConfirm]  = useState(false)
+  const [showBrokeModal,    setShowBrokeModal]    = useState(false)
 
   const [showSuspendModal, setShowSuspendModal] = useState(false)
 
@@ -957,6 +958,11 @@ export default function ThunderJokerPage({ auth }) {
 
   const canSpin = !spinning && (inFreeSpins || balance >= bet)
 
+  useEffect(() => {
+    if (buyIn != null && !spinning && !inFreeSpins && balance < BET_OPTIONS[0])
+      setShowBrokeModal(true)
+  }, [balance, spinning, inFreeSpins, buyIn])
+
   const displayMult = lightning?.mult ?? 1
   const isWinning   = winHits.length > 0
 
@@ -1577,6 +1583,29 @@ export default function ThunderJokerPage({ auth }) {
                 }
                 navigate('/')
               }}>確定離開</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Broke modal */}
+      {showBrokeModal && (
+        <div className="pt-modal-overlay">
+          <div className="pt-modal">
+            <p className="pt-modal-title">籌碼已用完</p>
+            <p className="pt-modal-body">本次帶入的籌碼已全部用完，無法繼續遊戲。</p>
+            <div className="pt-modal-btns" style={{ gridTemplateColumns: '1fr' }}>
+              <button type="button" className="pt-modal-confirm" onClick={() => {
+                clearAll()
+                if (buyIn != null && auth?.token) {
+                  apiRequest('/slots/ledger', {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${auth.token}` },
+                    body: JSON.stringify({ type: 'cash_out', amount: 0 }),
+                  }).catch(() => {})
+                }
+                navigate('/')
+              }}>返回大廳</button>
             </div>
           </div>
         </div>

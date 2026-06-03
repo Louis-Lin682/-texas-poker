@@ -41,7 +41,9 @@ function isBlackjack(cards) {
   return cards.length === 2 && handScore(cards) === 21
 }
 
-const BET_TIME = 15_000
+const BET_TIME    = 15_000
+const WAIT_TIME   = 30_000
+const ACTION_TIME = 30_000  // per-player action timeout → auto-stand
 
 function makeHand(cards, bet) {
   return { cards, bet, status: 'active', doubled: false, result: null }
@@ -66,7 +68,12 @@ export class BlackjackGame {
     this._betTimer = null
     this._dealerTimer = null
     this._resultTimer = null
+    this._startTimer = null
+    this._actionTimer = null
     this.betDeadline = null
+    this.resultDeadline = null
+    this.startDeadline = null
+    this.actionDeadline = null
     this.onEvent = null
   }
 
@@ -83,6 +90,7 @@ export class BlackjackGame {
       result: null,
     })
     this._emit(this.publicState())
+    this._tryStart()  // start immediately if room just filled up
   }
 
   removePlayer(userId) {
@@ -138,6 +146,9 @@ export class BlackjackGame {
       currentActorId: this._roundPlayers[this._actorIdx]?.id ?? null,
       currentHandIdx: this._roundPlayers[this._actorIdx]?.currentHandIdx ?? 0,
       betDeadline: this.betDeadline,
+      resultDeadline: this.resultDeadline,
+      startDeadline: this.startDeadline,
+      actionDeadline: this.actionDeadline,
       minBet: this.minBet,
       maxBet: this.maxBet,
       betUnit: this.betUnit,
@@ -148,6 +159,14 @@ export class BlackjackGame {
     clearTimeout(this._betTimer)
     clearTimeout(this._dealerTimer)
     clearTimeout(this._resultTimer)
+    clearTimeout(this._startTimer)
+    clearTimeout(this._actionTimer)
+  }
+
+  _clearActionTimer() {
+    clearTimeout(this._actionTimer)
+    this._actionTimer = null
+    this.actionDeadline = null
   }
 
   // ── Phase transitions ─────────────────────────────────────
@@ -155,8 +174,29 @@ export class BlackjackGame {
   _tryStart() {
     if (this.phase !== 'waiting') return
     if (this.players.length === 0) return
-    if (!this.players.every(p => p.ready)) return
-    this._startBetting()
+    if (!this.players.some(p => p.ready)) return
+
+    // Room full → start immediately (no point waiting for more players)
+    if (this.players.length >= this.maxPlayers) {
+      clearTimeout(this._startTimer)
+      this._startTimer = null
+      this.startDeadline = null
+      this._startBetting()
+      return
+    }
+
+    // At least one player ready → start countdown if not already running
+    if (!this._startTimer) {
+      this.startDeadline = Date.now() + WAIT_TIME
+      this._startTimer = setTimeout(() => {
+        this._startTimer = null
+        this.startDeadline = null
+        if (this.phase === 'waiting' && this.players.length > 0) {
+          this._startBetting()
+        }
+      }, WAIT_TIME)
+      this._emit(this.publicState())
+    }
   }
 
   _startBetting() {
@@ -208,6 +248,7 @@ export class BlackjackGame {
   }
 
   _advanceActor() {
+    this._clearActionTimer()
     this._actorIdx++
     while (
       this._actorIdx < this._roundPlayers.length &&
@@ -223,16 +264,40 @@ export class BlackjackGame {
 
     const actor = this._roundPlayers[this._actorIdx]
     actor.currentHandIdx = actor.hands.findIndex(h => h.status === 'active')
+
+    // AFK auto-stand: if player doesn't act within ACTION_TIME, stand for them
+    this.actionDeadline = Date.now() + ACTION_TIME
+    this._actionTimer = setTimeout(() => {
+      this._actionTimer = null
+      this.actionDeadline = null
+      const a = this._roundPlayers[this._actorIdx]
+      if (!a) return
+      const h = a.hands[a.currentHandIdx]
+      if (h?.status === 'active') this._stand(h)
+    }, ACTION_TIME)
+
     this._emit(this.publicState())
   }
 
   _dealerPlay() {
+    this._clearActionTimer()
     this.phase = 'dealer'
     this._emit(this.publicState())
+
     if (isBlackjack(this.dealer.cards)) {
       setTimeout(() => this._resolve(), 800)
       return
     }
+
+    // Skip dealer draw if all players already busted or have natural blackjack
+    const needsDealerPlay = this._roundPlayers.some(p =>
+      p.hands.some(h => h.status !== 'bust' && h.status !== 'blackjack')
+    )
+    if (!needsDealerPlay) {
+      setTimeout(() => this._resolve(), 400)
+      return
+    }
+
     this._dealerHitLoop()
   }
 
@@ -250,6 +315,7 @@ export class BlackjackGame {
 
   _resolve() {
     this.phase = 'result'
+    this.resultDeadline = Date.now() + 5000
     const dScore = handScore(this.dealer.cards)
     const dBJ = isBlackjack(this.dealer.cards)
 
@@ -267,6 +333,7 @@ export class BlackjackGame {
       for (const hand of p.hands) {
         const pScore = handScore(hand.cards)
         const pBJ = hand.status === 'blackjack'
+        const p5C = !!hand.fiveCard  // five card charlie (5 cards, score ≤ 21)
 
         if (hand.status === 'bust') {
           hand.result = 'lose'
@@ -276,6 +343,10 @@ export class BlackjackGame {
         } else if (pBJ) {
           hand.result = 'blackjack'
           totalReturn += hand.bet + Math.floor(hand.bet * 1.5)
+        } else if (p5C && !dBJ) {
+          // Five card charlie beats everything except dealer natural blackjack
+          hand.result = 'fivecard'
+          totalReturn += hand.bet * 2
         } else if (dBJ) {
           hand.result = 'lose'
         } else if (dScore > 21 || pScore > dScore) {
@@ -301,7 +372,7 @@ export class BlackjackGame {
       p.balance += totalReturn
 
       const allResults = p.hands.map(h => h.result)
-      if (allResults.some(r => r === 'win' || r === 'blackjack')) p.result = 'win'
+      if (allResults.some(r => r === 'win' || r === 'blackjack' || r === 'fivecard')) p.result = 'win'
       else if (allResults.every(r => r === 'push')) p.result = 'push'
       else p.result = 'lose'
 
@@ -317,11 +388,22 @@ export class BlackjackGame {
 
   _resetWaiting() {
     clearTimeout(this._resultTimer)
-    this.phase = 'waiting'
+    this._clearActionTimer()
     this.dealer = { cards: [] }
     this._roundPlayers = []
     this._actorIdx = -1
     this.betDeadline = null
+    this.resultDeadline = null
+
+    // Return chips and notify players being removed due to insufficient balance
+    const kicked = this.players.filter(p => p._left || p.balance < this.minBet)
+    if (kicked.length > 0) {
+      this.onEvent?.({
+        type: 'players_removed',
+        roomId: this.roomId,
+        players: kicked.map(p => ({ id: p.id, balance: p.balance, username: p.username })),
+      })
+    }
 
     this.players = this.players.filter(p => !p._left && p.balance >= this.minBet)
     for (const p of this.players) {
@@ -333,7 +415,14 @@ export class BlackjackGame {
       p.currentHandIdx = 0
       p.result = null
     }
-    this._emit(this.publicState())
+
+    // If players remain, jump straight into next betting round
+    if (this.players.length > 0) {
+      this._startBetting()
+    } else {
+      this.phase = 'waiting'
+      this._emit(this.publicState())
+    }
   }
 
   // ── Actions ───────────────────────────────────────────────
@@ -351,6 +440,7 @@ export class BlackjackGame {
   }
 
   _handleAction(actor, action, amount) {
+    this._clearActionTimer()
     const hand = actor.hands[actor.currentHandIdx]
     if (!hand || hand.status !== 'active') throw new Error('無效操作')
 
@@ -370,7 +460,9 @@ export class BlackjackGame {
     if (score > 21) {
       hand.status = 'bust'
       this._nextHand(actor)
-    } else if (score === 21) {
+    } else if (score === 21 || hand.cards.length >= 5) {
+      // Auto-stand: hit 21, or five-card charlie (5 cards ≤ 21)
+      if (hand.cards.length >= 5) hand.fiveCard = true
       hand.status = 'stood'
       this._nextHand(actor)
     } else {
@@ -436,6 +528,17 @@ export class BlackjackGame {
     const nextIdx = actor.hands.findIndex((h, i) => i > actor.currentHandIdx && h.status === 'active')
     if (nextIdx !== -1) {
       actor.currentHandIdx = nextIdx
+      // Reset timer: each split hand gets a fresh ACTION_TIME
+      this._clearActionTimer()
+      this.actionDeadline = Date.now() + ACTION_TIME
+      this._actionTimer = setTimeout(() => {
+        this._actionTimer = null
+        this.actionDeadline = null
+        const a = this._roundPlayers[this._actorIdx]
+        if (!a) return
+        const h = a.hands[a.currentHandIdx]
+        if (h?.status === 'active') this._stand(h)
+      }, ACTION_TIME)
       this._emit(this.publicState())
       return
     }
@@ -479,6 +582,7 @@ export class BlackjackGame {
     return {
       cards: this.dealer.cards,
       score: handScore(this.dealer.cards),
+      blackjack: isBlackjack(this.dealer.cards),
     }
   }
 

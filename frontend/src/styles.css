@@ -806,12 +806,138 @@ button.is-pressing {
   min-height: inherit;
 }
 
+/* ─── Hot-game carousel (GameSection) ───────────────────── */
+
+.gs-wrapper {
+  overflow: hidden;
+  padding-top: 22px;
+  margin-top: -10px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+}
+
+.gs-wrapper:active {
+  cursor: grabbing;
+}
+
+.gs-track {
+  display: flex;
+  gap: 10px;
+  will-change: transform;
+}
+
+.gs-card {
+  flex-shrink: 0;
+  min-height: 158px;
+  position: relative;
+  overflow: visible;
+  transition: transform 270ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity  270ms ease;
+}
+
+.gs-card .game-tile {
+  min-height: inherit;
+}
+
+.gs-card--center {
+  transform: scale(1.05);
+  z-index: 1;
+}
+
+.gs-card--side {
+  transform: scale(0.94);
+  opacity: 0.45;
+}
+
+/* During seamless loop jump: hide entire track for 1 frame (~16ms)
+   so no scale flicker is visible while cards snap to new positions */
+.gs-track--jumping {
+  opacity: 0;
+}
+
+.gs-track--jumping .gs-card {
+  transition: none;
+}
+
+/* Loading skeleton */
+.gs-skeleton {
+  display: flex;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.gs-skeleton-card {
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%);
+  background-size: 200% 100%;
+  animation: gsSkeleton 1.4s ease infinite;
+}
+
+.gs-skeleton-center {
+  flex: 1;
+  min-height: 158px;
+}
+
+.gs-skeleton-side {
+  flex: 0 0 25px;
+  opacity: 0.5;
+}
+
+@keyframes gsSkeleton {
+  0%   { background-position: 200% 0 }
+  100% { background-position: -200% 0 }
+}
+
+/* Progress dots */
+.gs-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.gs-dot {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: width 220ms ease, background 220ms ease;
+}
+
+.gs-dot--active {
+  width: 30px;
+  background: #d4af37;
+}
+
 .all-games-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-content: start;
   gap: 10px;
   min-height: 280px;
+}
+
+.all-games-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 8px 0 4px;
+}
+
+.all-games-skeleton-card {
+  border-radius: 10px;
+  aspect-ratio: 1 / 1.1;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: gsSkeleton 1.4s ease infinite;
 }
 
 .all-games-empty {
@@ -6802,6 +6928,32 @@ button.is-pressing {
   white-space: nowrap;
   letter-spacing: 0;
 }
+
+/* ── Blackjack chip animations (chips rendered on table) ── */
+@keyframes bj-chip-place {
+  0%   { transform: scale(0);    opacity: 0; }
+  65%  { transform: scale(1.28); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+@keyframes bj-chip-win {
+  0%   { transform: scale(1)   translateY(0);    opacity: 1; }
+  40%  { transform: scale(1.8) translateY(-12px); opacity: 1; }
+  100% { transform: scale(0.1) translateY(-24px); opacity: 0; }
+}
+@keyframes bj-chip-lose {
+  0%   { transform: scale(1)   translateY(0);     opacity: 1; }
+  18%  {                                           opacity: 1; }
+  100% { transform: scale(0.1) translateY(-220px); opacity: 0; }
+}
+@keyframes bj-chip-lose-down {
+  0%   { transform: scale(1)   translateY(0);     opacity: 1; }
+  18%  {                                           opacity: 1; }
+  100% { transform: scale(0.1) translateY(220px);  opacity: 0; }
+}
+.bj-chip-place     { animation: bj-chip-place     0.42s cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
+.bj-chip-win       { animation: bj-chip-win       0.55s ease-out forwards; }
+.bj-chip-lose      { animation: bj-chip-lose      0.68s cubic-bezier(0.55,0,1,0.45) forwards; }
+.bj-chip-lose-down { animation: bj-chip-lose-down 0.68s cubic-bezier(0.55,0,1,0.45) forwards; }
 
 /* ── Action panel ───────────────────────────────────────── */
 .pt-actions {
