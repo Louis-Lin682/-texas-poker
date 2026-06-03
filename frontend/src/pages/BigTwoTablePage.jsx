@@ -447,7 +447,7 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
         {/* ── Round table ── */}
         <div className="bt-table-wrap">
           <div className="bt-table-surface">
-            <img src="/big-two-table.png" alt="" />
+            <img src="/big-two/big-two-table.png" alt="" />
             <div className={`bt-turn-bar${isMyTurn ? ' bt-my-turn' : ''}${turnSeconds !== null && turnSeconds <= 10 ? ' bt-turn-urgent' : ''}`}>
               {isMyTurn
                 ? `✦ 輪到你行動 (${turnSeconds ?? AFK_SECS}s)`
@@ -597,7 +597,7 @@ function BigTwoTablePage({ auth }) {
 
   useEffect(() => {
     const { bgmMuted, bgmVolume } = getAudioSettings()
-    const audio = new Audio('/audio/game/bigTwoGameBg.mp3')
+    const audio = new Audio('/audio/big-two/bigTwoGameBg.mp3')
     audio.loop   = true
     audio.muted  = bgmMuted
     audio.volume = bgmMuted ? 0 : 0.28 * bgmVolume

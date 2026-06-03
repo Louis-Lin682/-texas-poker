@@ -30,7 +30,7 @@ export const audioMap = {
     volume: 0.55,
   },
   bigTwoBgm: {
-    src: '/audio/game/bigTwoGameBg.mp3',
+    src: '/audio/big-two/bigTwoGameBg.mp3',
     volume: 0.28,
     loop: true,
     bgm: true,

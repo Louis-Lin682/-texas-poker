@@ -7420,12 +7420,12 @@ button.is-pressing {
 }
 /* Texas Hold'em — black/gold card back */
 .pt-page .pcard-back {
-  background: url('/card-blackgold.png') center / 100% 100% no-repeat;
+  background: url('/texas-holdem/card-blackgold.png') center / 100% 100% no-repeat;
   border: none;
 }
 /* Big Two — purple/gold card back */
 .bt-game .pcard-back {
-  background: url('/card-purplegold.png') center / 100% 100% no-repeat;
+  background: url('/big-two/card-purplegold.png') center / 100% 100% no-repeat;
   border: none;
 }
 
@@ -7596,7 +7596,7 @@ button.is-pressing {
   position: absolute;
   bottom: 0;
   width: 14px; height: 20px;
-  background: url('/card-purplegold.png') center / 100% 100% no-repeat;
+  background: url('/big-two/card-purplegold.png') center / 100% 100% no-repeat;
   border: none;
   border-radius: 2px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.4);
@@ -7748,7 +7748,7 @@ button.is-pressing {
   position: absolute;
   width: 38px; height: 56px;
   border-radius: 4px;
-  background: url('/card-purplegold.png') center / 100% 100% no-repeat;
+  background: url('/big-two/card-purplegold.png') center / 100% 100% no-repeat;
   border: none;
   box-shadow: 0 2px 6px rgba(0,0,0,0.5);
   pointer-events: none;

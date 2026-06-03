@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { Howl, Howler } from 'howler'
 import { getAudioSettings } from './useAudio'
 
-const G = '/audio/game/'
+const G = '/audio/thunder-joker/'
 
 const DEFS = {
   'spin-click':         { src: [G+'spin-click.mp3'],         volume: 0.8 },
