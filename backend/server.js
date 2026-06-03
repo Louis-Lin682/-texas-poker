@@ -559,15 +559,9 @@ const server = http.createServer(async (request, response) => {
       const buyInAmount    = rows.length > 0 ? rows[0].buy_in_amount          : null
       const buyInStartBal  = rows.length > 0 ? rows[0].buy_in_start_balance   : null
 
-      // Auto-close incomplete buy-in session caused by game crash
-      if (buyInAmount != null && buyInStartBal != null) {
-        const { rows: urows } = await query('SELECT balance FROM users WHERE id = $1', [user.id])
-        const currentBalance = Number(urows[0].balance)
-        const cashOutAmount  = Math.max(0, buyInAmount + (currentBalance - buyInStartBal))
-        await query(
-          `INSERT INTO ledger (user_id, type, amount, game) VALUES ($1, 'cash_out', $2, 'thunder-joker')`,
-          [user.id, cashOutAmount]
-        )
+      // Clear stale buy-in session left by a crash — no cashout entry recorded
+      // (individual spin win/loss entries already account for the session activity)
+      if (buyInAmount != null) {
         await query(
           `UPDATE slot_sessions SET buy_in_amount = NULL, buy_in_start_balance = NULL WHERE user_id = $1`,
           [user.id]
