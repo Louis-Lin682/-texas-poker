@@ -113,6 +113,29 @@ const MAX_BET_PRESETS = [
   { label: '豪華', maxBet: 10000, buyIn: 30000 },
 ]
 
+// ── Image action button (blackjack UI) ────────────────────
+function BjBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} style={{
+      position: 'relative', background: 'none', border: 'none', padding: 0,
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      opacity: disabled ? 0.4 : 1, flexShrink: 0, ...style,
+    }}>
+      <img src={src} alt={alt} style={{ display: 'block', height: 44, width: 'auto', maxWidth: '100%' }} />
+      {amount != null && (
+        <span style={{
+          position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+          fontSize: 11, fontWeight: 800, color: '#f0c96b',
+          textShadow: '0 1px 3px #000', pointerEvents: 'none',
+          ...amountStyle,
+        }}>
+          {fmtNum(amount)}
+        </span>
+      )}
+    </button>
+  )
+}
+
 // ── Chip button (betting UI) ───────────────────────────────
 function ChipBtn({ value, img, onClick }) {
   return (
@@ -410,11 +433,15 @@ export default function BlackjackTablePage({ auth }) {
   const location = useLocation()
   const minBuyIn = location.state?.buyIn ?? 3000
 
-  const { play } = useAudio()
+  const { play, preload } = useAudio()
   const bgmRef = useRef(null)
 
   const [isGameMuted, setIsGameMuted] = useState(() => getAudioSettings().bgmMuted)
   const toggleGameMute = () => setIsGameMuted(m => !m)
+
+  useEffect(() => {
+    preload(['bj_win', 'bj_blackjack', 'bj_tie', 'bj_bust', 'bj_lose', 'bj_fivecard', 'bj_dealerBust', 'bj_nowYou', 'bj_insurance'])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Game BGM — same track as Texas Hold'em table
   useEffect(() => {
@@ -528,7 +555,42 @@ export default function BlackjackTablePage({ auth }) {
     if (cashoutBalance != null && !cashoutShown.current) {
       cashoutShown.current = true; auth?.refreshUser?.()
     }
-  }, [cashoutBalance, auth])
+  }, [cashoutBalance]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Blackjack voice ──────────────────────────────────────
+  const bjPrevActorRef = useRef(null)
+  useEffect(() => {
+    const current = gameState?.currentActorId
+    if (current === myId && bjPrevActorRef.current !== myId) play('bj_nowYou')
+    bjPrevActorRef.current = current ?? null
+  }, [gameState?.currentActorId, myId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const bjPrevInsuranceRef = useRef(false)
+  useEffect(() => {
+    const dealerShowsAce = gameState?.dealer?.cards?.[0]?.slice(0, -1) === 'A'
+    const cur = !!(gameState?.currentActorId === myId && dealerShowsAce)
+    if (cur && !bjPrevInsuranceRef.current) play('bj_insurance')
+    bjPrevInsuranceRef.current = cur
+  }, [gameState?.currentActorId, gameState?.dealer?.cards, myId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const bjPrevPhaseRef = useRef(null)
+  useEffect(() => {
+    const phase = gameState?.phase
+    if (phase === 'result' && bjPrevPhaseRef.current !== 'result') {
+      const dealerBust = (gameState?.dealer?.score ?? 0) > 21
+      if (dealerBust) {
+        play('bj_dealerBust')
+      } else {
+        const myP = gameState?.players?.find(p => p.id === myId)
+        const results = (myP?.hands ?? []).map(h => h.result).filter(Boolean)
+        const priority = ['blackjack', 'fivecard', 'win', 'push', 'bust', 'lose']
+        const best = priority.find(r => results.includes(r))
+        const keyMap = { blackjack: 'bj_blackjack', fivecard: 'bj_fivecard', win: 'bj_win', push: 'bj_tie', bust: 'bj_bust', lose: 'bj_lose' }
+        if (best && keyMap[best]) play(keyMap[best])
+      }
+    }
+    bjPrevPhaseRef.current = phase ?? null
+  }, [gameState?.phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const prev = prevRoomIdRef.current
@@ -947,39 +1009,9 @@ export default function BlackjackTablePage({ auth }) {
                 </div>
               )}
 
-              {/* Playing action buttons — inline below seat, not anchored to bottom */}
-              {phase === 'playing' && isMyTurn && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%', marginTop: 6 }}>
-                  {canInsurance && (
-                    <button type="button" className="pt-btn"
-                      style={{ width: '100%', borderColor: '#f0c96b66', color: '#f0c96b', background: '#f0c96b11' }}
-                      onClick={() => doAction('insurance')}>
-                      買保險 (×{fmtNum(Math.floor((myCurrentHand?.bet ?? 0) / 2))})
-                    </button>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
-                    <button type="button" className="pt-btn pt-btn-fold"
-                      style={{ flex: '0 0 auto', minWidth: 80 }}
-                      onClick={() => doAction('stand')}>停牌</button>
-                    <button type="button" className="pt-btn pt-btn-call"
-                      style={{ flex: '0 0 auto', minWidth: 80 }}
-                      onClick={() => doAction('hit')}>要牌</button>
-                    {canDouble && (
-                      <button type="button" className="pt-btn pt-btn-raise"
-                        style={{ flex: '0 0 auto', minWidth: 80 }}
-                        onClick={() => doAction('double')}>加倍</button>
-                    )}
-                    {canSplit && (
-                      <button type="button" className="pt-btn pt-btn-allin"
-                        style={{ flex: '0 0 auto', minWidth: 80 }}
-                        onClick={() => doAction('split')}>分牌</button>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Action bar — only during betting (no bet placed) */}
+            {/* Action bar — betting phase: chips + confirm */}
             {phase === 'betting' && (myPlayer?.bet ?? 0) === 0 && (
               <div className="pt-actions">
                 <div style={{ display: 'flex', gap: 6, justifyContent: 'center', padding: '4px 0' }}>
@@ -987,34 +1019,53 @@ export default function BlackjackTablePage({ auth }) {
                     <ChipBtn key={value} value={value} img={img} onClick={() => addChip(value)} />
                   ))}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 16px' }}>
                   <span style={{ fontSize: 12, color: '#aaa', flexShrink: 0 }}>
                     下注: <span style={{ color: '#f0c96b', fontWeight: 700 }}>{fmtNum(betAmount)}</span>
                   </span>
-                  <button type="button" className="pt-btn" style={{
-                    flex: '0 0 auto',
-                    background: 'rgba(100,110,130,0.28)',
-                    border: '1.5px solid rgba(150,160,180,0.35)',
-                    color: 'rgba(200,205,220,0.75)',
-                  }} onClick={() => setBetAmount(0)}>清除</button>
+                  <BjBtn src="/blackjack/Clear.png" alt="清除" onClick={() => setBetAmount(0)} />
                   {lastBetRef.current > 0 && betAmount === 0 && (
-                    <button type="button" className="pt-btn" style={{
-                      flex: '0 0 auto',
-                      background: 'rgba(25,140,160,0.28)',
-                      border: '1.5px solid rgba(50,190,210,0.5)',
-                      color: '#50d8e8',
-                    }} onClick={() => {
-                      const p = gameState?.players?.find(p => p.id === myId)
-                      if (p) setBetAmount(Math.min(lastBetRef.current, Math.min(maxBet, p.balance)))
-                    }}>
-                      重複 {fmtNum(lastBetRef.current)}
-                    </button>
+                    <BjBtn
+                      src="/blackjack/repeat.png" alt="重複"
+                      amount={lastBetRef.current}
+                      amountStyle={{ right: '20%', top: '35%', transform: 'none' }}
+                      onClick={() => {
+                        const p = gameState?.players?.find(p => p.id === myId)
+                        if (p) setBetAmount(Math.min(lastBetRef.current, Math.min(maxBet, p.balance)))
+                      }}
+                    />
                   )}
-                  <button type="button" className="pt-btn pt-btn-call" style={{ flex: 1 }}
+                  <BjBtn
+                    src="/blackjack/Betting.png" alt="確認下注"
                     disabled={betAmount < (gameState?.minBet ?? 50)}
-                    onClick={confirmBet}>
-                    確認下注
-                  </button>
+                    onClick={confirmBet}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Action bar — playing phase: stop/hit/double/split + insurance */}
+            {phase === 'playing' && isMyTurn && (
+              <div className="pt-actions">
+                {canInsurance && (
+                  <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: 4 }}>
+                    <BjBtn
+                      src="/blackjack/Insurance.png" alt="買保險"
+                      amount={Math.floor((myCurrentHand?.bet ?? 0) / 2)}
+                      amountStyle={{ right: '15%', top: '25%', transform: 'none' }}
+                      onClick={() => doAction('insurance')}
+                    />
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                  <BjBtn src="/blackjack/stop.png" alt="停牌" onClick={() => doAction('stand')} />
+                  <BjBtn src="/blackjack/hold.png" alt="要牌" onClick={() => doAction('hit')} />
+                  {canDouble && (
+                    <BjBtn src="/blackjack/double.png" alt="加倍" onClick={() => doAction('double')} />
+                  )}
+                  {canSplit && (
+                    <BjBtn src="/blackjack/Split.png" alt="分牌" onClick={() => doAction('split')} />
+                  )}
                 </div>
               </div>
             )}

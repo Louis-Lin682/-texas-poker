@@ -7,6 +7,28 @@ import { useAudio, getAudioSettings } from '../hooks/useAudio'
 const CHIP_IMGS = ['/chip-red.png', '/chip-gold.png', '/chip-purple.png', '/chip-blackgold.png']
 const TURN_TIME  = 30
 
+function PtBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} style={{
+      position: 'relative', background: 'none', border: 'none', padding: 0,
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      opacity: disabled ? 0.4 : 1, flexShrink: 0, ...style,
+    }}>
+      <img src={src} alt={alt} style={{ display: 'block', height: 44, width: 'auto', maxWidth: '100%' }} />
+      {amount != null && (
+        <span style={{
+          position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+          fontSize: 11, fontWeight: 800, color: '#f0c96b',
+          textShadow: '0 1px 3px #000', pointerEvents: 'none',
+          ...amountStyle,
+        }}>
+          {amount}
+        </span>
+      )}
+    </button>
+  )
+}
+
 const RANK_VAL = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'T':10,'J':11,'Q':12,'K':13,'A':14}
 function evalHand(cards) {
   if (!cards || cards.length < 2) return null
@@ -347,13 +369,33 @@ function GameTablePage({ auth }) {
   const minBuyIn = location.state?.buyIn ?? 3000
 
   const {
-    status, rooms, roomId, myId, gameState, winInfo, error, cashoutBalance,
+    status, rooms, roomId, myId, gameState, winInfo, lastAction, error, cashoutBalance,
     refreshRooms, createRoom, joinRoom, leaveRoom, startGame, doAction, setReady, unready,
   } = usePokerSocket({ minBuyIn })
 
   useEffect(() => {
     if (cashoutBalance !== null) auth?.refreshUser?.()
-  }, [cashoutBalance, auth])
+  }, [cashoutBalance]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { play, preload } = useAudio()
+
+  useEffect(() => {
+    preload(['pt_nowYou', 'pt_fold', 'pt_check', 'pt_call', 'pt_raise', 'pt_allin', 'cardDeal'])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const PT_VOICE = { fold: 'pt_fold', check: 'pt_check', call: 'pt_call', raise: 'pt_raise', all_in: 'pt_allin' }
+  useEffect(() => {
+    if (!lastAction) return
+    const key = PT_VOICE[lastAction.action]
+    if (key) play(key)
+  }, [lastAction]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const prevActorRef = useRef(null)
+  useEffect(() => {
+    const current = gameState?.currentActorId
+    if (current === myId && prevActorRef.current !== myId) play('pt_nowYou')
+    prevActorRef.current = current ?? null
+  }, [gameState?.currentActorId, myId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const phase       = gameState?.phase ?? 'waiting'
   const pot         = gameState?.pot ?? 0
@@ -366,8 +408,6 @@ function GameTablePage({ auth }) {
 
   const isMyTurn = !!myId && gameState?.actingPlayerId === myId
   const toCall   = Math.max(0, currentBet - (me?.roundBet ?? 0))
-
-  const { play } = useAudio()
 
   // ── Game BGM (completely independent from lobby) ───────────
   const [isGameMuted, setIsGameMuted] = useState(() => getAudioSettings().bgmMuted)
@@ -427,18 +467,8 @@ function GameTablePage({ auth }) {
       const playerCount = gameState?.players?.length ?? 4
       for (let i = 0; i < playerCount * 2; i++) setTimeout(() => play('cardDeal'), i * 110)
     }
-    if (cur === 'flop'  && prev !== 'flop')  { play('cardFlip'); setTimeout(() => play('cardFlip'), 110); setTimeout(() => play('cardFlip'), 220) }
-    if (cur === 'turn'  && prev !== 'turn')   play('cardFlip')
-    if (cur === 'river' && prev !== 'river')  play('cardFlip')
     prevPhaseRef.current = cur
   }, [gameState?.phase]) // eslint-disable-line
-
-  // Chip-drop sound when pot grows
-  useEffect(() => {
-    const p = gameState?.pot ?? 0
-    if (p > prevPotRef.current) play('chipDrop')
-    prevPotRef.current = p
-  }, [gameState?.pot]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Countdown timer — syncs with backend turnDeadline when available
   useEffect(() => {
@@ -480,7 +510,6 @@ function GameTablePage({ auth }) {
   const [isEntering,       setIsEntering]       = useState(false)
   const [gameStarting,     setGameStarting]     = useState(false)
   const prevBalanceRef   = useRef(null)
-  const prevPotRef       = useRef(0)
   const prevRoomIdRef    = useRef(null)
   const enterPhaseRef    = useRef(null)
   const turnDeadlineRef  = useRef(null)
@@ -750,23 +779,25 @@ function GameTablePage({ auth }) {
               <span className="pt-raise-val">共 {fmt(toCall + raiseAmt)}</span>
             </div>
             <div className="pt-btn-row">
-              <button type="button" className="pt-btn pt-btn-fold"
-                disabled={!isMyTurn} onClick={() => doAction('fold')}>棄牌</button>
-              <button type="button" className="pt-btn pt-btn-call"
-                disabled={!isMyTurn} onClick={() => doAction(toCall === 0 ? 'check' : 'call')}>
-                {toCall === 0 ? '過牌' : `跟注 ${fmt(toCall)}`}
-              </button>
-              <button type="button" className="pt-btn pt-btn-raise"
-                disabled={!isMyTurn} onClick={() => doAction('raise', raiseAmt)}>
-                +{fmt(raiseAmt)}
-              </button>
-              <button type="button" className="pt-btn pt-btn-allin"
+              <PtBtn src="/texas-holdem/giveUp.png" alt="棄牌"
+                disabled={!isMyTurn} onClick={() => doAction('fold')} />
+              <PtBtn
+                src={toCall === 0 ? '/texas-holdem/Pass.png' : '/texas-holdem/follow.png'}
+                alt={toCall === 0 ? '過牌' : '跟注'}
+                disabled={!isMyTurn}
+                onClick={() => doAction(toCall === 0 ? 'check' : 'call')}
+                amount={toCall > 0 ? fmt(toCall) : null}
+                amountStyle={{ right: '27%', top: '30%', transform: 'none' }}
+              />
+              <PtBtn src="/texas-holdem/add.png" alt="加注"
+                disabled={!isMyTurn} onClick={() => doAction('raise', raiseAmt)}
+                amount={`+${fmt(raiseAmt)}`}
+                amountStyle={{ right: '27%', top: '30%', transform: 'none' }} />
+              <PtBtn src="/texas-holdem/all-in.png" alt="ALL IN"
                 disabled={!isMyTurn} onClick={() => {
                   const chips = me?.balance ?? 0
                   chips <= toCall ? doAction('call') : doAction('raise', chips - toCall)
-                }}>
-                ALL IN
-              </button>
+                }} />
             </div>
           </div>
           </div>

@@ -6131,7 +6131,7 @@ button.is-pressing {
   animation: goldShimmer 2.8s ease-in-out infinite alternate;
   border: none;
   color: #1a0e00;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
   transition: filter 120ms, opacity 120ms;
@@ -7547,6 +7547,58 @@ button.is-pressing {
 .pcard-xs .pcard-rank { font-size: 7px; line-height: 1; }
 .pcard-xs .pcard-suit { font-size: 6px; line-height: 1; }
 
+/* ── Narrow-screen fixes (≤380px width, e.g. Galaxy S5 360px) ─ */
+@media (max-width: 380px) {
+  /* Remove horizontal padding so seats get full 90px column width */
+  .pt-side-col {
+    padding: 6px 0;
+  }
+  /* Tighten seat side padding; width:100% pins seat to column width so it can't overflow */
+  .pt-side-col .pt-seat {
+    padding: 7px 6px;
+    min-width: 0;
+    width: 100%;
+  }
+  /* Community cards: 5×34 + 4×1 = 174px fits in 180px center */
+  .pt-community-cards {
+    gap: 1px;
+  }
+  .pt-actions {
+    padding: 6px 8px 12px;
+  }
+  .pt-btn-row {
+    gap: 4px;
+  }
+}
+
+/* ── Short-screen fixes (≤680px height, e.g. Galaxy S5 640px) ─ */
+@media (max-height: 680px) {
+  /* Shrink top-container margin so the middle gets more vertical space */
+  .pt-top-container {
+    margin: 4px 0;
+  }
+  /* Allow side-column seats to share available height and compress */
+  .pt-side-col {
+    gap: 3px;
+  }
+  .pt-side-col .pt-seat {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  /* Allow opp-cards to compress (removes 32px floor) */
+  .pt-side-col .pt-opp-cards {
+    min-height: 0;
+  }
+}
+
+/* ── Narrow + short combined (360×640 target) ─────────────── */
+@media (max-width: 380px) and (max-height: 680px) {
+  /* Push top seat to top of column (closer to dealer), bottom seat to bottom */
+  .pt-side-col {
+    justify-content: space-between;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════
    Big Two (大老二) table
    ═══════════════════════════════════════════════════════════ */
@@ -7555,7 +7607,6 @@ button.is-pressing {
   display: flex;
   flex-direction: column;
   height: calc(100dvh - 52px);   /* subtract header */
-  overflow: hidden;
 }
 
 /* ── Arena: table fills everything, seats float at edges ── */
@@ -7709,7 +7760,7 @@ button.is-pressing {
   height: 410px;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -55%);
+  transform: translate(-50%, -45%);
 }
 
 .bt-table-surface {
@@ -7918,7 +7969,7 @@ button.is-pressing {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  bottom: 17%;
+  bottom: -3%;
   left: 50%;
   transform: translate(-50%, 0);
   position: absolute;
@@ -7929,7 +7980,8 @@ button.is-pressing {
 .bt-action-bar {
   display: flex;
   flex-direction: row;
-  align-items: stretch;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 8px 12px 6px;
   width: 80%;

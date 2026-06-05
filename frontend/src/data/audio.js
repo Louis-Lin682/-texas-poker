@@ -3,10 +3,6 @@ export const audioMap = {
     src: '/audio/ui/click.mp3',
     volume: 0.55,
   },
-  uiHover: {
-    src: '/audio/ui/hover.mp3',
-    volume: 0.35,
-  },
   uiWhoosh: {
     src: '/audio/ui/whoosh.mp3',
     volume: 0.42,
@@ -16,14 +12,6 @@ export const audioMap = {
     volume: 0.28,
     loop: true,
     bgm: true,
-  },
-  chipDrop: {
-    src: '/audio/game/chip-drop.mp3',
-    volume: 0.6,
-  },
-  cardFlip: {
-    src: '/audio/game/card-flip.mp3',
-    volume: 0.5,
   },
   cardDeal: {
     src: '/audio/game/fly_card.mp3',
@@ -35,6 +23,30 @@ export const audioMap = {
     loop: true,
     bgm: true,
   },
+  pt_nowYou:  { src: '/audio/Texas_Poker/game/now-you.mp3',  volume: 0.85 },
+  bj_win:         { src: '/audio/blackjack/game/win.mp3',             volume: 0.85 },
+  bj_blackjack:   { src: '/audio/blackjack/game/blackjack.mp3',       volume: 0.85 },
+  bj_tie:         { src: '/audio/blackjack/game/tie.mp3',             volume: 0.85 },
+  bj_bust:        { src: '/audio/blackjack/game/Bust.mp3',            volume: 0.85 },
+  bj_lose:        { src: '/audio/blackjack/game/lose.mp3',            volume: 0.85 },
+  bj_fivecard:    { src: '/audio/blackjack/game/Five-Passes.mp3',     volume: 0.85 },
+  bj_dealerBust:  { src: '/audio/blackjack/game/dealer-exploded.mp3', volume: 0.85 },
+  bj_nowYou:      { src: '/audio/blackjack/game/now-you.mp3',         volume: 0.85 },
+  bj_insurance:   { src: '/audio/blackjack/game/insurance.mp3',       volume: 0.85 },
+  pt_fold:    { src: '/audio/Texas_Poker/game/givingUp.mp3', volume: 0.85 },
+  pt_check:   { src: '/audio/Texas_Poker/game/pass.mp3',     volume: 0.85 },
+  pt_call:    { src: '/audio/Texas_Poker/game/Call.mp3',     volume: 0.85 },
+  pt_raise:   { src: '/audio/Texas_Poker/game/add.mp3',      volume: 0.85 },
+  pt_allin:   { src: '/audio/Texas_Poker/game/all-in.mp3',   volume: 0.85 },
+  bt_single:    { src: '/audio/big-two/game/Single.mp3',       volume: 0.85 },
+  bt_pair:      { src: '/audio/big-two/game/Pair.mp3',         volume: 0.85 },
+  bt_triple:    { src: '/audio/big-two/game/Sanjo.mp3',        volume: 0.85 },
+  bt_straight:  { src: '/audio/big-two/game/shun.mp3',         volume: 0.85 },
+  bt_flush:     { src: '/audio/big-two/game/Tonghua.mp3',      volume: 0.85 },
+  bt_fullhouse: { src: '/audio/big-two/game/gourd.mp3',        volume: 0.85 },
+  bt_quads:     { src: '/audio/big-two/game/FourArticles.mp3', volume: 0.85 },
+  bt_sf:        { src: '/audio/big-two/game/Tonghuashun.mp3',  volume: 0.85 },
+  bt_pass:      { src: '/audio/big-two/game/bu-chu.mp3',       volume: 0.85 },
 }
 
 export const audioKeys = Object.keys(audioMap)

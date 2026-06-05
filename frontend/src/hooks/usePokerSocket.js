@@ -17,6 +17,7 @@ export function usePokerSocket({ minBuyIn = 2000 } = {}) {
   const [myId, setMyId] = useState(null)
   const [gameState, setGameState] = useState(null)
   const [winInfo, setWinInfo] = useState(null)
+  const [lastAction, setLastAction] = useState(null)
   const [error, setError] = useState(null)
   const [cashoutBalance, setCashoutBalance] = useState(null)
 
@@ -86,6 +87,10 @@ export function usePokerSocket({ minBuyIn = 2000 } = {}) {
             setWinInfo({ winners: msg.winners, pot: msg.pot, folded: true })
             setTimeout(() => setWinInfo(null), 4500)
             break
+          case 'player_action':
+            setLastAction({ playerId: msg.playerId, username: msg.username, action: msg.action, amount: msg.amount })
+            setTimeout(() => setLastAction(null), 2500)
+            break
           case 'balance_update':
             setCashoutBalance(msg.balance)
             break
@@ -147,5 +152,5 @@ export function usePokerSocket({ minBuyIn = 2000 } = {}) {
   const setReady  = useCallback(() => send({ type: 'set_ready' }),  [send])
   const unready   = useCallback(() => send({ type: 'unready' }),    [send])
 
-  return { status, rooms, roomId, myId, gameState, winInfo, error, cashoutBalance, refreshRooms, createRoom, joinRoom, leaveRoom, startGame, doAction, setReady, unready }
+  return { status, rooms, roomId, myId, gameState, winInfo, lastAction, error, cashoutBalance, refreshRooms, createRoom, joinRoom, leaveRoom, startGame, doAction, setReady, unready }
 }

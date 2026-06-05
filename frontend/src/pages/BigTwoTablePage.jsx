@@ -18,6 +18,28 @@ const HAND_ZH = {
 
 const BT_PHASE = { waiting: '等待玩家', playing: '遊戲中', finished: '結算中' }
 
+function BtBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} style={{
+      position: 'relative', background: 'none', border: 'none', padding: 0,
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      opacity: disabled ? 0.4 : 1, flexShrink: 0, ...style,
+    }}>
+      <img src={src} alt={alt} style={{ display: 'block', height: 44, width: 'auto', maxWidth: '100%' }} />
+      {amount != null && (
+        <span style={{
+          position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+          fontSize: 11, fontWeight: 800, color: '#f0c96b',
+          textShadow: '0 1px 3px #000', pointerEvents: 'none',
+          ...amountStyle,
+        }}>
+          {amount}
+        </span>
+      )}
+    </button>
+  )
+}
+
 // ── Lobby ─────────────────────────────────────────────────────────────────────
 const BET_UNITS = [10, 50, 100, 500]
 const MIN_UNIT_MULTIPLE = 50  // need at least 50× betUnit to sit down
@@ -520,14 +542,14 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
         {gameError && <div key={gameError} className="bt-game-error">{gameError}</div>}
 
         <div className="bt-action-bar">
-          <button type="button" className="bt-btn bt-btn-hint"
-            disabled={!isMyTurn} onClick={handleHint}>提示</button>
-          <button type="button" className="bt-btn bt-btn-pass"
-            disabled={!isMyTurn || !canPass} onClick={onPass}>不出</button>
-          <button type="button" className="bt-btn bt-btn-play"
-            disabled={!isMyTurn || selected.length === 0} onClick={handlePlay}>
-            {selected.length > 0 ? `出牌 (${selected.length})` : '出牌'}
-          </button>
+          <BtBtn src="/big-two/hint.png" alt="提示"
+            disabled={!isMyTurn} onClick={handleHint} />
+          <BtBtn src="/big-two/stop.png" alt="不出"
+            disabled={!isMyTurn || !canPass} onClick={onPass} />
+          <BtBtn src="/big-two/playing-cards.png" alt="出牌"
+            disabled={!isMyTurn || selected.length === 0} onClick={handlePlay}
+            amount={selected.length > 0 ? `(${selected.length})` : null}
+            amountStyle={{ right: '25%', top: '25%', transform: 'none' }} />
         </div>
 
         <div className="bt-hand-area">
@@ -582,6 +604,18 @@ function BigTwoTablePage({ auth }) {
     if (cashoutBalance !== null) auth?.refreshUser?.()
   }, [cashoutBalance, auth])
 
+  const BT_VOICE = {
+    single: 'bt_single', pair: 'bt_pair', triple: 'bt_triple',
+    straight: 'bt_straight', flush: 'bt_flush', fullhouse: 'bt_fullhouse',
+    quads: 'bt_quads', sf: 'bt_sf',
+  }
+  useEffect(() => {
+    if (!lastAction) return
+    if (lastAction.action === 'pass') { play('bt_pass'); return }
+    const key = BT_VOICE[lastAction.handType]
+    if (key) play(key)
+  }, [lastAction]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const phase     = gameState?.phase ?? 'waiting'
   const isWaiting = !!roomId && phase === 'waiting'
   const isPlaying = !!roomId && (phase === 'playing' || phase === 'finished')
@@ -614,9 +648,13 @@ function BigTwoTablePage({ auth }) {
   }, [phase])
 
   // ── BGM ──
-  const { play } = useAudio()
+  const { play, preload } = useAudio()
   const [isGameMuted, setIsGameMuted] = useState(() => getAudioSettings().bgmMuted)
   const bgmRef = useRef(null)
+
+  useEffect(() => {
+    preload(['bt_single', 'bt_pair', 'bt_triple', 'bt_straight', 'bt_flush', 'bt_fullhouse', 'bt_quads', 'bt_sf', 'bt_pass'])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const { bgmMuted, bgmVolume } = getAudioSettings()
