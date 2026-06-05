@@ -472,6 +472,12 @@ export class PokerGame {
     if (!p) return
     p.ready = true
     this._broadcastState()
+    const eligible = this.players.filter(p => p.balance > 0)
+    if (this.players.length >= this.maxPlayers && eligible.every(p => p.ready)) {
+      this._clearCountdown()
+      try { this.startGame() } catch {}
+      return
+    }
     this._checkCountdown()
   }
 
