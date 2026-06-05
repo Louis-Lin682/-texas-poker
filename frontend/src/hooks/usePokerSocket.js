@@ -144,9 +144,8 @@ export function usePokerSocket({ minBuyIn = 2000 } = {}) {
     send({ type: 'action', action, amount })
   }, [send])
 
-  const setReady = useCallback(() => {
-    send({ type: 'set_ready' })
-  }, [send])
+  const setReady  = useCallback(() => send({ type: 'set_ready' }),  [send])
+  const unready   = useCallback(() => send({ type: 'unready' }),    [send])
 
-  return { status, rooms, roomId, myId, gameState, winInfo, error, cashoutBalance, refreshRooms, createRoom, joinRoom, leaveRoom, startGame, doAction, setReady }
+  return { status, rooms, roomId, myId, gameState, winInfo, error, cashoutBalance, refreshRooms, createRoom, joinRoom, leaveRoom, startGame, doAction, setReady, unready }
 }

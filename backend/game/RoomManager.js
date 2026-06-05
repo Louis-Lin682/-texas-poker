@@ -116,6 +116,13 @@ export class RoomManager {
         return
       }
 
+      if (type === 'unready') {
+        const game = this._roomOf(info)
+        if (!game) return this._sendError(ws, '尚未加入房間')
+        if (typeof game.unready === 'function') game.unready(info.userId)
+        return
+      }
+
       if (type === 'start_game') {
         const game = this._roomOf(info)
         if (!game) return this._sendError(ws, '尚未加入房間')

@@ -138,11 +138,12 @@ export function useBigTwoSocket({ minBuyIn = 2000 } = {}) {
   }, [send])
 
   const setReady  = useCallback(() => send({ type: 'set_ready' }), [send])
+  const unready   = useCallback(() => send({ type: 'unready' }),   [send])
   const doAction  = useCallback((action, cards = []) => send({ type: 'action', action, cards }), [send])
 
   return {
     status, rooms, roomId, myId, gameState, gameResult, lastAction,
     error, cashoutBalance,
-    refreshRooms, createRoom, joinRoom, leaveRoom, setReady, doAction,
+    refreshRooms, createRoom, joinRoom, leaveRoom, setReady, unready, doAction,
   }
 }

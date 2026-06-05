@@ -135,6 +135,7 @@ export function useBlackjackSocket({ minBuyIn = 2000 } = {}) {
   }, [send])
 
   const setReady = useCallback(() => send({ type: 'set_ready' }), [send])
+  const unready  = useCallback(() => send({ type: 'unready' }),   [send])
 
   const doAction = useCallback((action, amount = 0) => {
     send({ type: 'action', action, amount })
@@ -142,6 +143,6 @@ export function useBlackjackSocket({ minBuyIn = 2000 } = {}) {
 
   return {
     status, rooms, roomId, myId, gameState, error, cashoutBalance,
-    refreshRooms, createRoom, joinRoom, leaveRoom, setReady, doAction,
+    refreshRooms, createRoom, joinRoom, leaveRoom, setReady, unready, doAction,
   }
 }

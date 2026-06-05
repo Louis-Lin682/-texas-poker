@@ -110,6 +110,7 @@ export function btBeats(newCls, newLen, pileCls, pileLen) {
 // ── Game ─────────────────────────────────────────────────
 
 const RESULT_DELAY_MS = 5_000
+const COUNTDOWN_MS    = 30_000
 
 export class BigTwoGame {
   constructor({ roomId, maxPlayers = 4, betUnit = 10, gameSlug = 'big-two', minPlayers = 3 } = {}) {
@@ -127,6 +128,8 @@ export class BigTwoGame {
     this.winners          = []
     this._hasPlayed       = new Set()  // ids who played ≥1 card
     this._resultTimer     = null
+    this._countdownTimer  = null
+    this.countdownEnd     = null
 
     this.onEvent = null
   }
@@ -162,15 +165,37 @@ export class BigTwoGame {
     if (!p) return
     p.ready = true
     this._broadcastState()
-    this._checkAllReady()
+    this._checkCountdown()
   }
 
-  _checkAllReady() {
+  unready(playerId) {
+    if (this.phase !== 'waiting') return
+    const p = this._find(playerId)
+    if (!p || !p.ready) return
+    p.ready = false
+    const eligible = this.players.filter(p => p.balance > 0)
+    if (!eligible.some(p => p.ready)) this._clearCountdown()
+    this._broadcastState()
+  }
+
+  _checkCountdown() {
     if (this.phase !== 'waiting') return
     const eligible = this.players.filter(p => p.balance > 0)
     if (eligible.length < this.minPlayers) return
-    if (!eligible.every(p => p.ready)) return
-    this._startGame()
+    if (!eligible.some(p => p.ready)) return
+    if (this._countdownTimer) return
+    this.countdownEnd = Date.now() + COUNTDOWN_MS
+    this._broadcastState()
+    this._countdownTimer = setTimeout(() => {
+      this._countdownTimer = null
+      this.countdownEnd = null
+      try { this._startGame() } catch {}
+    }, COUNTDOWN_MS)
+  }
+
+  _clearCountdown() {
+    if (this._countdownTimer) { clearTimeout(this._countdownTimer); this._countdownTimer = null }
+    this.countdownEnd = null
   }
 
   // ── Game flow ─────────────────────────────────────────
@@ -369,6 +394,7 @@ export class BigTwoGame {
   }
 
   _resetGame() {
+    this._clearCountdown()
     this.players = this.players.filter(p => p.balance > 0)
     for (const p of this.players) {
       p.hand   = []
@@ -384,7 +410,8 @@ export class BigTwoGame {
   }
 
   destroy() {
-    if (this._resultTimer) { clearTimeout(this._resultTimer); this._resultTimer = null }
+    if (this._resultTimer)   { clearTimeout(this._resultTimer);   this._resultTimer = null }
+    if (this._countdownTimer) { clearTimeout(this._countdownTimer); this._countdownTimer = null }
   }
 
   // ── State ──────────────────────────────────────────────
@@ -418,6 +445,7 @@ export class BigTwoGame {
       passCount:       this.passCount,
       winners:         this.winners,
       betUnit:         this.betUnit,
+      countdownEnd:    this.countdownEnd,
       myHand:          [],
     }
   }

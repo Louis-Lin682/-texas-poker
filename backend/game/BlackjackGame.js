@@ -122,6 +122,19 @@ export class BlackjackGame {
     this._tryStart()
   }
 
+  unready(userId) {
+    if (this.phase !== 'waiting') return
+    const p = this.players.find(p => p.id === userId)
+    if (!p || !p.ready) return
+    p.ready = false
+    if (!this.players.some(p => p.ready)) {
+      clearTimeout(this._startTimer)
+      this._startTimer = null
+      this.startDeadline = null
+    }
+    this._emit(this.publicState())
+  }
+
   processAction(userId, action, amount = 0) {
     if (this.phase === 'betting') {
       if (action !== 'bet') throw new Error('請先下注')

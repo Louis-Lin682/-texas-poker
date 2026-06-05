@@ -62,7 +62,7 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
                 disabled={!ok}
                 title={!ok ? `需帶入至少 ${new Intl.NumberFormat('en-US').format(u * MIN_UNIT_MULTIPLE)}` : ''}
               >
-                {u}
+                {!ok ? '🔒 ' : ''}{u}
               </button>
             )
           })}
@@ -87,15 +87,20 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
               </div>
               <div className="pt-room-bottom">
                 <span className="pt-room-players">{r.playerCount} / {r.maxPlayers} 玩家</span>
-                <button
-                  type="button"
-                  className="pt-room-join"
-                  onClick={() => onJoinRoom(r.id, buyIn)}
-                  disabled={!isConnected || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers || !canJoin}
-                  title={!canJoin ? `需帶入至少 ${new Intl.NumberFormat('en-US').format((r.betUnit ?? 10) * MIN_UNIT_MULTIPLE)}` : ''}
-                >
-                  加入
-                </button>
+                {(() => {
+                  const isInsufficient = !canJoin && r.phase === 'waiting' && r.playerCount < r.maxPlayers
+                  return (
+                    <button
+                      type="button"
+                      className={`pt-room-join${isInsufficient ? ' is-locked' : ''}`}
+                      onClick={() => onJoinRoom(r.id, buyIn)}
+                      disabled={!isConnected || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers || !canJoin}
+                      title={!canJoin ? `需帶入至少 ${new Intl.NumberFormat('en-US').format((r.betUnit ?? 10) * MIN_UNIT_MULTIPLE)}` : ''}
+                    >
+                      {isInsufficient ? '🔒 籌碼不足' : '加入'}
+                    </button>
+                  )
+                })()}
               </div>
             </div>
           )
@@ -106,17 +111,30 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
 }
 
 // ── Waiting room ───────────────────────────────────────────────────────────────
-function WaitingView({ gameState, myId, onReady, onLeaveRoom }) {
+function WaitingView({ gameState, myId, onReady, onUnready, onLeaveRoom }) {
   const players = gameState?.players ?? []
   const me = players.find(p => p.id === myId)
+  const countdownEnd = gameState?.countdownEnd ?? null
+  const [cdLeft, setCdLeft] = useState(0)
+
+  useEffect(() => {
+    if (!countdownEnd) { setCdLeft(0); return }
+    const tick = () => setCdLeft(Math.max(0, Math.ceil((countdownEnd - Date.now()) / 1000)))
+    tick()
+    const id = setInterval(tick, 200)
+    return () => clearInterval(id)
+  }, [countdownEnd])
+
+  const isCountingDown = !!countdownEnd && cdLeft > 0
+  const lockedIn = !!me?.ready && isCountingDown && cdLeft <= 10
 
   return (
     <div className="pt-wait">
       <div className="pt-wait-title">等待玩家</div>
       <div className="pt-wait-players">
         {players.map(p => (
-          <div key={p.id} className="pt-wait-player">
-            <span className={`pt-wait-dot ${p.ready ? 'is-ready' : ''}`} />
+          <div key={p.id} className={`pt-wait-player${p.id === myId ? ' is-me' : ''}`}>
+            <span className={`pt-wait-dot${p.ready ? ' is-ready' : ''}`} />
             <span className="pt-wait-av">{p.username[0].toUpperCase()}</span>
             <span className="pt-wait-name">{p.username}</span>
             <span className="pt-wait-chips">{fmt(p.balance)}</span>
@@ -124,18 +142,24 @@ function WaitingView({ gameState, myId, onReady, onLeaveRoom }) {
           </div>
         ))}
       </div>
-      <p className="pt-wait-hint">
-        {players.length < 3
-          ? `還需要 ${3 - players.length} 名玩家`
-          : players.every(p => p.ready)
-            ? '所有人已準備，即將開始…'
-            : '等待所有人準備'}
-      </p>
+      {isCountingDown ? (
+        <div className="pt-wait-countdown">
+          <span className="pt-wait-cd-num">{cdLeft}</span>
+          <span className="pt-wait-cd-label">秒後自動開始</span>
+        </div>
+      ) : (
+        <p className="pt-wait-hint">
+          {players.length < 3
+            ? `還需要 ${3 - players.length} 名玩家`
+            : players.every(p => p.ready)
+              ? '所有人已準備，即將開始…'
+              : '等待所有人準備'}
+        </p>
+      )}
       <button type="button"
         className={`pt-wait-start${me?.ready ? ' is-ready' : ''}`}
-        onClick={onReady}
-        disabled={me?.ready}
-      >
+        onClick={me?.ready ? onUnready : onReady}
+        disabled={lockedIn}>
         {me?.ready ? '✓ 已準備好' : '我準備好了'}
       </button>
       <button type="button" className="pt-wait-leave" onClick={onLeaveRoom}>離開房間</button>
@@ -551,7 +575,7 @@ function BigTwoTablePage({ auth }) {
   const {
     status, rooms, roomId, myId, gameState, gameResult, lastAction,
     error, cashoutBalance,
-    refreshRooms, createRoom, joinRoom, leaveRoom, setReady, doAction,
+    refreshRooms, createRoom, joinRoom, leaveRoom, setReady, unready, doAction,
   } = useBigTwoSocket({ minBuyIn })
 
   useEffect(() => {
@@ -739,6 +763,7 @@ function BigTwoTablePage({ auth }) {
           gameState={gameState}
           myId={myId}
           onReady={setReady}
+          onUnready={unready}
           onLeaveRoom={leaveRoom}
         />
       )}

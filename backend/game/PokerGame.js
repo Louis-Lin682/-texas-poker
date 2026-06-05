@@ -472,17 +472,27 @@ export class PokerGame {
     if (!p) return
     p.ready = true
     this._broadcastState()
-    this._checkAllReady()
+    this._checkCountdown()
   }
 
-  _checkAllReady() {
+  unready(playerId) {
+    if (this.phase !== 'waiting') return
+    const p = this._findPlayer(playerId)
+    if (!p || !p.ready) return
+    p.ready = false
+    const eligible = this.players.filter(p => p.balance > 0)
+    if (!eligible.some(p => p.ready)) this._clearCountdown()
+    this._broadcastState()
+  }
+
+  _checkCountdown() {
     if (this.phase !== 'waiting') return
     const eligible = this.players.filter(p => p.balance > 0)
     if (eligible.length < 2) return
     if (this._countdownTimer) return
-    if (!eligible.every(p => p.ready)) return
+    if (!eligible.some(p => p.ready)) return
 
-    const COUNTDOWN_MS = 10_000
+    const COUNTDOWN_MS = 30_000
     this.countdownEnd = Date.now() + COUNTDOWN_MS
     this._broadcastState()
 

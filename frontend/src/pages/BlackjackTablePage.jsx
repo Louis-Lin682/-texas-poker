@@ -338,12 +338,18 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBal
               </div>
               <div className="pt-room-bottom">
                 <span className="pt-room-players">{r.playerCount} / {r.maxPlayers} 玩家</span>
-                <button type="button" className="pt-room-join"
-                  onClick={() => onJoinRoom(r.id, minBuyIn)}
-                  disabled={!canJoin}
-                  title={!affordable && r.phase === 'waiting' ? `需要帶入 ${fmtNum(requiredBuyIn)} 籌碼` : undefined}>
-                  {!affordable && r.phase === 'waiting' && r.playerCount < r.maxPlayers ? '籌碼不足' : '加入'}
-                </button>
+                {(() => {
+                  const isInsufficient = !affordable && r.phase === 'waiting' && r.playerCount < r.maxPlayers
+                  return (
+                    <button type="button"
+                      className={`pt-room-join${isInsufficient ? ' is-locked' : ''}`}
+                      onClick={() => onJoinRoom(r.id, minBuyIn)}
+                      disabled={!canJoin}
+                      title={isInsufficient ? `需要帶入 ${fmtNum(requiredBuyIn)} 籌碼` : undefined}>
+                      {isInsufficient ? '🔒 籌碼不足' : '加入'}
+                    </button>
+                  )
+                })()}
               </div>
             </div>
           )
@@ -354,18 +360,19 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBal
 }
 
 // ── Waiting view ───────────────────────────────────────────
-function WaitingView({ gameState, myId, onReady, onLeaveRoom }) {
+function WaitingView({ gameState, myId, onReady, onUnready, onLeaveRoom }) {
   const players = gameState?.players ?? []
   const me = players.find(p => p.id === myId)
   const startLeft = useCountdown(gameState?.startDeadline)
   const countingDown = !!gameState?.startDeadline && startLeft > 0
+  const lockedIn = !!me?.ready && countingDown && startLeft <= 10
 
   return (
     <div className="pt-wait">
       <div className="pt-wait-title">等待玩家</div>
       <div className="pt-wait-players">
         {players.map(p => (
-          <div key={p.id} className="pt-wait-player">
+          <div key={p.id} className={`pt-wait-player${p.id === myId ? ' is-me' : ''}`}>
             <span className={`pt-wait-dot${p.ready ? ' is-ready' : ''}`} />
             <span className="pt-wait-av">{p.username[0].toUpperCase()}</span>
             <span className="pt-wait-name">{p.username}</span>
@@ -376,17 +383,20 @@ function WaitingView({ gameState, myId, onReady, onLeaveRoom }) {
       </div>
 
       {countingDown ? (
-        <p className="pt-wait-hint" style={{ color: '#e2ce87' }}>
-          {startLeft} 秒後自動開局，等待其他玩家加入…
-        </p>
+        <div className="pt-wait-countdown">
+          <span className="pt-wait-cd-num">{startLeft}</span>
+          <span className="pt-wait-cd-label">秒後自動開始</span>
+        </div>
       ) : (
         <p className="pt-wait-hint">
           {players.length < 2 ? `還需要 ${2 - players.length} 名玩家` : '等待所有人準備'}
         </p>
       )}
 
-      <button type="button" className={`pt-wait-start${me?.ready ? ' is-ready' : ''}`}
-        onClick={onReady} disabled={me?.ready}>
+      <button type="button"
+        className={`pt-wait-start${me?.ready ? ' is-ready' : ''}`}
+        onClick={me?.ready ? onUnready : onReady}
+        disabled={lockedIn}>
         {me?.ready ? '✓ 已準備好' : '我準備好了'}
       </button>
       <button type="button" className="pt-wait-leave" onClick={onLeaveRoom}>離開房間</button>
@@ -432,7 +442,7 @@ export default function BlackjackTablePage({ auth }) {
 
   const {
     status, rooms, roomId, myId, gameState, error,
-    cashoutBalance, refreshRooms, createRoom, joinRoom, leaveRoom, setReady, doAction,
+    cashoutBalance, refreshRooms, createRoom, joinRoom, leaveRoom, setReady, unready, doAction,
   } = useBlackjackSocket({ minBuyIn })
 
   const [betAmount, setBetAmount] = useState(0)
@@ -708,7 +718,7 @@ export default function BlackjackTablePage({ auth }) {
       )}
 
       {isWaiting && (
-        <WaitingView gameState={gameState} myId={myId} onReady={setReady} onLeaveRoom={leaveRoom} />
+        <WaitingView gameState={gameState} myId={myId} onReady={setReady} onUnready={unready} onLeaveRoom={leaveRoom} />
       )}
 
       {isPlaying && (
