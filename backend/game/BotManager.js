@@ -146,8 +146,7 @@ export class BotManager {
 
     const actingId = publicState.actingPlayerId
     if (!actingId || !this.isBot(actingId)) return
-
-    this._cancelTimer(actingId)
+    if (this._timers.has(actingId)) return
 
     const me = publicState.players.find(p => p.id === actingId)
     if (!me) return
@@ -211,8 +210,7 @@ export class BotManager {
 
     const actingId = publicState.currentPlayerId
     if (!actingId || !this.isBot(actingId)) return
-
-    this._cancelTimer(actingId)
+    if (this._timers.has(actingId)) return
 
     const botPlayer = game.players.find(p => p.id === actingId)
     if (!botPlayer || botPlayer.status !== 'playing') return
@@ -282,7 +280,7 @@ export class BotManager {
     if (publicState.phase === 'playing') {
       const actingId = publicState.currentActorId
       if (!actingId || !this.isBot(actingId)) return
-      this._cancelTimer(actingId)
+      if (this._timers.has(actingId)) return
 
       const delay = THINK_MIN + Math.random() * (THINK_MAX - THINK_MIN)
       const t = setTimeout(() => {
