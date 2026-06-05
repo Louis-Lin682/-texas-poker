@@ -6053,7 +6053,7 @@ button.is-pressing {
   flex: 1;
   min-height: 0;
   margin: 20px 0;
-  background: url(./poker-table.png);
+  background: url('/poker-table.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: bottom;
@@ -7615,7 +7615,7 @@ button.is-pressing {
   position: relative;
   margin: 4px 6px 0;
   min-height: 0;
-  background: url(./poker-table.png);
+  background: url('/poker-table.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
