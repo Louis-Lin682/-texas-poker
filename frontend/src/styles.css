@@ -6859,14 +6859,21 @@ button.is-pressing {
 
 .pt-seat.pt-seat-me {
   flex-direction: row;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 7px 12px;
-  min-width: 144px;
+  gap: 10px;
+  padding: 7px 10px;
+  min-width: 0;
   border-color: rgba(226,206,135,0.22);
   box-shadow: 0 -4px 24px rgba(226,206,135,0.07), 0 6px 24px rgba(0,0,0,0.6),
               inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.pt-me-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .pt-seat.is-acting {
@@ -6908,10 +6915,11 @@ button.is-pressing {
   padding: 1px 4px;
 }
 
-.pt-badge-d  { background: #e2ce87; color: #1a1000; }
-.pt-badge-sb { background: #3a7cd5; color: #fff; }
-.pt-badge-bb { background: #e05050; color: #fff; }
-.pt-badge-ai { background: #c84040; color: #fff; letter-spacing: 0.3px; }
+.pt-badge-d    { background: #e2ce87; color: #1a1000; }
+.pt-badge-sb   { background: #3a7cd5; color: #fff; }
+.pt-badge-bb   { background: #e05050; color: #fff; }
+.pt-badge-ai   { background: #c84040; color: #fff; letter-spacing: 0.3px; }
+.pt-badge-hand { background: rgba(226,206,135,0.15); color: #ffe870; border-color: rgba(226,206,135,0.35); text-shadow: 0 0 8px rgba(226,206,135,0.5); }
 
 /* ── Seat internals ─────────────────────────────────────── */
 .pt-avatar {

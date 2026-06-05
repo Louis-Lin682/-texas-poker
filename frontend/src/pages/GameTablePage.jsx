@@ -99,11 +99,22 @@ function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, se
         {player.isSB     && <span className="pt-badge pt-badge-sb">小盲</span>}
         {player.isBB     && <span className="pt-badge pt-badge-bb">大盲</span>}
         {allIn           && <span className="pt-badge pt-badge-ai">AI</span>}
+        {isMe && handStrength && <span className="pt-badge pt-badge-hand">{handStrength}</span>}
       </div>
 
-      <div className="pt-avatar">{player.username[0].toUpperCase()}</div>
-      <span className="pt-name">{player.username}</span>
-      <span className="pt-chips">{fmt(player.balance)}</span>
+      {isMe ? (
+        <div className="pt-me-info">
+          <div className="pt-avatar">{player.username[0].toUpperCase()}</div>
+          <span className="pt-name">{player.username}</span>
+          <span className="pt-chips">{fmt(player.balance)}</span>
+        </div>
+      ) : (
+        <>
+          <div className="pt-avatar">{player.username[0].toUpperCase()}</div>
+          <span className="pt-name">{player.username}</span>
+          <span className="pt-chips">{fmt(player.balance)}</span>
+        </>
+      )}
 
       {!isMe && (
         <div key={dealKey} className="pt-opp-cards" style={{'--deal-base': `${baseDelay}s`}}>
@@ -119,9 +130,6 @@ function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, se
         <div key={dealKey} className="pt-my-cards" style={{'--deal-base': `${baseDelay}s`}}>
           {myCards.map((c, i) => <PlayingCard key={i} card={c} size="lg" />)}
         </div>
-      )}
-      {isMe && handStrength && (
-        <span className="pt-hand-badge">{handStrength}</span>
       )}
 
       {player.roundBet > 0 && (
