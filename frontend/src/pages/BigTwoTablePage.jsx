@@ -231,8 +231,8 @@ function ResultOverlay({ gameResult }) {
 }
 
 // ── Opponent fan of card backs ────────────────────────────────────────────────
-const OPP_CARD_W = 18
-const OPP_PIVOT  = 80
+const OPP_CARD_W = 14
+const OPP_PIVOT  = 72
 
 function OppFan({ count, compact = false }) {
   const n      = Math.min(count, 13)

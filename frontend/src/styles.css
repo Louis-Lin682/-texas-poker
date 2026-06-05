@@ -7670,7 +7670,7 @@ button.is-pressing {
 
 .bt-seat-top .bt-opp { max-width: 114px; }
 .bt-seat-left .bt-opp,
-.bt-seat-right .bt-opp { width: 76px; }
+.bt-seat-right .bt-opp { width: 68px; }
 
 .bt-opp.is-acting {
   border-color: rgba(226,206,135,0.6);
@@ -7735,10 +7735,10 @@ button.is-pressing {
 .bt-opp-back {
   position: absolute;
   bottom: 0;
-  width: 18px; height: 26px;
+  width: 14px; height: 20px;
   background: url('/big-two/card-purplegold.png') center / 100% 100% no-repeat;
   border: none;
-  border-radius: 3px;
+  border-radius: 2px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 
