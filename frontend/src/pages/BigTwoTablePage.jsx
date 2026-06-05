@@ -447,7 +447,6 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
         {/* ── Round table ── */}
         <div className="bt-table-wrap">
           <div className="bt-table-surface">
-            <img src="/big-two/big-two-table.png" alt="" />
             <div className={`bt-turn-bar${isMyTurn ? ' bt-my-turn' : ''}${turnSeconds !== null && turnSeconds <= 10 ? ' bt-turn-urgent' : ''}`}>
               {isMyTurn
                 ? `✦ 輪到你行動 (${turnSeconds ?? AFK_SECS}s)`
@@ -699,7 +698,10 @@ function BigTwoTablePage({ auth }) {
           <img src="/arrow.png" alt="返回" />
         </button>
         <div className="pt-header-info">
-          <span className="pt-room-label">{roomId ? `房間 #${roomId}` : '大老二'}</span>
+          {roomId
+            ? <span className="pt-room-label">房間 #{roomId}</span>
+            : <img src="/big-two/big-two.png" alt="大老二" className="pt-room-label-img" />
+          }
           {roomId && <span className="pt-blinds">單位 {betUnit}</span>}
         </div>
         {isPlaying && <span className="pt-phase-badge">{BT_PHASE[phase]}</span>}

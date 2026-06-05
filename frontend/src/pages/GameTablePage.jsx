@@ -73,9 +73,9 @@ function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, se
     ].filter(Boolean).join(' ')}>
 
       <div className="pt-badges">
-        {player.isDealer && <span className="pt-badge pt-badge-d">D</span>}
-        {player.isSB     && <span className="pt-badge pt-badge-sb">SB</span>}
-        {player.isBB     && <span className="pt-badge pt-badge-bb">BB</span>}
+        {player.isDealer && <span className="pt-badge pt-badge-d">莊家</span>}
+        {player.isSB     && <span className="pt-badge pt-badge-sb">小盲</span>}
+        {player.isBB     && <span className="pt-badge pt-badge-bb">大盲</span>}
         {allIn           && <span className="pt-badge pt-badge-ai">AI</span>}
       </div>
 
@@ -608,7 +608,10 @@ function GameTablePage({ auth }) {
           <img src="/arrow.png" alt="返回" />
         </button>
         <div className="pt-header-info">
-          <span className="pt-room-label">{roomId ? `房間 #${roomId}` : '德州撲克'}</span>
+          {roomId
+            ? <span className="pt-room-label">房間 #{roomId}</span>
+            : <img src="/texas-holdem/texas-holdem.png" alt="德州撲克" className="pt-room-label-img" />
+          }
           <span className="pt-blinds">盲注 {gameState?.smallBlind ?? 10} / {gameState?.bigBlind ?? 20}</span>
         </div>
         {isPlaying && <span className="pt-phase-badge">{PHASE_LABEL[phase]}</span>}
@@ -675,7 +678,6 @@ function GameTablePage({ auth }) {
             </div>
 
             <div className="pt-table-center">
-              <img className="pt-table-img" src="/poker-table.png" alt="" />
               <div className="pt-overlay">
                 <div className="pt-community-cards">
                   {communityCards.map((c, i) => {

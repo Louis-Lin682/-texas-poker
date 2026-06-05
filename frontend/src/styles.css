@@ -6053,6 +6053,10 @@ button.is-pressing {
   flex: 1;
   min-height: 0;
   margin: 20px 0;
+  background: url(./poker-table.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -6097,17 +6101,13 @@ button.is-pressing {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  color: rgba(226,206,135,0.55);
-  padding: 4px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: color 150ms;
-  width: 35px;
-  height: 35px;
   background: transparent;
-  border-color: #e2ce87;
-  flex-shrink: 0;
+  cursor: pointer;
+  width: 15%;
+  height: auto;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 .pt-lobby-refresh:hover { color: #e2ce87; }
 .pt-lobby-refresh.is-spinning img { animation: ptSpinOnce 0.7s ease-in-out forwards; }
@@ -6385,6 +6385,7 @@ button.is-pressing {
     radial-gradient(ellipse  90% 45% at 50% 48%,  rgba(8,38,12,0.22)   0%, transparent 72%),
     radial-gradient(ellipse at 50% 50%, #0d0b1a 0%, #040308 100%);
   overflow: hidden;
+  padding-bottom: 130px; /* reserve space for absolutely-positioned action bar */
 }
 
 /* ── Header ─────────────────────────────────────────────── */
@@ -6432,6 +6433,13 @@ button.is-pressing {
   color: #e2ce87;
 }
 
+.pt-room-label-img {
+  height: 28px;
+  width: fit-content;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,0.6));
+}
+
 .pt-blinds {
   font-size: 11px;
   color: rgba(225,215,178,0.45);
@@ -6454,6 +6462,7 @@ button.is-pressing {
   justify-content: center;
   padding: 2px 0 0;
   flex-shrink: 0;
+  z-index: 3;
 }
 
 .pt-middle {
@@ -6504,7 +6513,7 @@ button.is-pressing {
 .pt-table-img {
   display: block;
   width: 150%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
 }
 
@@ -6735,7 +6744,8 @@ button.is-pressing {
 
 .pt-bottom-center {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   padding: 3px 0 2px;
   flex-shrink: 0;
   position: relative;
@@ -6823,10 +6833,11 @@ button.is-pressing {
 /* ── Badges ──────────────────────────────────────────────── */
 .pt-badges {
   position: absolute;
-  top: -8px;
-  left: 4px;
+  top: 0px;
+  left: 50%;
   display: flex;
   gap: 2px;
+  transform: translate(-50%, -50%);
 }
 
 .pt-badge {
@@ -6957,12 +6968,16 @@ button.is-pressing {
 
 /* ── Action panel ───────────────────────────────────────── */
 .pt-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
   padding: 8px 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex-shrink: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.08) 100%);
+  background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.12) 100%);
   border-top: 1px solid rgba(226,206,135,0.08);
 }
 
@@ -7070,6 +7085,8 @@ button.is-pressing {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(226,206,135,0.07);
+  border-radius: 6px;
 }
 .pt-countdown-wrap::before {
   content: '';
@@ -7113,24 +7130,23 @@ button.is-pressing {
 
 /* ── Mute button in header ── */
 .pt-mute-btn {
-  font-size: 18px;
-  line-height: 1;
-  padding: 4px;
-  border-radius: 50%;
   cursor: pointer;
-  flex-shrink: 0;
-  opacity: 0.75;
-  transition: opacity 150ms;
-  width: 35px;
+  width: 15%;
   height: auto;
   background: transparent;
-  border-color: #e2ce87;
+  border: none;
+  padding: 0;
 }
 
-.pt-mute-btn img, .pt-lobby-refresh img {
+.pt-mute-btn img {
   display: block;
   height: auto;
   width: 100%;
+}
+.pt-lobby-refresh img {
+  display: block;
+  height: auto;
+  width: 85%;
 }
 .pt-mute-btn:hover { opacity: 1; }
 
@@ -7487,6 +7503,10 @@ button.is-pressing {
   position: relative;
   margin: 4px 6px 0;
   min-height: 0;
+  background: url(./poker-table.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 /* All seats float over the table edges */
@@ -7620,7 +7640,7 @@ button.is-pressing {
 .bt-table-wrap {
   border-radius: 40px;
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+  /* box-shadow: 0 8px 40px rgba(0,0,0,0.8); */
   display: flex;
   position: absolute;
   inset: 0;
@@ -7628,7 +7648,7 @@ button.is-pressing {
   height: 410px;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -65%);
+  transform: translate(-50%, -55%);
 }
 
 .bt-table-surface {

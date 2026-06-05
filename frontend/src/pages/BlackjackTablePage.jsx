@@ -674,7 +674,10 @@ export default function BlackjackTablePage({ auth }) {
           <img src="/arrow.png" alt="返回" />
         </button>
         <div className="pt-header-info">
-          <span className="pt-room-label">{roomId ? `房間 #${roomId}` : '21點'}</span>
+          {roomId
+            ? <span className="pt-room-label">房間 #{roomId}</span>
+            : <img src="/blackjack/blackjack.png" alt="21點" className="pt-room-label-img" />
+          }
           {roomId && <span className="pt-blinds">最低下注 {gameState?.minBet ?? 50}</span>}
         </div>
         {isPlaying && <span className="pt-phase-badge">{PHASE_LABEL[phase]}</span>}
@@ -798,8 +801,6 @@ export default function BlackjackTablePage({ auth }) {
               </div>
 
               <div className="pt-table-center">
-                <img className="pt-table-img" src="/poker-table.png" alt="" />
-
                 {/* Betting zones — one per player position, spread around the oval */}
                 {tablePlayers.map((player, i) => {
                   const animKey = chipAnimKeys[player?.id] ?? 1
@@ -864,8 +865,10 @@ export default function BlackjackTablePage({ auth }) {
             <div className="pt-bottom-center">
               <div className={`pt-seat pt-seat-me${isMyTurn ? ' is-acting' : ''}`}>
                 <div className="pt-avatar">{myPlayer?.username?.[0]?.toUpperCase() ?? 'M'}</div>
-                <span className="pt-name">{myPlayer?.username}</span>
-                <span className="pt-chips">{fmt(myPlayer?.balance ?? 0)}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }}>
+                  <span className="pt-name">{myPlayer?.username}</span>
+                  <span className="pt-chips">{fmt(myPlayer?.balance ?? 0)}</span>
+                </div>
 
                 {(myPlayer?.hands?.length ?? 0) > 0 && (
                   <div style={{
@@ -907,107 +910,102 @@ export default function BlackjackTablePage({ auth }) {
                   </div>
                 )}
               </div>
+
+              {/* Countdown below seat */}
+              {phase === 'betting' && (myPlayer?.bet ?? 0) > 0 && (
+                <div className="pt-countdown-wrap" style={{ width: '100%', marginTop: 4 }}>
+                  <span className="pt-waiting-inline" style={{ color: '#57d46f' }}>
+                    ✓ 已下注 {fmtNum(myPlayer.bet)}，等待其他玩家…
+                  </span>
+                </div>
+              )}
+              {phase === 'betting' && (myPlayer?.bet ?? 0) === 0 && (
+                <div className="pt-countdown-wrap" style={{ width: '100%', marginTop: 4 }}>
+                  <div className="pt-countdown-bar" style={{ width: `${Math.max(0, (timeLeft / 15) * 100)}%` }} />
+                  <span className="pt-countdown-num">{timeLeft}s</span>
+                </div>
+              )}
+              {phase === 'playing' && isMyTurn && actionLeft > 0 && (
+                <div className="pt-countdown-wrap" style={{ width: '100%', marginTop: 4 }}>
+                  <div className="pt-countdown-bar" style={{
+                    width: `${Math.max(0, (actionLeft / 30) * 100)}%`,
+                    background: actionLeft <= 10 ? '#f06060' : undefined,
+                  }} />
+                  <span className="pt-countdown-num" style={{ color: actionLeft <= 10 ? '#f06060' : undefined }}>
+                    {actionLeft}s
+                  </span>
+                </div>
+              )}
+
+              {/* Playing action buttons — inline below seat, not anchored to bottom */}
+              {phase === 'playing' && isMyTurn && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%', marginTop: 6 }}>
+                  {canInsurance && (
+                    <button type="button" className="pt-btn"
+                      style={{ width: '100%', borderColor: '#f0c96b66', color: '#f0c96b', background: '#f0c96b11' }}
+                      onClick={() => doAction('insurance')}>
+                      買保險 (×{fmtNum(Math.floor((myCurrentHand?.bet ?? 0) / 2))})
+                    </button>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                    <button type="button" className="pt-btn pt-btn-fold"
+                      style={{ flex: '0 0 auto', minWidth: 80 }}
+                      onClick={() => doAction('stand')}>停牌</button>
+                    <button type="button" className="pt-btn pt-btn-call"
+                      style={{ flex: '0 0 auto', minWidth: 80 }}
+                      onClick={() => doAction('hit')}>要牌</button>
+                    {canDouble && (
+                      <button type="button" className="pt-btn pt-btn-raise"
+                        style={{ flex: '0 0 auto', minWidth: 80 }}
+                        onClick={() => doAction('double')}>加倍</button>
+                    )}
+                    {canSplit && (
+                      <button type="button" className="pt-btn pt-btn-allin"
+                        style={{ flex: '0 0 auto', minWidth: 80 }}
+                        onClick={() => doAction('split')}>分牌</button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Action bar — only during betting or my turn */}
-            {(phase === 'betting' || (phase === 'playing' && isMyTurn)) && (
+            {/* Action bar — only during betting (no bet placed) */}
+            {phase === 'betting' && (myPlayer?.bet ?? 0) === 0 && (
               <div className="pt-actions">
-
-                {phase === 'betting' && (
-                  (myPlayer?.bet ?? 0) > 0 ? (
-                    <div className="pt-countdown-wrap">
-                      <span className="pt-waiting-inline" style={{ color: '#57d46f' }}>
-                        ✓ 已下注 {fmtNum(myPlayer.bet)}，等待其他玩家…
-                      </span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="pt-countdown-wrap">
-                        <div className="pt-countdown-bar" style={{ width: `${Math.max(0, (timeLeft / 15) * 100)}%` }} />
-                        <span className="pt-countdown-num">{timeLeft}s</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, justifyContent: 'center', padding: '4px 0' }}>
-                        {activeChips.map(({ value, img }) => (
-                          <ChipBtn key={value} value={value} img={img} onClick={() => addChip(value)} />
-                        ))}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px' }}>
-                        <span style={{ fontSize: 12, color: '#aaa', flexShrink: 0 }}>
-                          下注: <span style={{ color: '#f0c96b', fontWeight: 700 }}>{fmtNum(betAmount)}</span>
-                        </span>
-                        <button type="button" className="pt-btn" style={{
-                          flex: '0 0 auto',
-                          background: 'rgba(100,110,130,0.28)',
-                          border: '1.5px solid rgba(150,160,180,0.35)',
-                          color: 'rgba(200,205,220,0.75)',
-                        }} onClick={() => setBetAmount(0)}>清除</button>
-                        {lastBetRef.current > 0 && betAmount === 0 && (
-                          <button type="button" className="pt-btn" style={{
-                            flex: '0 0 auto',
-                            background: 'rgba(25,140,160,0.28)',
-                            border: '1.5px solid rgba(50,190,210,0.5)',
-                            color: '#50d8e8',
-                          }} onClick={() => {
-                            const p = gameState?.players?.find(p => p.id === myId)
-                            if (p) setBetAmount(Math.min(lastBetRef.current, Math.min(maxBet, p.balance)))
-                          }}>
-                            重複 {fmtNum(lastBetRef.current)}
-                          </button>
-                        )}
-                        <button type="button" className="pt-btn pt-btn-call" style={{ flex: 1 }}
-                          disabled={betAmount < (gameState?.minBet ?? 50)}
-                          onClick={confirmBet}>
-                          確認下注
-                        </button>
-                      </div>
-                    </>
-                  )
-                )}
-
-                {phase === 'playing' && isMyTurn && (
-                  <>
-                    {/* Action countdown bar */}
-                    {actionLeft > 0 && (
-                      <div className="pt-countdown-wrap">
-                        <div className="pt-countdown-bar" style={{
-                          width: `${Math.max(0, (actionLeft / 30) * 100)}%`,
-                          background: actionLeft <= 10 ? '#f06060' : undefined,
-                        }} />
-                        <span className="pt-countdown-num" style={{ color: actionLeft <= 10 ? '#f06060' : undefined }}>
-                          {actionLeft}s
-                        </span>
-                      </div>
-                    )}
-                    {canInsurance && (
-                      <div style={{ padding: '0 16px 6px' }}>
-                        <button type="button" className="pt-btn"
-                          style={{ width: '100%', borderColor: '#f0c96b66', color: '#f0c96b', background: '#f0c96b11' }}
-                          onClick={() => doAction('insurance')}>
-                          買保險 (×{fmtNum(Math.floor((myCurrentHand?.bet ?? 0) / 2))})
-                        </button>
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: 8, padding: '0 16px' }}>
-                      <button type="button" className="pt-btn pt-btn-fold"
-                        style={{ flex: '0 0 auto', minWidth: 80 }}
-                        onClick={() => doAction('stand')}>停牌</button>
-                      <button type="button" className="pt-btn pt-btn-call"
-                        style={{ flex: '0 0 auto', minWidth: 80 }}
-                        onClick={() => doAction('hit')}>要牌</button>
-                      {canDouble && (
-                        <button type="button" className="pt-btn pt-btn-raise"
-                          style={{ flex: '0 0 auto', minWidth: 80 }}
-                          onClick={() => doAction('double')}>加倍</button>
-                      )}
-                      {canSplit && (
-                        <button type="button" className="pt-btn pt-btn-allin"
-                          style={{ flex: '0 0 auto', minWidth: 80 }}
-                          onClick={() => doAction('split')}>分牌</button>
-                      )}
-                    </div>
-                  </>
-                )}
-
+                <div style={{ display: 'flex', gap: 6, justifyContent: 'center', padding: '4px 0' }}>
+                  {activeChips.map(({ value, img }) => (
+                    <ChipBtn key={value} value={value} img={img} onClick={() => addChip(value)} />
+                  ))}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px' }}>
+                  <span style={{ fontSize: 12, color: '#aaa', flexShrink: 0 }}>
+                    下注: <span style={{ color: '#f0c96b', fontWeight: 700 }}>{fmtNum(betAmount)}</span>
+                  </span>
+                  <button type="button" className="pt-btn" style={{
+                    flex: '0 0 auto',
+                    background: 'rgba(100,110,130,0.28)',
+                    border: '1.5px solid rgba(150,160,180,0.35)',
+                    color: 'rgba(200,205,220,0.75)',
+                  }} onClick={() => setBetAmount(0)}>清除</button>
+                  {lastBetRef.current > 0 && betAmount === 0 && (
+                    <button type="button" className="pt-btn" style={{
+                      flex: '0 0 auto',
+                      background: 'rgba(25,140,160,0.28)',
+                      border: '1.5px solid rgba(50,190,210,0.5)',
+                      color: '#50d8e8',
+                    }} onClick={() => {
+                      const p = gameState?.players?.find(p => p.id === myId)
+                      if (p) setBetAmount(Math.min(lastBetRef.current, Math.min(maxBet, p.balance)))
+                    }}>
+                      重複 {fmtNum(lastBetRef.current)}
+                    </button>
+                  )}
+                  <button type="button" className="pt-btn pt-btn-call" style={{ flex: 1 }}
+                    disabled={betAmount < (gameState?.minBet ?? 50)}
+                    onClick={confirmBet}>
+                    確認下注
+                  </button>
+                </div>
               </div>
             )}
 
