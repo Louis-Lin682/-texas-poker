@@ -4,8 +4,8 @@ import { decideBlackjack } from './BlackjackBotPlayer.js'
 import { cardFaceValue } from './BlackjackGame.js'
 import { query as dbQuery } from '../db.js'
 
-const THINK_MIN = 900
-const THINK_MAX = 2800
+const THINK_MIN = 600
+const THINK_MAX = 1400
 
 const BOT_DEFS = [
   { username: '阿明', balance: 10000 },

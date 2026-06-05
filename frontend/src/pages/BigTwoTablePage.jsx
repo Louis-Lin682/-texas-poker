@@ -520,14 +520,6 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
               {passCount > 0 && <div className="bt-pass-count">已跳過 {passCount} 人</div>}
             </div>
 
-            {lastAction && (
-              <div key={lastAction.playerId + lastAction.action + (lastAction.cards?.[0] ?? '')} className="bt-action-toast">
-                {lastAction.action === 'pass'
-                  ? `${lastAction.username} 不出`
-                  : `${lastAction.username} 出了 ${HAND_ZH[lastAction.handType] ?? ''}`
-                }
-              </div>
-            )}
 
           </div>
         </div>
