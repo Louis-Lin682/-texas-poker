@@ -45,6 +45,26 @@
     "imageUrl": "/games/poker/blackjack.png"
   },
   {
+    "id": 112,
+    "slug": "dragon-tiger",
+    "name": "龍虎鬥：巔峰對決",
+    "category": "poker",
+    "featured": false,
+    "status": "preview",
+    "badge": "SOON",
+    "imageUrl": "/games/poker/Dragon-Tiger.png"
+  },
+  {
+    "id": 301,
+    "slug": "weiqi",
+    "name": "智者對弈・圍棋之戰",
+    "category": "chess",
+    "featured": false,
+    "status": "preview",
+    "badge": "SOON",
+    "imageUrl": "/games/chess/weiqi.png"
+  },
+  {
     "id": 103,
     "slug": "omaha",
     "name": "奧馬哈",
