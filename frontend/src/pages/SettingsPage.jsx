@@ -57,20 +57,40 @@ function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
     if (el) el.style.setProperty('--pct', `${Math.round(volume * 100)}%`)
   }, [volume])
 
-  // Native listener — most reliable for iOS Safari range inputs
+  // Native + touch listeners — iOS Safari may not fire `input` during drag
   useEffect(() => {
     const el = sliderRef.current
     if (!el) return
-    function handle() {
-      const v = parseFloat(el.value)
+
+    function apply(v) {
       el.style.setProperty('--pct', `${Math.round(v * 100)}%`)
       onVolume(v)
       if (v === 0 && enabled)  onToggle(false)
       if (v > 0  && !enabled) onToggle(true)
     }
-    el.addEventListener('input', handle)
-    return () => el.removeEventListener('input', handle)
-  }) // re-attach when enabled/onToggle/onVolume change
+
+    function onNative() { apply(parseFloat(el.value)) }
+
+    function onTouch(e) {
+      const rect = el.getBoundingClientRect()
+      const clientX = (e.touches?.[0] ?? e.changedTouches?.[0])?.clientX
+      if (clientX == null) return
+      const v = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+      el.value = String(v)
+      apply(v)
+    }
+
+    el.addEventListener('input', onNative)
+    el.addEventListener('change', onNative)
+    el.addEventListener('touchmove', onTouch, { passive: true })
+    el.addEventListener('touchend', onTouch)
+    return () => {
+      el.removeEventListener('input', onNative)
+      el.removeEventListener('change', onNative)
+      el.removeEventListener('touchmove', onTouch)
+      el.removeEventListener('touchend', onTouch)
+    }
+  }) // no deps — re-attach on every render to capture fresh enabled/onToggle/onVolume
 
   return (
     <div className="settings-audio-block">
