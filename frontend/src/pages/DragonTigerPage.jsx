@@ -363,6 +363,7 @@ export default function DragonTigerPage({ auth }) {
               className={`dt-zone dt-zone-${key} ${isBetting ? 'is-active' : ''}`}
               onClick={() => handleZoneTap(key)}
               disabled={!isBetting}
+              data-no-global-click="true"
             >
               <ZoneBetDisplay
                 placements={chipPlacements[key]}
@@ -427,6 +428,7 @@ export default function DragonTigerPage({ auth }) {
                 type="button"
                 className={`dt-chip-btn ${selectedChip.value === chip.value ? 'is-selected' : ''}`}
                 onClick={() => setSelectedChip(chip)}
+                data-no-global-click="true"
               >
                 <img src={chip.img} alt={chip.label} className="dt-chip-img" />
                 <span className={`dt-chip-label ${selectedChip.value === chip.value ? 'is-selected' : ''}`}>
