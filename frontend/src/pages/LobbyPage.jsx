@@ -42,9 +42,24 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
   const { games, featuredGames, isLoadingGames } = useGames()
   const [minBuyIn, setMinBuyIn] = useState(2000)
+  const [showFloatTop, setShowFloatTop] = useState(false)
 
   useEffect(() => {
     getConfig().then(cfg => { if (cfg.minBuyIn) setMinBuyIn(cfg.minBuyIn) }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const frame = document.querySelector('.phone-frame-lobby')
+    const check = () => {
+      const top = (frame?.scrollTop ?? 0) + window.scrollY
+      setShowFloatTop(top > 80)
+    }
+    frame?.addEventListener('scroll', check, { passive: true })
+    window.addEventListener('scroll', check, { passive: true })
+    return () => {
+      frame?.removeEventListener('scroll', check)
+      window.removeEventListener('scroll', check)
+    }
   }, [])
   const openAuthPrompt = (context = 'default') => {
     setAuthPromptContext(context)
@@ -97,14 +112,16 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
     <div
       className={`app-shell ${isFavoritesOpen || isMyDrawerOpen || isEventDrawerOpen ? 'has-favorites-open' : ''}`}
     >
-      <button
-        type="button"
-        className="float-btn float-top"
-        onClick={handleTopClick}
-        aria-label="回頂部"
-      >
-        <img src="/top.png" alt="" />
-      </button>
+      {showFloatTop && (
+        <button
+          type="button"
+          className="float-btn float-top"
+          onClick={handleTopClick}
+          aria-label="回頂部"
+        >
+          <img src="/top.png" alt="" />
+        </button>
+      )}
       <div className="phone-frame phone-frame-lobby">
         <NoticeTicker text={noticeText} isMuted={isMuted} onToggleMute={toggleMute} />
         {auth.isAuthenticated ? (

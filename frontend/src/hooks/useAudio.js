@@ -94,10 +94,10 @@ export function useAudio() {
         if (!hasOverrides && audio.currentTime > 0.05) audio.currentTime = 0
         await audio.play()
       } else {
-        const clone = audio.cloneNode()
-        clone.volume = effectiveVolume(config)
-        clone.muted  = _sfxMuted
-        await clone.play()
+        audio.currentTime = 0
+        audio.volume = effectiveVolume(config)
+        audio.muted  = _sfxMuted
+        await audio.play()
       }
       return true
     } catch {

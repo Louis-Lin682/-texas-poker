@@ -49,22 +49,28 @@ function SettingsRow({ label, children }) {
 }
 
 function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
+  function handleSlider(e) {
+    const v = parseFloat(e.target.value)
+    onVolume(v)
+    if (v === 0 && enabled)  onToggle(false)
+    if (v > 0  && !enabled) onToggle(true)
+  }
   return (
     <div className="settings-audio-block">
       <div className="settings-row">
         <span className="settings-row-label">{label}</span>
         <Toggle checked={enabled} onChange={onToggle} />
       </div>
-      <div className={`settings-slider-row ${!enabled ? 'is-disabled' : ''}`}>
+      <div className="settings-slider-row">
         <span className="settings-slider-icon">🔈</span>
         <input
           type="range"
           className="settings-slider"
           min={0} max={1} step={0.01}
           value={volume}
-          disabled={!enabled}
           style={{ '--pct': `${Math.round(volume * 100)}%` }}
-          onChange={e => onVolume(parseFloat(e.target.value))}
+          onChange={handleSlider}
+          onInput={handleSlider}
         />
         <span className="settings-slider-icon">🔊</span>
       </div>
