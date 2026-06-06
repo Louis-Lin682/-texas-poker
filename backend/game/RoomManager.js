@@ -3,6 +3,7 @@ import { query as dbQuery } from '../db.js'
 import { PokerGame } from './PokerGame.js'
 import { BigTwoGame } from './BigTwoGame.js'
 import { BlackjackGame } from './BlackjackGame.js'
+import { DragonTigerGame } from './DragonTigerGame.js'
 import { decideBigTwo } from './BigTwoBotPlayer.js'
 
 export class RoomManager {
@@ -22,17 +23,22 @@ export class RoomManager {
 
   createRoom(options = {}) {
     const roomId  = randomUUID().slice(0, 8).toUpperCase()
-    const isBigTwo    = options.gameType === 'big-two'
-    const isBlackjack = options.gameType === 'blackjack'
+    const isBigTwo      = options.gameType === 'big-two'
+    const isBlackjack   = options.gameType === 'blackjack'
+    const isDragonTiger = options.gameType === 'dragon-tiger'
     const game = isBigTwo
       ? new BigTwoGame({ roomId, ...options })
       : isBlackjack
         ? new BlackjackGame({ roomId, ...options })
-        : new PokerGame({ roomId, ...options })
+        : isDragonTiger
+          ? new DragonTigerGame({ roomId, ...options })
+          : new PokerGame({ roomId, ...options })
 
     game.onEvent = (event) => this._handleGameEvent(event)
 
     this.rooms.set(roomId, game)
+    // Dragon Tiger runs a continuous loop independent of player count
+    if (isDragonTiger) game.start()
     this._broadcastRoomList()
     return roomId
   }
@@ -148,6 +154,13 @@ export class RoomManager {
         return
       }
 
+      if (type === 'dt_place_bet') {
+        const game = this._roomOf(info)
+        if (!game) return this._sendError(ws, '尚未加入房間')
+        game.placeBet(info.userId, payload.zone, payload.amount ?? 0)
+        return
+      }
+
       this._sendError(ws, '未知指令')
     } catch (err) {
       this._sendError(ws, err.message)
@@ -168,8 +181,9 @@ export class RoomManager {
     const game = this.rooms.get(roomId)
     if (!game) return this._sendError(ws, '房間不存在')
 
-    // Check joinability BEFORE deducting buy-in to avoid lost chips
-    if (game.phase !== 'waiting') return this._sendError(ws, '遊戲進行中，無法加入')
+    // Dragon Tiger runs continuously — players can join at any phase
+    const isDragonTiger = game.gameSlug === 'dragon-tiger'
+    if (!isDragonTiger && game.phase !== 'waiting') return this._sendError(ws, '遊戲進行中，無法加入')
     if (game.players.length >= game.maxPlayers) return this._sendError(ws, '房間已滿')
 
     if (this.pool) {
@@ -338,17 +352,18 @@ export class RoomManager {
     }
 
     if (type === 'round_result') {
-      // Blackjack round end: sync balances and write ledger entries
+      // Blackjack / Dragon Tiger round end: sync balances and write ledger entries
       this.botManager?.syncBalances(game)
       if (this.pool) {
         for (const r of data.results) {
           if (this.botManager?.isBot(r.id)) continue
+          if (!r.totalBet) continue
           const net = r.totalReturn - r.totalBet
           const entryType = net >= 0 ? 'hand_win' : 'hand_loss'
           dbQuery(
             'INSERT INTO ledger (user_id, type, amount, bet, room_id, game) VALUES ($1, $2, $3, $4, $5, $6)',
             [r.id, entryType, net, r.totalBet, roomId, game.gameSlug],
-          ).catch(err => console.error('[ledger blackjack]', err))
+          ).catch(err => console.error('[ledger round]', err))
         }
       }
       return  // no need to broadcast this event to clients

@@ -1719,6 +1719,10 @@ initDbWithRetry()
     const r3 = roomManager.createRoom({ gameType: 'big-two', gameSlug: 'big-two', betUnit: 10, maxPlayers: 4 })
     const g3 = roomManager.getRoom(r3)
     if (g3) botManager.fillRoom(g3, r3, bt3BotCount)
+
+    const r4 = roomManager.createRoom({ gameType: 'dragon-tiger', gameSlug: 'dragon-tiger', maxPlayers: 6, minBet: 20, maxBet: 10000 })
+    const g4 = roomManager.getRoom(r4)
+    if (g4) botManager.fillRoom(g4, r4, 3)
   })
   .catch((error) => {
     console.error('Failed to initialize:', error)

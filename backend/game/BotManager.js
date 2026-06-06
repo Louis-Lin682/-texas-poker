@@ -122,6 +122,10 @@ export class BotManager {
       this._handleBlackjackTurn(game, publicState)
       return
     }
+    if (game.gameSlug === 'dragon-tiger') {
+      this._handleDragonTigerTurn(game, publicState)
+      return
+    }
 
     if (publicState.phase === 'waiting') {
       // Clear stale game-phase action tracking from previous hand
@@ -357,6 +361,52 @@ export class BotManager {
       }, delay)
 
       this._timers.set(actingId, t)
+    }
+  }
+
+  _handleDragonTigerTurn(game, publicState) {
+    // Free bots that were silently removed (e.g. balance hit 0)
+    for (const [id, info] of this.bots) {
+      if (info.roomId === game.roomId && !game.players.some(p => p.id === id)) {
+        this._cancelTimer(id)
+        info.roomId = null
+      }
+    }
+
+    if (publicState.phase !== 'betting') return
+
+    // Clear stale action tracking when a new round starts (bets reset to 0)
+    for (const p of publicState.players) {
+      if (this.isBot(p.id) && p.bets &&
+          p.bets.dragon === 0 && p.bets.tie === 0 && p.bets.tiger === 0) {
+        this._actionBots.delete(p.id)
+      }
+    }
+
+    const ZONES   = ['dragon', 'dragon', 'tiger', 'tiger', 'tie']
+    const AMOUNTS = [20, 50, 100, 500, 1000]
+
+    for (const p of publicState.players) {
+      if (!this.isBot(p.id)) continue
+      if (this._actionBots.has(p.id)) continue
+      const totalBet = p.bets ? p.bets.dragon + p.bets.tie + p.bets.tiger : 0
+      if (totalBet > 0) continue
+      this._actionBots.add(p.id)
+
+      const delay = 1500 + Math.random() * 5000
+      const t = setTimeout(() => {
+        this._actionBots.delete(p.id)
+        this._timers.delete(p.id)
+        if (game.phase !== 'betting') return
+        const botPlayer = game.players.find(pl => pl.id === p.id)
+        if (!botPlayer || botPlayer.balance <= 0) return
+
+        const zone   = ZONES[Math.floor(Math.random() * ZONES.length)]
+        const amount = AMOUNTS[Math.floor(Math.random() * AMOUNTS.length)]
+        try { game.placeBet(p.id, zone, Math.min(amount, botPlayer.balance)) } catch {}
+      }, delay)
+
+      this._timers.set(p.id, t)
     }
   }
 

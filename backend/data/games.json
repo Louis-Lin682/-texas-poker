@@ -49,9 +49,10 @@
     "slug": "dragon-tiger",
     "name": "龍虎鬥：巔峰對決",
     "category": "poker",
-    "featured": false,
-    "status": "preview",
-    "badge": "SOON",
+    "featured": true,
+    "status": "playable",
+    "badge": "NEW",
+    "route": "/dragon-tiger",
     "imageUrl": "/games/poker/Dragon-Tiger.png"
   },
   {
