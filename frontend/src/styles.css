@@ -2163,7 +2163,7 @@ button.is-pressing {
 
 .my-action-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -2191,6 +2191,7 @@ button.is-pressing {
   font-size: 14px;
   font-weight: 800;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .my-action-tile small {

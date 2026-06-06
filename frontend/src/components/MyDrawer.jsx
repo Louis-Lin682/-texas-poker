@@ -119,10 +119,7 @@ function MyDrawer({ isOpen, onClose, profile, onLogout }) {
               <ActionTile label="儲值紀錄" onClick={() => {}} />
               <ActionTile label="任務中心" onClick={() => goTo('/quest')} />
               <ActionTile label="最新消息" onClick={() => goTo('/news')} />
-            </div>
-
-            <div className="my-menu-list" style={{ marginTop: 10 }}>
-              <MenuRow label="帳務明細" onClick={() => goTo('/ledger')} />
+              <ActionTile label="帳務明細" onClick={() => goTo('/ledger')} />
             </div>
           </section>
 
