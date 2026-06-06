@@ -27,10 +27,57 @@ function _rawSetSfxMuted(v)  { _sfxMuted  = v; localStorage.setItem(K.sfxMuted, 
 function _rawSetBgmVolume(v) { _bgmVolume = v; localStorage.setItem(K.bgmVol, String(v)) }
 function _rawSetSfxVolume(v) { _sfxVolume = v; localStorage.setItem(K.sfxVol, String(v)) }
 
-export function setGlobalBgmMuted(v)  { _rawSetBgmMuted(v);  window.dispatchEvent(new Event(SETTINGS_EVENT)) }
-export function setGlobalSfxMuted(v)  { _rawSetSfxMuted(v);  window.dispatchEvent(new Event(SETTINGS_EVENT)) }
-export function setGlobalBgmVolume(v) { _rawSetBgmVolume(v); window.dispatchEvent(new Event(SETTINGS_EVENT)) }
-export function setGlobalSfxVolume(v) { _rawSetSfxVolume(v); window.dispatchEvent(new Event(SETTINGS_EVENT)) }
+// ── Web Audio API ─────────────────────────────────────────────────────────────
+
+let _audioCtx = null
+let _bgmGain  = null
+let _sfxGain  = null
+const _wiredSet = new WeakSet()
+
+function _initCtx() {
+  if (_audioCtx) return
+  const Ctx = window.AudioContext || window.webkitAudioContext
+  if (!Ctx) return
+  _audioCtx = new Ctx()
+  _bgmGain = _audioCtx.createGain()
+  _sfxGain = _audioCtx.createGain()
+  _bgmGain.gain.value = _bgmMuted ? 0 : _bgmVolume
+  _sfxGain.gain.value = _sfxMuted ? 0 : _sfxVolume
+  _bgmGain.connect(_audioCtx.destination)
+  _sfxGain.connect(_audioCtx.destination)
+}
+
+function _wire(audio, isBgm) {
+  if (_wiredSet.has(audio) || !_audioCtx) return
+  try {
+    const src = _audioCtx.createMediaElementSource(audio)
+    src.connect(isBgm ? _bgmGain : _sfxGain)
+    _wiredSet.add(audio)
+  } catch {}
+}
+
+// ── Public setters ────────────────────────────────────────────────────────────
+
+export function setGlobalBgmMuted(v) {
+  _rawSetBgmMuted(v)
+  if (_bgmGain) _bgmGain.gain.value = v ? 0 : _bgmVolume
+  window.dispatchEvent(new Event(SETTINGS_EVENT))
+}
+export function setGlobalSfxMuted(v) {
+  _rawSetSfxMuted(v)
+  if (_sfxGain) _sfxGain.gain.value = v ? 0 : _sfxVolume
+  window.dispatchEvent(new Event(SETTINGS_EVENT))
+}
+export function setGlobalBgmVolume(v) {
+  _rawSetBgmVolume(v)
+  if (_bgmGain) _bgmGain.gain.value = _bgmMuted ? 0 : v
+  window.dispatchEvent(new Event(SETTINGS_EVENT))
+}
+export function setGlobalSfxVolume(v) {
+  _rawSetSfxVolume(v)
+  if (_sfxGain) _sfxGain.gain.value = _sfxMuted ? 0 : v
+  window.dispatchEvent(new Event(SETTINGS_EVENT))
+}
 
 export function getAudioSettings() {
   return {
@@ -51,12 +98,17 @@ function effectiveVolume(config) {
 }
 
 function applyBgmSettings(audio, config, overrides = {}) {
-  const isMuted  = _bgmMuted
-  const globalV  = _bgmVolume
-  audio.src      = overrides.src  ?? config.src
-  audio.loop     = overrides.loop ?? config.loop ?? false
-  audio.volume   = isMuted ? 0 : (overrides.volume ?? config.volume ?? 1) * globalV
-  audio.muted    = isMuted
+  audio.src  = overrides.src  ?? config.src
+  audio.loop = overrides.loop ?? config.loop ?? false
+  if (_audioCtx) {
+    // GainNode controls volume; element must not be muted
+    audio.muted  = false
+    audio.volume = 1
+  } else {
+    const isMuted = _bgmMuted
+    audio.volume  = isMuted ? 0 : (overrides.volume ?? config.volume ?? 1) * _bgmVolume
+    audio.muted   = isMuted
+  }
   audio.currentTime = overrides.currentTime ?? 0
 }
 
@@ -65,7 +117,6 @@ function applyBgmSettings(audio, config, overrides = {}) {
 export function useAudio() {
   const audioRegistryRef = useRef(new Map())
 
-  // React state mirrors — used so components can re-render on change
   const [bgmMuted,  setBgmMutedState]  = useState(_bgmMuted)
   const [sfxMuted,  setSfxMutedState]  = useState(_sfxMuted)
   const [bgmVolume, setBgmVolumeState] = useState(_bgmVolume)
@@ -86,6 +137,11 @@ export function useAudio() {
     if (!config || !audio) return false
 
     try {
+      // Init Web Audio on first user-triggered play; wire element through GainNode
+      _initCtx()
+      _wire(audio, Boolean(config.bgm))
+      if (_audioCtx?.state === 'suspended') await _audioCtx.resume()
+
       if (config.bgm) {
         const hasOverrides = Object.keys(overrides).length > 0
         if (!audio.paused && !hasOverrides) return true
@@ -95,8 +151,13 @@ export function useAudio() {
         await audio.play()
       } else {
         audio.currentTime = 0
-        audio.volume = effectiveVolume(config)
-        audio.muted  = _sfxMuted
+        if (_audioCtx) {
+          audio.muted  = false
+          audio.volume = 1
+        } else {
+          audio.volume = effectiveVolume(config)
+          audio.muted  = _sfxMuted
+        }
         await audio.play()
       }
       return true
@@ -133,8 +194,13 @@ export function useAudio() {
     })
   }, [getAudio])
 
-  // Live-update any currently-playing BGM when settings change
+  // Live-update gain when BGM settings change
   useEffect(() => {
+    if (_bgmGain) {
+      _bgmGain.gain.value = bgmMuted ? 0 : bgmVolume
+      return
+    }
+    // Fallback for browsers without Web Audio
     audioRegistryRef.current.forEach((audio, key) => {
       const config = audioMap[key]
       if (!config?.bgm) return
@@ -155,28 +221,30 @@ export function useAudio() {
     return () => window.removeEventListener(SETTINGS_EVENT, sync)
   }, [])
 
-  // Expose setters that update both module globals and React state
   const setBgmMuted = useCallback((v) => {
     _rawSetBgmMuted(v)
+    if (_bgmGain) _bgmGain.gain.value = v ? 0 : _bgmVolume
     setBgmMutedState(v)
   }, [])
 
   const setSfxMuted = useCallback((v) => {
     _rawSetSfxMuted(v)
+    if (_sfxGain) _sfxGain.gain.value = v ? 0 : _sfxVolume
     setSfxMutedState(v)
   }, [])
 
   const setBgmVolume = useCallback((v) => {
     _rawSetBgmVolume(v)
+    if (_bgmGain) _bgmGain.gain.value = _bgmMuted ? 0 : v
     setBgmVolumeState(v)
   }, [])
 
   const setSfxVolume = useCallback((v) => {
     _rawSetSfxVolume(v)
+    if (_sfxGain) _sfxGain.gain.value = _sfxMuted ? 0 : v
     setSfxVolumeState(v)
   }, [])
 
-  // Backward-compat alias (old code that calls toggleMute treats BGM as "the" mute)
   const isMuted    = bgmMuted
   const toggleMute = useCallback(() => setBgmMuted(!_bgmMuted), [setBgmMuted])
 
