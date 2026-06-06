@@ -21,8 +21,10 @@ export class BotManager {
     this.pool = pool
     // id → { username, balance, roomId }
     this.bots = new Map()
-    // id → setTimeout handle (action timers)
+    // id → setTimeout handle (ready + action timers)
     this._timers = new Map()
+    // ids of bots that already have a game-phase action timer set (not ready timers)
+    this._actionBots = new Set()
     // roomId → [setTimeout handles] (staggered join timers)
     this._joinTimers = new Map()
   }
@@ -146,13 +148,16 @@ export class BotManager {
 
     const actingId = publicState.actingPlayerId
     if (!actingId || !this.isBot(actingId)) return
-    if (this._timers.has(actingId)) return
+    if (this._actionBots.has(actingId)) return  // game-phase timer already set
+    this._cancelTimer(actingId)                 // clear any stale ready-phase timer
+    this._actionBots.add(actingId)
 
     const me = publicState.players.find(p => p.id === actingId)
     if (!me) return
 
     const delay = THINK_MIN + Math.random() * (THINK_MAX - THINK_MIN)
     const timer = setTimeout(() => {
+      this._actionBots.delete(actingId)
       this._timers.delete(actingId)
       const acting = game._actingPlayer()
       if (!acting || acting.id !== actingId) return
@@ -210,13 +215,16 @@ export class BotManager {
 
     const actingId = publicState.currentPlayerId
     if (!actingId || !this.isBot(actingId)) return
-    if (this._timers.has(actingId)) return
+    if (this._actionBots.has(actingId)) return
+    this._cancelTimer(actingId)
+    this._actionBots.add(actingId)
 
     const botPlayer = game.players.find(p => p.id === actingId)
     if (!botPlayer || botPlayer.status !== 'playing') return
 
     const delay = THINK_MIN + Math.random() * (THINK_MAX - THINK_MIN)
     const timer = setTimeout(() => {
+      this._actionBots.delete(actingId)
       this._timers.delete(actingId)
       if (game.players[game.currentPlayerIdx]?.id !== actingId) return
       const bp = game.players.find(p => p.id === actingId)
@@ -280,10 +288,13 @@ export class BotManager {
     if (publicState.phase === 'playing') {
       const actingId = publicState.currentActorId
       if (!actingId || !this.isBot(actingId)) return
-      if (this._timers.has(actingId)) return
+      if (this._actionBots.has(actingId)) return
+      this._cancelTimer(actingId)
+      this._actionBots.add(actingId)
 
       const delay = THINK_MIN + Math.random() * (THINK_MAX - THINK_MIN)
       const t = setTimeout(() => {
+        this._actionBots.delete(actingId)
         this._timers.delete(actingId)
         if (game.phase !== 'playing') return
         if (game._roundPlayers[game._actorIdx]?.id !== actingId) return

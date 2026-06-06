@@ -918,7 +918,7 @@ export default function BlackjackTablePage({ auth }) {
                       border: '1px solid rgba(255,255,255,0.1)',
                       borderRadius: 20, padding: '4px 14px', backdropFilter: 'blur(4px)',
                     }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#bbb' }}>莊家出牌中…</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#bbb', whiteSpace: 'nowrap' }}>莊家出牌中…</span>
                     </div>
                   )}
                   <div className="pt-pot">
