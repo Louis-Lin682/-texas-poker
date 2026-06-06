@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import PageShell from '../components/PageShell'
 import VipPageHeader from '../components/VipPageHeader'
 import { apiRequest } from '../services/apiClient'
@@ -49,12 +49,29 @@ function SettingsRow({ label, children }) {
 }
 
 function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
-  function handleSlider(e) {
-    const v = parseFloat(e.target.value)
-    onVolume(v)
-    if (v === 0 && enabled)  onToggle(false)
-    if (v > 0  && !enabled) onToggle(true)
-  }
+  const sliderRef = useRef(null)
+
+  // Sync visual fill when volume changes from outside (e.g. toggle resets)
+  useEffect(() => {
+    const el = sliderRef.current
+    if (el) el.style.setProperty('--pct', `${Math.round(volume * 100)}%`)
+  }, [volume])
+
+  // Native listener — most reliable for iOS Safari range inputs
+  useEffect(() => {
+    const el = sliderRef.current
+    if (!el) return
+    function handle() {
+      const v = parseFloat(el.value)
+      el.style.setProperty('--pct', `${Math.round(v * 100)}%`)
+      onVolume(v)
+      if (v === 0 && enabled)  onToggle(false)
+      if (v > 0  && !enabled) onToggle(true)
+    }
+    el.addEventListener('input', handle)
+    return () => el.removeEventListener('input', handle)
+  }) // re-attach when enabled/onToggle/onVolume change
+
   return (
     <div className="settings-audio-block">
       <div className="settings-row">
@@ -64,13 +81,12 @@ function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
       <div className="settings-slider-row">
         <span className="settings-slider-icon">🔈</span>
         <input
+          ref={sliderRef}
           type="range"
           className="settings-slider"
           min={0} max={1} step={0.01}
-          value={volume}
+          defaultValue={volume}
           style={{ '--pct': `${Math.round(volume * 100)}%` }}
-          onChange={handleSlider}
-          onInput={handleSlider}
         />
         <span className="settings-slider-icon">🔊</span>
       </div>

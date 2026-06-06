@@ -124,6 +124,10 @@ export class BotManager {
     }
 
     if (publicState.phase === 'waiting') {
+      // Clear stale game-phase action tracking from previous hand
+      for (const p of publicState.players) {
+        if (this.isBot(p.id)) this._actionBots.delete(p.id)
+      }
       // Free bots silently removed from game (e.g. balance hit 0 in _startHand)
       for (const [id, info] of this.bots) {
         if (info.roomId === game.roomId && !game.players.some(p => p.id === id)) {
@@ -148,12 +152,12 @@ export class BotManager {
 
     const actingId = publicState.actingPlayerId
     if (!actingId || !this.isBot(actingId)) return
-    if (this._actionBots.has(actingId)) return  // game-phase timer already set
-    this._cancelTimer(actingId)                 // clear any stale ready-phase timer
-    this._actionBots.add(actingId)
+    if (this._actionBots.has(actingId)) return
+    this._cancelTimer(actingId)
 
     const me = publicState.players.find(p => p.id === actingId)
     if (!me) return
+    this._actionBots.add(actingId)
 
     const delay = THINK_MIN + Math.random() * (THINK_MAX - THINK_MIN)
     const timer = setTimeout(() => {
@@ -191,6 +195,10 @@ export class BotManager {
     // Only auto-ready if at least one human is in the room — bots should not start
     // games among themselves, which would block humans from joining mid-game.
     if (publicState.phase === 'waiting') {
+      // Clear stale game-phase action tracking from previous game
+      for (const p of publicState.players) {
+        if (this.isBot(p.id)) this._actionBots.delete(p.id)
+      }
       // Free bots silently removed from game (e.g. balance hit 0 in _resetGame)
       for (const [id, info] of this.bots) {
         if (info.roomId === game.roomId && !game.players.some(p => p.id === id)) {
@@ -213,14 +221,16 @@ export class BotManager {
       return
     }
 
+    if (publicState.phase !== 'playing') return
+
     const actingId = publicState.currentPlayerId
     if (!actingId || !this.isBot(actingId)) return
     if (this._actionBots.has(actingId)) return
     this._cancelTimer(actingId)
-    this._actionBots.add(actingId)
 
     const botPlayer = game.players.find(p => p.id === actingId)
     if (!botPlayer || botPlayer.status !== 'playing') return
+    this._actionBots.add(actingId)
 
     const delay = THINK_MIN + Math.random() * (THINK_MAX - THINK_MIN)
     const timer = setTimeout(() => {
@@ -239,7 +249,16 @@ export class BotManager {
       try {
         game.processAction(actingId, dec.action, dec.cards ?? [])
       } catch {
-        try { game.processAction(actingId, 'pass') } catch {}
+        // Smarter fallback: if free turn, must play a card; otherwise try pass
+        const pile = game.pile
+        const canPass = pile && pile.playerId !== actingId
+        if (canPass) {
+          try { game.processAction(actingId, 'pass') } catch {}
+        } else {
+          for (const card of (bp.hand ?? [])) {
+            try { game.processAction(actingId, 'play', [card]); break } catch {}
+          }
+        }
       }
     }, delay)
 
@@ -248,6 +267,10 @@ export class BotManager {
 
   _handleBlackjackTurn(game, publicState) {
     if (publicState.phase === 'waiting') {
+      // Clear stale game-phase action tracking from previous hand
+      for (const p of publicState.players) {
+        if (this.isBot(p.id)) this._actionBots.delete(p.id)
+      }
       for (const [id, info] of this.bots) {
         if (info.roomId === game.roomId && !game.players.some(p => p.id === id)) {
           this._cancelTimer(id)
@@ -270,6 +293,10 @@ export class BotManager {
     }
 
     if (publicState.phase === 'betting') {
+      // Clear stale action tracking when a new betting round starts
+      for (const p of publicState.players) {
+        if (this.isBot(p.id)) this._actionBots.delete(p.id)
+      }
       for (const p of publicState.players) {
         if (!this.isBot(p.id) || p.bet > 0) continue
         this._cancelTimer(p.id)
@@ -290,6 +317,9 @@ export class BotManager {
       if (!actingId || !this.isBot(actingId)) return
       if (this._actionBots.has(actingId)) return
       this._cancelTimer(actingId)
+
+      const actor0 = game._roundPlayers?.[game._actorIdx]
+      if (!actor0 || actor0.id !== actingId) return
       this._actionBots.add(actingId)
 
       const delay = THINK_MIN + Math.random() * (THINK_MAX - THINK_MIN)
