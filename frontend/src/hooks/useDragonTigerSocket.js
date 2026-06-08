@@ -137,8 +137,16 @@ export function useDragonTigerSocket({ minBuyIn = 3000 } = {}) {
     send({ type: 'dt_place_bet', zone, amount })
   }, [send])
 
+  const cancelLastBet = useCallback(() => {
+    send({ type: 'dt_cancel_last_bet' })
+  }, [send])
+
+  const cancelBets = useCallback(() => {
+    send({ type: 'dt_cancel_bets' })
+  }, [send])
+
   return {
     status, rooms, roomId, myId, gameState, error, cashoutBalance,
-    refreshRooms, createRoom, joinRoom, leaveRoom, setReady, placeBet,
+    refreshRooms, createRoom, joinRoom, leaveRoom, setReady, placeBet, cancelLastBet, cancelBets,
   }
 }

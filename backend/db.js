@@ -69,8 +69,9 @@ export async function initDb() {
       game TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
-    ALTER TABLE ledger ADD COLUMN IF NOT EXISTS game TEXT;
-    ALTER TABLE ledger ADD COLUMN IF NOT EXISTS bet  INTEGER;
+    ALTER TABLE ledger ADD COLUMN IF NOT EXISTS game   TEXT;
+    ALTER TABLE ledger ADD COLUMN IF NOT EXISTS bet    INTEGER;
+    ALTER TABLE ledger ADD COLUMN IF NOT EXISTS detail JSONB;
     ALTER TABLE users  ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
     CREATE INDEX IF NOT EXISTS idx_ledger_user ON ledger (user_id, created_at DESC);
 

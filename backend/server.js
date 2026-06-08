@@ -522,7 +522,7 @@ const server = http.createServer(async (request, response) => {
 
       const [{ rows }, { rows: sumRows }] = await Promise.all([
         query(
-          `SELECT id, type, amount, bet, room_id, game, created_at
+          `SELECT id, type, amount, bet, room_id, game, detail, created_at
            FROM ledger WHERE ${whereStr}
            ORDER BY created_at DESC
            LIMIT $${fp.length + 1} OFFSET $${fp.length + 2}`,

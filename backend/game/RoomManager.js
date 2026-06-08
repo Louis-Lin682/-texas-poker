@@ -161,6 +161,20 @@ export class RoomManager {
         return
       }
 
+      if (type === 'dt_cancel_last_bet') {
+        const game = this._roomOf(info)
+        if (!game) return this._sendError(ws, '尚未加入房間')
+        game.cancelLastBet(info.userId)
+        return
+      }
+
+      if (type === 'dt_cancel_bets') {
+        const game = this._roomOf(info)
+        if (!game) return this._sendError(ws, '尚未加入房間')
+        game.cancelBets(info.userId)
+        return
+      }
+
       this._sendError(ws, '未知指令')
     } catch (err) {
       this._sendError(ws, err.message)
@@ -361,8 +375,8 @@ export class RoomManager {
           const net = r.totalReturn - r.totalBet
           const entryType = net >= 0 ? 'hand_win' : 'hand_loss'
           dbQuery(
-            'INSERT INTO ledger (user_id, type, amount, bet, room_id, game) VALUES ($1, $2, $3, $4, $5, $6)',
-            [r.id, entryType, net, r.totalBet, roomId, game.gameSlug],
+            'INSERT INTO ledger (user_id, type, amount, bet, room_id, game, detail) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [r.id, entryType, net, r.totalBet, roomId, game.gameSlug, r.detail ? JSON.stringify(r.detail) : null],
           ).catch(err => console.error('[ledger round]', err))
         }
       }

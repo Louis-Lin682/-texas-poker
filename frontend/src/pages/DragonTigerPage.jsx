@@ -3,12 +3,15 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useDragonTigerSocket } from '../hooks/useDragonTigerSocket'
 import { useAudio, getAudioSettings } from '../hooks/useAudio'
 
-// Pre-load result SFX at module import time so they're ready well before result phase
+// Pre-load SFX at module import time for reliable playback
 function _mkAudio(src) { const a = new Audio(src); a.preload = 'auto'; return a }
-const _stamp1 = _mkAudio('/audio/DragonTiger/stamp.mp3')
-const _stamp2 = _mkAudio('/audio/DragonTiger/stamp.mp3')
+const _stamp1  = _mkAudio('/audio/DragonTiger/stamp.mp3')
+const _stamp2  = _mkAudio('/audio/DragonTiger/stamp.mp3')
 const _winSfx  = _mkAudio('/audio/DragonTiger/win.mp3')
 const _loseSfx = _mkAudio('/audio/DragonTiger/lose.mp3')
+const _dingding = _mkAudio('/audio/DragonTiger/dingding.mp3')
+const _chipPool = [0, 1, 2].map(() => _mkAudio('/audio/game/poker-chips.mp3'))
+let _chipIdx = 0
 
 const CHIPS = [
   { value: 20,   img: '/chip-red.png',       label: '20' },
@@ -124,7 +127,7 @@ function ZoneBetDisplay({ placements, totalBet, myBet, small }) {
           src={p.img}
           alt=""
           draggable={false}
-          className={`dt-placed-chip${small ? ' is-small' : ''}`}
+          className={`dt-placed-chip${small ? ' is-small' : ''}${p.isMe ? ' is-mine' : ''}`}
           style={{
             left:      `${p.x}%`,
             top:       `${p.y}%`,
@@ -241,6 +244,68 @@ function TigerWinAnim({ onDone }) {
         ? <canvas ref={canvasRef} className="dt-tiger-canvas" width={280} height={374} />
         : <img src="/DragonTiger/win/tiger_hand.png" alt="" className="dt-tiger-final" draggable={false} />
       }
+    </div>
+  )
+}
+
+const SUIT_COLOR = { '♥': '#e05050', '♦': '#e05050', '♠': '#e8e0cc', '♣': '#e8e0cc' }
+const RESULT_LABEL = { dragon: '龍勝', tiger: '虎勝', tie: '和局' }
+const RESULT_COLOR = { dragon: '#5b8cff', tiger: '#ff7c5b', tie: '#c8a84b' }
+
+function HistoryModal({ history, onClose }) {
+  return (
+    <div className="dt-rules-overlay" onClick={onClose}>
+      <div className="dt-history-modal" onClick={e => e.stopPropagation()}>
+        <img src="/DragonTiger/Accounting-outline.png" alt="" className="dt-history-bg" draggable={false} />
+        <div className="dt-history-inner">
+          <button type="button" className="dt-history-close" onClick={onClose}></button>
+          {history.length === 0 ? (
+            <div className="dt-history-empty">本場尚無記錄</div>
+          ) : (
+          <div className="dt-history-list">
+            {history.map(r => {
+              const dc = r.dragonCard
+              const tc = r.tigerCard
+              return (
+                <div key={`${r.roundId}-${r.ts}`} className="dt-history-row">
+                  <div className="dt-history-row-top">
+                    <span className="dt-history-round">第 {r.roundId} 局</span>
+                    <span className="dt-history-result" style={{ color: RESULT_COLOR[r.result] }}>
+                      {RESULT_LABEL[r.result]}
+                    </span>
+                    {r.totalBet > 0 && (
+                      <span className={`dt-history-net ${r.net > 0 ? 'is-win' : r.net < 0 ? 'is-lose' : ''}`}>
+                        {r.net > 0 ? `+${fmt(r.net)}` : fmt(r.net)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="dt-history-cards">
+                    <span className="dt-history-card-label">龍</span>
+                    <span className="dt-history-card" style={{ color: SUIT_COLOR[dc?.suit] }}>
+                      {dc ? `${dc.rank}${dc.suit}` : '—'}
+                    </span>
+                    <span className="dt-history-card-sep">vs</span>
+                    <span className="dt-history-card-label">虎</span>
+                    <span className="dt-history-card" style={{ color: SUIT_COLOR[tc?.suit] }}>
+                      {tc ? `${tc.rank}${tc.suit}` : '—'}
+                    </span>
+                  </div>
+                  {r.bets.length > 0 && (
+                    <div className="dt-history-bets">
+                      {r.bets.map(b => (
+                        <span key={b.zone} className="dt-history-bet-tag">
+                          {BET_LABELS[b.zone]} {fmt(b.amount)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -368,19 +433,26 @@ export default function DragonTigerPage({ auth }) {
   const {
     status, rooms, roomId, myId, gameState, error,
     cashoutBalance, refreshRooms, createRoom, joinRoom, leaveRoom,
-    placeBet,
+    placeBet, cancelLastBet, cancelBets,
   } = useDragonTigerSocket({ minBuyIn: buyIn })
 
   const [selectedChip,    setSelectedChip]    = useState(CHIPS[0])
+  const [pendingCancel,   setPendingCancel]   = useState(false)
   const [chipPlacements,  setChipPlacements]  = useState(emptyPlacements)
   const [betActivities,   setBetActivities]   = useState([])
   const [flashingPlayers, setFlashingPlayers] = useState(new Set())
   const [showAllPlayers,  setShowAllPlayers]  = useState(false)
   const [showRules,      setShowRules]      = useState(false)
+  const [showHistory,    setShowHistory]    = useState(false)
+  const [roundHistory,   setRoundHistory]   = useState([])
   const [showDragonWin,  setShowDragonWin]  = useState(false)
   const [showTigerWin,   setShowTigerWin]   = useState(false)
   const [dtBgmMuted,     setDtBgmMuted]     = useState(false)
   const dtBgmRef = useRef(null)
+
+  useEffect(() => {
+    if (!location.state) navigate('/', { replace: true })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const joinedRef         = useRef(false)
   const prevPhase         = useRef(null)
@@ -452,6 +524,7 @@ export default function DragonTigerPage({ auth }) {
 
     if (roundId !== prevRound.current) {
       setChipPlacements(emptyPlacements())
+      setPendingCancel(false)
       setShowDragonWin(false)
       setShowTigerWin(false)
       chipZRef.current       = 1
@@ -462,7 +535,8 @@ export default function DragonTigerPage({ auth }) {
     // Dingding on last second before dealing
     if (phase === 'betting' && gameState.countdown === 1 && !dingdingFiredRef.current) {
       dingdingFiredRef.current = true
-      play('dt_dingding')
+      const { sfxVolume, sfxMuted } = getAudioSettings()
+      if (!sfxMuted) { _dingding.volume = 0.90 * sfxVolume; _dingding.currentTime = 0; _dingding.play().catch(() => {}) }
     }
 
     if (phase !== prevPhase.current) {
@@ -476,6 +550,23 @@ export default function DragonTigerPage({ auth }) {
       if (phase === 'result') {
         if (gameState.result === 'dragon') setTimeout(() => setShowDragonWin(true), 700)
         if (gameState.result === 'tiger')  setTimeout(() => setShowTigerWin(true),  700)
+        // Record round history
+        const meNow = gameState.players.find(p => p.id === myId)
+        const bets  = meNow
+          ? ZONE_KEYS.filter(z => (meNow.bets[z] || 0) > 0).map(z => ({ zone: z, amount: meNow.bets[z] }))
+          : []
+        const totalBet = bets.reduce((s, b) => s + b.amount, 0)
+        setRoundHistory(h => [{
+          roundId:    gameState.roundId,
+          dragonCard: gameState.dragonCard,
+          tigerCard:  gameState.tigerCard,
+          result:     gameState.result,
+          bets,
+          totalBet,
+          payout:     meNow?.payout ?? 0,
+          net:        (meNow?.payout ?? 0) - totalBet,
+          ts:         Date.now(),
+        }, ...h].slice(0, 50))
       }
       prevPhase.current = phase
     }
@@ -499,6 +590,7 @@ export default function DragonTigerPage({ auth }) {
             changed = true
             const chipImg = [...CHIPS].reverse().find(c => c.value <= diff)?.img ?? CHIPS[0].img
             const chipId  = Date.now() + Math.random()
+            const isMe    = p.id === myId
             setChipPlacements(cp => ({
               ...cp,
               [z]: [...cp[z], {
@@ -508,10 +600,15 @@ export default function DragonTigerPage({ auth }) {
                 y:   rnd(30, 70),
                 rot: rnd(-20, 20),
                 z:   chipZRef.current++,
+                isMe,
               }],
             }))
-            if (p.id === myId) {
-              play('dt_chips')
+            if (isMe) {
+              const { sfxVolume, sfxMuted } = getAudioSettings()
+              if (!sfxMuted) {
+                const a = _chipPool[_chipIdx++ % _chipPool.length]
+                a.volume = 0.70 * sfxVolume; a.currentTime = 0; a.play().catch(() => {})
+              }
             } else {
               const id   = chipId + 0.1
               const text = `${p.username} 押${BET_LABELS[z]} ${fmt(diff)}`
@@ -541,6 +638,34 @@ export default function DragonTigerPage({ auth }) {
     placeBet(zone, selectedChip.value)
   }
 
+  const handleUndoBet = () => {
+    cancelLastBet()
+    setChipPlacements(prev => {
+      // find and remove the last isMe chip (highest z)
+      let maxZ = -1, maxZone = null
+      for (const z of ZONE_KEYS) {
+        for (const c of prev[z]) {
+          if (c.isMe && c.z > maxZ) { maxZ = c.z; maxZone = z }
+        }
+      }
+      if (!maxZone) return prev
+      return { ...prev, [maxZone]: prev[maxZone].filter(c => c.z !== maxZ) }
+    })
+  }
+
+  const handleCancelBets = () => {
+    cancelBets()
+    setPendingCancel(true)
+    setChipPlacements(prev => {
+      const cleared = emptyPlacements()
+      for (const z of ZONE_KEYS) {
+        cleared[z] = prev[z].filter(c => !c.isMe)
+      }
+      return cleared
+    })
+    if (myId) prevPlayerBetsRef.current[myId] = Object.fromEntries(ZONE_KEYS.map(z => [z, 0]))
+  }
+
   // ── Derived state ──────────────────────────────────────────
 
   const phase      = gameState?.phase ?? 'idle'
@@ -551,10 +676,11 @@ export default function DragonTigerPage({ auth }) {
   const result     = gameState?.result     ?? null
 
   const me         = players.find(p => p.id === myId)
-  const myBets     = me?.bets ?? Object.fromEntries(ZONE_KEYS.map(z => [z, 0]))
-  const myPayout       = me?.payout ?? 0
-  const myTotalBet     = ZONE_KEYS.reduce((s, z) => s + (myBets[z] || 0), 0)
-  const myRoundTotalBet = me?.roundTotalBet ?? myTotalBet
+  const _serverBets = me?.bets ?? Object.fromEntries(ZONE_KEYS.map(z => [z, 0]))
+  const myBets      = pendingCancel ? Object.fromEntries(ZONE_KEYS.map(z => [z, 0])) : _serverBets
+  const myPayout        = me?.payout ?? 0
+  const myTotalBet      = pendingCancel ? 0 : ZONE_KEYS.reduce((s, z) => s + (myBets[z] || 0), 0)
+  const myRoundTotalBet = pendingCancel ? 0 : (me?.roundTotalBet ?? myTotalBet)
 
   const zoneTotals = Object.fromEntries(ZONE_KEYS.map(z => [z, 0]))
   for (const p of players) {
@@ -631,6 +757,11 @@ export default function DragonTigerPage({ auth }) {
           <img src="/DragonTiger/ruleIcon.png" alt="規則" draggable={false} />
         </button>
 
+        {/* Ledger button */}
+        <button type="button" className="dt-ledger-btn" onClick={() => setShowHistory(true)} data-no-global-click="true">
+          <img src="/DragonTiger/accounting.png" alt="帳務" draggable={false} />
+        </button>
+
         {/* Cards */}
         <div className="dt-cards-area">
           <img src="/DragonTiger/DragonIcon.png" alt="龍" className="dt-card-label dt-label-dragon" draggable={false} />
@@ -662,6 +793,14 @@ export default function DragonTigerPage({ auth }) {
             </button>
           ))}
         </div>
+
+        {/* Bet action buttons — sit on the table rail */}
+        {myTotalBet > 0 && isBetting && (
+          <div className="dt-rail-actions">
+            <button type="button" className="dt-rail-undo" onClick={handleUndoBet} data-no-global-click="true">撤銷</button>
+            <button type="button" className="dt-rail-clear" onClick={handleCancelBets} data-no-global-click="true">全清</button>
+          </div>
+        )}
 
         {/* Result overlay */}
         {isResult && (
@@ -698,14 +837,12 @@ export default function DragonTigerPage({ auth }) {
         )}
       </div>
 
+
       {/* My bets summary */}
       {myTotalBet > 0 && (
         <div className="dt-bet-summary-bar">
           {ZONE_KEYS.filter(z => (myBets[z] || 0) > 0).map(z => (
-            <span
-              key={z}
-              className={`dt-bet-tag dt-bet-${z.split('_')[0]}`}
-            >
+            <span key={z} className={`dt-bet-tag dt-bet-${z.split('_')[0]}`}>
               {BET_LABELS[z]}：{fmt(myBets[z])}
             </span>
           ))}
@@ -715,6 +852,7 @@ export default function DragonTigerPage({ auth }) {
       {/* Bottom panel */}
       {(phase === 'betting' || phase === 'dealing') && (
         <div className={`dt-bottom-panel${phase === 'dealing' ? ' is-dealing' : ''}`}>
+          <div className="dt-chip-hint">已選面額：{fmt(selectedChip.value)}</div>
           <div className="dt-chip-tray">
             {CHIPS.map(chip => (
               <button
@@ -731,7 +869,6 @@ export default function DragonTigerPage({ auth }) {
               </button>
             ))}
           </div>
-          <div className="dt-chip-hint">已選面額：{fmt(selectedChip.value)}</div>
         </div>
       )}
 
@@ -766,6 +903,9 @@ export default function DragonTigerPage({ auth }) {
 
       {/* Rules modal */}
       {showRules && <RulesModal onClose={() => setShowRules(false)} />}
+
+      {/* History modal */}
+      {showHistory && <HistoryModal history={roundHistory} onClose={() => setShowHistory(false)} />}
 
       {/* All-players modal */}
       {showAllPlayers && (

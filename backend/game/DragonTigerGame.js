@@ -98,7 +98,7 @@ export class DragonTigerGame {
   addPlayer({ id, username, balance }) {
     if (this.players.find(p => p.id === id)) return
     if (this.players.length >= this.maxPlayers) throw new Error('房間已滿')
-    this.players.push({ id, username, balance, bets: emptyBets(), payout: 0 })
+    this.players.push({ id, username, balance, bets: emptyBets(), payout: 0, betHistory: [] })
     this._emit('state_update')
   }
 
@@ -110,6 +110,29 @@ export class DragonTigerGame {
   }
 
   setReady() {} // no-op — continuous game needs no ready
+
+  cancelLastBet(id) {
+    if (this.phase !== 'betting') throw new Error('目前不是下注階段')
+    const p = this.players.find(p => p.id === id)
+    if (!p) throw new Error('玩家不在房間內')
+    if (!p.betHistory || p.betHistory.length === 0) throw new Error('沒有可撤銷的下注')
+    const last = p.betHistory.pop()
+    p.bets[last.zone] -= last.amount
+    p.balance         += last.amount
+    this._emit('state_update')
+  }
+
+  cancelBets(id) {
+    if (this.phase !== 'betting') throw new Error('目前不是下注階段')
+    const p = this.players.find(p => p.id === id)
+    if (!p) throw new Error('玩家不在房間內')
+    const total = Object.values(p.bets).reduce((a, v) => a + v, 0)
+    if (total === 0) throw new Error('尚未下注')
+    p.balance    += total
+    p.bets        = emptyBets()
+    p.betHistory  = []
+    this._emit('state_update')
+  }
 
   // ── Betting ───────────────────────────────────────────────
 
@@ -146,6 +169,7 @@ export class DragonTigerGame {
 
     p.bets[zone] += amount
     p.balance    -= amount
+    p.betHistory.push({ zone, amount })
     this._emit('state_update')
   }
 
@@ -163,6 +187,7 @@ export class DragonTigerGame {
       p.bets          = emptyBets()
       p.payout        = 0
       p.roundTotalBet = 0
+      p.betHistory    = []
     }
 
     this._emit('state_update')
@@ -225,7 +250,15 @@ export class DragonTigerGame {
       p.balance      += payout
       p.payout        = payout
       p.roundTotalBet = totalBet
-      roundResults.push({ id: p.id, payout, totalBet, totalReturn: payout, net: payout - totalBet })
+      roundResults.push({
+        id: p.id, payout, totalBet, totalReturn: payout, net: payout - totalBet,
+        detail: {
+          result:     this.result,
+          dragonCard: { rank: this.dragonCard.rank, suit: this.dragonCard.suit },
+          tigerCard:  { rank: this.tigerCard.rank,  suit: this.tigerCard.suit  },
+          bets:       Object.fromEntries(Object.entries(b).filter(([, v]) => v > 0)),
+        },
+      })
     }
 
     this._emit('state_update')

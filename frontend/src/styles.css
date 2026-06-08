@@ -1748,6 +1748,32 @@ button.is-pressing {
   font-size: 11px;
   color: rgba(225, 215, 178, 0.4);
 }
+.ledger-dt-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+.ledger-dt-result {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c8a84b;
+  background: rgba(200,160,50,.12);
+  border: 1px solid rgba(200,160,50,.3);
+  border-radius: 8px;
+  padding: 0 6px;
+}
+.ledger-dt-cards {
+  font-size: 12px;
+  color: rgba(225,215,178,.7);
+  font-weight: 600;
+  letter-spacing: .5px;
+}
+.ledger-dt-bets {
+  font-size: 11px;
+  color: rgba(225,215,178,.45);
+}
 
 .ledger-empty {
   margin: 8px 0 4px;
@@ -9614,6 +9640,7 @@ button.is-pressing {
   flex-direction: column;
   align-items: flex-end;
   flex-shrink: 0;
+  gap: 2px;
 }
 .dt-balance-label { font-size: 10px; color: #8a7050; }
 .dt-balance-val   { font-size: 15px; font-weight: 800; color: #f0c96b; }
@@ -9791,6 +9818,9 @@ button.is-pressing {
 .dt-placed-chip.is-small {
   width: 22px;
   height: 22px;
+}
+.dt-placed-chip.is-mine {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.7)) drop-shadow(0 0 6px rgba(240,200,80,.9));
 }
 
 .dt-zone-bet-label {
@@ -10069,14 +10099,51 @@ button.is-pressing {
   text-shadow: 0 0 6px rgba(255,220,80,.8);
 }
 
+.dt-chip-hint-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-bottom: 2px;
+}
 .dt-chip-hint {
-  text-align: center;
   font-size: 11px;
   font-weight: 700;
   color: #b89040;
   letter-spacing: .5px;
-  padding-bottom: 2px;
+  text-align: center;
 }
+.dt-rail-actions {
+  position: absolute;
+  bottom: 9%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 5;
+}
+.dt-rail-undo,
+.dt-rail-clear {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 4px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  border: 1px solid;
+}
+.dt-rail-undo {
+  color: #ffd080;
+  background: rgba(40,30,10,.75);
+  border-color: rgba(200,150,50,.6);
+}
+.dt-rail-clear {
+  color: #ff9090;
+  background: rgba(40,10,10,.75);
+  border-color: rgba(200,60,60,.6);
+}
+.dt-rail-undo:active,
+.dt-rail-clear:active { opacity: 0.65; }
 
 .dt-bet-tag {
   font-size: 12px;
@@ -10203,6 +10270,28 @@ button.is-pressing {
 }
 .dt-rule-btn:active img { transform: scale(0.88); }
 
+.dt-ledger-btn {
+  position: absolute;
+  top: calc(3% + 50px);
+  left: 3%;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 5;
+  -webkit-tap-highlight-color: transparent;
+}
+.dt-ledger-btn img {
+  width: 44px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,.7));
+  transition: transform 120ms ease;
+}
+.dt-ledger-btn:active img { transform: scale(0.88); }
+
 .dt-bgm-btn {
   position: absolute;
   top: 3%;
@@ -10224,6 +10313,111 @@ button.is-pressing {
   transition: transform 120ms ease, opacity 120ms ease;
 }
 .dt-bgm-btn:active img { transform: scale(0.88); }
+
+/* ── Dragon Tiger history modal ───────────────────────── */
+.dt-history-modal {
+  position: relative;
+  width: 88%;
+  max-width: 380px;
+}
+.dt-history-bg {
+  width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
+.dt-history-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18% 8% 12%;
+  overflow: hidden;
+}
+.dt-history-close {
+  position: absolute;
+  top: 7.5%;
+  right: 10%;
+  font-size: 18px;
+  color: #c8a84b;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.dt-history-empty {
+  text-align: center;
+  color: #7a6030;
+  padding: 32px 0;
+  font-size: 14px;
+}
+.dt-history-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+.dt-history-row {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.dt-history-row-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.dt-history-round {
+  font-size: 11px;
+  color: #7a6030;
+  flex-shrink: 0;
+}
+.dt-history-result {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .5px;
+}
+.dt-history-net {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 900;
+  color: #b0a070;
+}
+.dt-history-net.is-win  { color: #ffe566; }
+.dt-history-net.is-lose { color: #ff7070; }
+.dt-history-cards {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+.dt-history-card-label {
+  font-size: 11px;
+  color: #7a6030;
+}
+.dt-history-card {
+  font-weight: 700;
+  font-size: 14px;
+}
+.dt-history-card-sep {
+  color: #4a3820;
+  font-size: 11px;
+  margin: 0 2px;
+}
+.dt-history-bets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dt-history-bet-tag {
+  font-size: 11px;
+  color: #c0a060;
+  background: rgba(180,130,40,.15);
+  border: 1px solid rgba(180,130,40,.3);
+  border-radius: 8px;
+  padding: 1px 7px;
+}
 
 .dt-rules-overlay {
   position: fixed;

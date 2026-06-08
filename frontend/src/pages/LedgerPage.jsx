@@ -28,6 +28,17 @@ const TYPE_LABEL = {
 const GAME_LABEL = {
   'texas-holdem': '德州撲克',
   'big-two':      '大老二',
+  'dragon-tiger': '龍虎鬥',
+}
+
+const SUIT_RED  = new Set(['♥', '♦'])
+const DT_RESULT = { dragon: '龍勝', tiger: '虎勝', tie: '和局' }
+const DT_BET_LABEL = {
+  dragon: '龍', tiger: '虎', tie: '和',
+  dragon_big: '龍大', dragon_small: '龍小', dragon_odd: '龍單', dragon_even: '龍雙',
+  dragon_spade: '龍♠', dragon_heart: '龍♥', dragon_club: '龍♣', dragon_diamond: '龍♦',
+  tiger_big: '虎大', tiger_small: '虎小', tiger_odd: '虎單', tiger_even: '虎雙',
+  tiger_spade: '虎♠', tiger_heart: '虎♥', tiger_club: '虎♣', tiger_diamond: '虎♦',
 }
 
 const DATE_CHIPS = [
@@ -392,6 +403,31 @@ function LedgerPage() {
                       {e.room_id && <span className="ledger-room">#{e.room_id}</span>}
                       <span className="ledger-time">{dateFmt(e.created_at)}</span>
                       {note && <span className="ledger-note">{note}</span>}
+                      {e.detail && e.game === 'dragon-tiger' && (() => {
+                        const d = e.detail
+                        const dc = d.dragonCard, tc = d.tigerCard
+                        return (
+                          <div className="ledger-dt-detail">
+                            <span className="ledger-dt-result">{DT_RESULT[d.result] ?? d.result}</span>
+                            <span className="ledger-dt-cards">
+                              龍<span style={{ color: SUIT_RED.has(dc?.suit) ? '#e05050' : '#e8e0cc' }}>
+                                {dc ? `${dc.rank}${dc.suit}` : '—'}
+                              </span>
+                              {' vs '}
+                              虎<span style={{ color: SUIT_RED.has(tc?.suit) ? '#e05050' : '#e8e0cc' }}>
+                                {tc ? `${tc.rank}${tc.suit}` : '—'}
+                              </span>
+                            </span>
+                            {d.bets && Object.keys(d.bets).length > 0 && (
+                              <span className="ledger-dt-bets">
+                                {Object.entries(d.bets).map(([z, amt]) =>
+                                  `${DT_BET_LABEL[z] ?? z} ${fmt(amt)}`
+                                ).join('・')}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </div>
                     <span className={`ledger-amount ${e.amount === 0 ? '' : positive ? 'is-positive' : 'is-negative'}`}>
                       {e.amount === 0 ? '0' : `${positive ? '+' : '-'}${fmt(e.amount)}`}
