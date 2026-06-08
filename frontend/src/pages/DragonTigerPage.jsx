@@ -10,8 +10,7 @@ const _stamp2  = _mkAudio('/audio/DragonTiger/stamp.mp3')
 const _winSfx  = _mkAudio('/audio/DragonTiger/win.mp3')
 const _loseSfx = _mkAudio('/audio/DragonTiger/lose.mp3')
 const _dingding = _mkAudio('/audio/DragonTiger/dingding.mp3')
-const _chipPool = [0, 1, 2].map(() => _mkAudio('/audio/game/poker-chips.mp3'))
-let _chipIdx = 0
+const _chipSrc = _mkAudio('/audio/game/poker-chips.mp3')
 const _dealSfx      = _mkAudio('/audio/game/fly_card.mp3')
 const _flip1        = _mkAudio('/audio/game/flip_card.mp3')
 const _flip2        = _mkAudio('/audio/game/flip_card.mp3')
@@ -157,6 +156,7 @@ function ZoneBetDisplay({ placements, totalBet, myBet, small }) {
 
 function DragonWinAnim({ onDone }) {
   const canvasRef = useRef(null)
+  const onDoneRef = useRef(onDone)
 
   useEffect(() => {
     const { sfxVolume, sfxMuted } = getAudioSettings()
@@ -188,9 +188,9 @@ function DragonWinAnim({ onDone }) {
     animId = requestAnimationFrame(tick)
     img.onload = () => {}
 
-    const t = setTimeout(() => { cancelAnimationFrame(animId); onDone?.() }, 4000)
+    const t = setTimeout(() => { cancelAnimationFrame(animId); onDoneRef.current?.() }, 4000)
     return () => { cancelAnimationFrame(animId); clearTimeout(t) }
-  }, [onDone])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="dt-dragon-win-overlay">
@@ -202,6 +202,7 @@ function DragonWinAnim({ onDone }) {
 function TigerWinAnim({ onDone }) {
   const canvasRef = useRef(null)
   const [phase, setPhase] = useState('walk')
+  const onDoneRef = useRef(onDone)
 
   // Phase 1: sprite walk-in (2s)
   useEffect(() => {
@@ -239,9 +240,9 @@ function TigerWinAnim({ onDone }) {
   // Phase 2: final image burst (2s) then done
   useEffect(() => {
     if (phase !== 'final') return
-    const t = setTimeout(() => onDone?.(), 2000)
+    const t = setTimeout(() => onDoneRef.current?.(), 2000)
     return () => clearTimeout(t)
-  }, [phase, onDone])
+  }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="dt-tiger-win-overlay">
@@ -615,8 +616,8 @@ export default function DragonTigerPage({ auth }) {
             if (isMe) {
               const { sfxVolume, sfxMuted } = getAudioSettings()
               if (!sfxMuted) {
-                const a = _chipPool[_chipIdx++ % _chipPool.length]
-                a.volume = 0.70 * sfxVolume; a.currentTime = 0; a.play().catch(() => {})
+                const a = _chipSrc.cloneNode()
+                a.volume = 0.70 * sfxVolume; a.play().catch(() => {})
               }
             } else {
               const id   = chipId + 0.1
