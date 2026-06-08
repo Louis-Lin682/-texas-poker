@@ -809,8 +809,12 @@ export default function DragonTigerPage({ auth }) {
         {/* Bet action buttons — sit on the table rail */}
         {myTotalBet > 0 && isBetting && (
           <div className="dt-rail-actions">
-            <button type="button" className="dt-rail-undo" onClick={handleUndoBet} data-no-global-click="true">撤銷</button>
-            <button type="button" className="dt-rail-clear" onClick={handleCancelBets} data-no-global-click="true">全清</button>
+            <button type="button" className="dt-rail-undo" onClick={handleUndoBet} data-no-global-click="true">
+              <img src="/DragonTiger/undo.png" alt="撤銷" draggable={false} />
+            </button>
+            <button type="button" className="dt-rail-clear" onClick={handleCancelBets} data-no-global-click="true">
+              <img src="/DragonTiger/clear.png" alt="全清" draggable={false} />
+            </button>
           </div>
         )}
 
