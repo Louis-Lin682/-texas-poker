@@ -10338,13 +10338,12 @@ button.is-pressing {
   position: absolute;
   top: 7.5%;
   right: 10%;
-  font-size: 18px;
-  color: #c8a84b;
+  width: 40px;
+  height: 40px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
-  line-height: 1;
+  z-index: 2;
 }
 .dt-history-empty {
   text-align: center;
@@ -10472,8 +10471,10 @@ button.is-pressing {
 
 .dt-scroll-content {
   position: relative;
-  padding: 25px 50px;
+  margin: 25px 50px;
   z-index: 1;
+  max-height: 42vh;
+  overflow-y: auto;
 }
 
 .dt-rules-title {

@@ -12,6 +12,11 @@ const _loseSfx = _mkAudio('/audio/DragonTiger/lose.mp3')
 const _dingding = _mkAudio('/audio/DragonTiger/dingding.mp3')
 const _chipPool = [0, 1, 2].map(() => _mkAudio('/audio/game/poker-chips.mp3'))
 let _chipIdx = 0
+const _dealSfx      = _mkAudio('/audio/game/fly_card.mp3')
+const _flip1        = _mkAudio('/audio/game/flip_card.mp3')
+const _flip2        = _mkAudio('/audio/game/flip_card.mp3')
+const _dragonWinSfx = _mkAudio('/audio/DragonTiger/dragonWin.mp3')
+const _tigerWinSfx  = _mkAudio('/audio/DragonTiger/tigerWin.mp3')
 
 const CHIPS = [
   { value: 20,   img: '/chip-red.png',       label: '20' },
@@ -154,8 +159,8 @@ function DragonWinAnim({ onDone }) {
   const canvasRef = useRef(null)
 
   useEffect(() => {
-    const sfx = new Audio('/audio/DragonTiger/dragonWin.mp3?t=' + Date.now())
-    sfx.play().catch(() => { sfx.load(); sfx.play().catch(() => {}) })
+    const { sfxVolume, sfxMuted } = getAudioSettings()
+    if (!sfxMuted) { _dragonWinSfx.volume = 0.85 * sfxVolume; _dragonWinSfx.currentTime = 0; _dragonWinSfx.play().catch(() => {}) }
 
     const img = new Image()
     img.src = '/DragonTiger/win/dragon_win.png'
@@ -200,8 +205,8 @@ function TigerWinAnim({ onDone }) {
 
   // Phase 1: sprite walk-in (2s)
   useEffect(() => {
-    const sfx = new Audio('/audio/DragonTiger/tigerWin.mp3?t=' + Date.now())
-    sfx.play().catch(() => { sfx.load(); sfx.play().catch(() => {}) })
+    const { sfxVolume, sfxMuted } = getAudioSettings()
+    if (!sfxMuted) { _tigerWinSfx.volume = 0.85 * sfxVolume; _tigerWinSfx.currentTime = 0; _tigerWinSfx.play().catch(() => {}) }
 
     const img = new Image()
     img.src = '/DragonTiger/win/tiger_walk.png'
@@ -541,11 +546,15 @@ export default function DragonTigerPage({ auth }) {
 
     if (phase !== prevPhase.current) {
       if (phase === 'betting' && prevPhase.current !== null) {
-        play('dt_deal')
+        const { sfxVolume, sfxMuted } = getAudioSettings()
+        if (!sfxMuted) { _dealSfx.volume = 0.75 * sfxVolume; _dealSfx.currentTime = 0; _dealSfx.play().catch(() => {}) }
       }
       if (phase === 'dealing') {
-        play('dt_flip')
-        setTimeout(() => play('dt_flip'), 600)
+        const { sfxVolume, sfxMuted } = getAudioSettings()
+        if (!sfxMuted) {
+          _flip1.volume = 0.75 * sfxVolume; _flip1.currentTime = 0; _flip1.play().catch(() => {})
+          setTimeout(() => { _flip2.volume = 0.75 * sfxVolume; _flip2.currentTime = 0; _flip2.play().catch(() => {}) }, 600)
+        }
       }
       if (phase === 'result') {
         if (gameState.result === 'dragon') setTimeout(() => setShowDragonWin(true), 700)
