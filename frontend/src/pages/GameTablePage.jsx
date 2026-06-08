@@ -374,7 +374,7 @@ function GameTablePage({ auth }) {
   const location = useLocation()
   const defaultGameSlug = location.state?.gameSlug ?? 'texas-holdem'
 
-  const minBuyIn = location.state?.buyIn ?? 3000
+  const minBuyIn = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
 
   const {
     status, rooms, roomId, myId, gameState, winInfo, lastAction, error, cashoutBalance,

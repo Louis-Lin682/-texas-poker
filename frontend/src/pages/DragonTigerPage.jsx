@@ -1,22 +1,77 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDragonTigerSocket } from '../hooks/useDragonTigerSocket'
-import { useAudio } from '../hooks/useAudio'
+import { useAudio, getAudioSettings } from '../hooks/useAudio'
+
+// Pre-load result SFX at module import time so they're ready well before result phase
+function _mkAudio(src) { const a = new Audio(src); a.preload = 'auto'; return a }
+const _stamp1 = _mkAudio('/audio/DragonTiger/stamp.mp3')
+const _stamp2 = _mkAudio('/audio/DragonTiger/stamp.mp3')
+const _winSfx  = _mkAudio('/audio/DragonTiger/win.mp3')
+const _loseSfx = _mkAudio('/audio/DragonTiger/lose.mp3')
 
 const CHIPS = [
-  { value: 20,   img: '/chip-red.png',      label: '20' },
-  { value: 50,   img: '/chip-blue.png',     label: '50' },
-  { value: 100,  img: '/chip-green.png',    label: '100' },
-  { value: 500,  img: '/chip-purple.png',   label: '500' },
+  { value: 20,   img: '/chip-red.png',       label: '20' },
+  { value: 50,   img: '/chip-blue.png',      label: '50' },
+  { value: 100,  img: '/chip-green.png',     label: '100' },
+  { value: 500,  img: '/chip-purple.png',    label: '500' },
   { value: 1000, img: '/chip-blackgold.png', label: '1K' },
 ]
 
+const ZONE_KEYS = [
+  'dragon', 'tie', 'tiger',
+  'dragon_big', 'dragon_small', 'dragon_odd', 'dragon_even',
+  'dragon_spade', 'dragon_heart', 'dragon_club', 'dragon_diamond',
+  'tiger_big', 'tiger_small', 'tiger_odd', 'tiger_even',
+  'tiger_spade', 'tiger_heart', 'tiger_club', 'tiger_diamond',
+]
+
+const BET_LABELS = {
+  dragon: '龍', tiger: '虎', tie: '和',
+  dragon_big: '龍大', dragon_small: '龍小', dragon_odd: '龍單', dragon_even: '龍雙',
+  dragon_spade: '龍♠', dragon_heart: '龍♥', dragon_club: '龍♣', dragon_diamond: '龍♦',
+  tiger_big: '虎大', tiger_small: '虎小', tiger_odd: '虎單', tiger_even: '虎雙',
+  tiger_spade: '虎♠', tiger_heart: '虎♥', tiger_club: '虎♣', tiger_diamond: '虎♦',
+}
+
+// Absolute positions within .dt-zones-area (covers top:29%–bottom:17% of table)
+// Tune these percentages to align with the background image zones
+const ZONE_DEFS = {
+  dragon:        { left: '4%',     top: '0%',   width: '31%',   height: '58%' },
+  tie:           { left: '39%',    top: '0%',   width: '21%',   height: '100%' },
+  tiger:         { left: '65%',    top: '0%',   width: '31%',   height: '58%' },
+  dragon_big:    { left: '4%',     top: '60%',  width: '17.5%', height: '13%' },
+  dragon_small:  { left: '21.5%',  top: '60%',  width: '17.5%', height: '13%' },
+  dragon_odd:    { left: '4%',     top: '73%',  width: '17.5%', height: '12%' },
+  dragon_even:   { left: '21.5%',  top: '73%',  width: '17.5%', height: '12%' },
+  dragon_spade:  { left: '5%',     top: '86%',  width: '7.75%', height: '18%' },
+  dragon_heart:  { left: '12.75%',  top: '86%',  width: '7.75%', height: '18%' },
+  dragon_club:   { left: '22%',  top: '86%',  width: '7.75%', height: '18%' },
+  dragon_diamond:{ left: '30.25%', top: '86%',  width: '7.75%', height: '18%' },
+  tiger_big:     { left: '61%',    top: '59%',  width: '15.5%', height: '13%' },
+  tiger_small:   { left: '78.5%',  top: '59%',  width: '15.5%', height: '13%' },
+  tiger_odd:     { left: '61%',    top: '72%',  width: '15.5%', height: '13%' },
+  tiger_even:    { left: '79.5%',  top: '72%',  width: '15.5%', height: '13%' },
+  tiger_spade:   { left: '61%',    top: '87%',  width: '7.75%', height: '16%' },
+  tiger_heart:   { left: '69.5%', top: '87%',  width: '7.75%', height: '16%' },
+  tiger_club:    { left: '78.5%',  top: '87%',  width: '7.75%', height: '16%' },
+  tiger_diamond: { left: '87.25%', top: '87%',  width: '7.75%', height: '16%' },
+}
+
 const SUIT_RED   = new Set(['♥', '♦'])
 const MAX_VISIBLE = 5
-const BET_LABELS  = { dragon: '龍', tie: '和', tiger: '虎' }
 
 function fmt(n) {
   return new Intl.NumberFormat('en-US').format(n ?? 0)
+}
+
+function emptyPlacements() {
+  return Object.fromEntries(ZONE_KEYS.map(z => [z, []]))
+}
+
+function isSuitZone(zone) {
+  return zone.endsWith('_spade') || zone.endsWith('_heart') ||
+    zone.endsWith('_club')  || zone.endsWith('_diamond')
 }
 
 function PlayingCard({ card, faceDown, delay = 0 }) {
@@ -59,7 +114,7 @@ function rnd(min, max) {
   return min + Math.random() * (max - min)
 }
 
-function ZoneBetDisplay({ placements, totalBet, myBet }) {
+function ZoneBetDisplay({ placements, totalBet, myBet, small }) {
   if (placements.length === 0 && totalBet === 0) return null
   return (
     <>
@@ -69,7 +124,7 @@ function ZoneBetDisplay({ placements, totalBet, myBet }) {
           src={p.img}
           alt=""
           draggable={false}
-          className="dt-placed-chip"
+          className={`dt-placed-chip${small ? ' is-small' : ''}`}
           style={{
             left:      `${p.x}%`,
             top:       `${p.y}%`,
@@ -80,20 +135,199 @@ function ZoneBetDisplay({ placements, totalBet, myBet }) {
       ))}
       {totalBet > 0 && (
         <div className="dt-zone-bet-label">
-          <span className="dt-zone-bet-total">{fmt(totalBet)}</span>
-          {myBet > 0 && <span className="dt-zone-my-bet">我 {fmt(myBet)}</span>}
+          <span className={`dt-zone-bet-total${small ? ' is-small' : ''}`}>
+            {small
+              ? (totalBet >= 1000 ? `${Math.floor(totalBet / 1000)}K` : String(totalBet))
+              : fmt(totalBet)}
+          </span>
+          {!small && myBet > 0 && <span className="dt-zone-my-bet">我 {fmt(myBet)}</span>}
         </div>
       )}
     </>
   )
 }
 
+function DragonWinAnim({ onDone }) {
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    const sfx = new Audio('/audio/DragonTiger/dragonWin.mp3?t=' + Date.now())
+    sfx.play().catch(() => { sfx.load(); sfx.play().catch(() => {}) })
+
+    const img = new Image()
+    img.src = '/DragonTiger/win/dragon_win.png'
+
+    const FRAME_W = 1086, FRAME_H = 1448, COLS = 4, TOTAL = 8
+    let frame = 0, animId = null, last = 0
+    const INTERVAL = 100 // 10 fps
+
+    function tick(now) {
+      if (!canvasRef.current) return
+      if (now - last >= INTERVAL) {
+        last = now
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext('2d')
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        if (img.complete) {
+          const col = frame % COLS
+          const row = Math.floor(frame / COLS)
+          ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, canvas.width, canvas.height)
+        }
+        frame = (frame + 1) % TOTAL
+      }
+      animId = requestAnimationFrame(tick)
+    }
+    animId = requestAnimationFrame(tick)
+    img.onload = () => {}
+
+    const t = setTimeout(() => { cancelAnimationFrame(animId); onDone?.() }, 4000)
+    return () => { cancelAnimationFrame(animId); clearTimeout(t) }
+  }, [onDone])
+
+  return (
+    <div className="dt-dragon-win-overlay">
+      <canvas ref={canvasRef} className="dt-dragon-canvas" width={280} height={374} />
+    </div>
+  )
+}
+
+function TigerWinAnim({ onDone }) {
+  const canvasRef = useRef(null)
+  const [phase, setPhase] = useState('walk')
+
+  // Phase 1: sprite walk-in (2s)
+  useEffect(() => {
+    const sfx = new Audio('/audio/DragonTiger/tigerWin.mp3?t=' + Date.now())
+    sfx.play().catch(() => { sfx.load(); sfx.play().catch(() => {}) })
+
+    const img = new Image()
+    img.src = '/DragonTiger/win/tiger_walk.png'
+    const FRAME_W = 1086, FRAME_H = 1448, COLS = 4, TOTAL = 8
+    let frame = 0, animId = null, last = 0
+    const INTERVAL = 100
+
+    function tick(now) {
+      if (!canvasRef.current) return
+      if (now - last >= INTERVAL) {
+        last = now
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext('2d')
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        if (img.complete) {
+          const col = frame % COLS
+          const row = Math.floor(frame / COLS)
+          ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, canvas.width, canvas.height)
+        }
+        frame = (frame + 1) % TOTAL
+      }
+      animId = requestAnimationFrame(tick)
+    }
+    animId = requestAnimationFrame(tick)
+
+    const t = setTimeout(() => { cancelAnimationFrame(animId); setPhase('final') }, 2000)
+    return () => { cancelAnimationFrame(animId); clearTimeout(t) }
+  }, [])
+
+  // Phase 2: final image burst (2s) then done
+  useEffect(() => {
+    if (phase !== 'final') return
+    const t = setTimeout(() => onDone?.(), 2000)
+    return () => clearTimeout(t)
+  }, [phase, onDone])
+
+  return (
+    <div className="dt-tiger-win-overlay">
+      {phase === 'walk'
+        ? <canvas ref={canvasRef} className="dt-tiger-canvas" width={280} height={374} />
+        : <img src="/DragonTiger/win/tiger_hand.png" alt="" className="dt-tiger-final" draggable={false} />
+      }
+    </div>
+  )
+}
+
+function RulesModal({ onClose }) {
+  return (
+    <div className="dt-rules-overlay" onClick={onClose}>
+      <div className="dt-rules-scroll" onClick={e => e.stopPropagation()}>
+        <img src="/DragonTiger/scrollTop.png.png" alt="" className="dt-scroll-top" draggable={false} />
+        <div className="dt-scroll-body">
+          <img src="/DragonTiger/scrollBody.png" alt="" className="dt-scroll-body-bg" draggable={false} />
+          <div className="dt-scroll-content">
+            <h3 className="dt-rules-title">龍虎鬥 遊戲規則</h3>
+
+            <div className="dt-rules-section">
+              <div className="dt-rules-section-title">主注賠率</div>
+              <div className="dt-rules-row"><span>龍 / 虎</span><span>1 : 1（和局退半注）</span></div>
+              <div className="dt-rules-row"><span>和</span><span>1 : 8</span></div>
+            </div>
+
+            <div className="dt-rules-section">
+              <div className="dt-rules-section-title">大 / 小（副注）</div>
+              <div className="dt-rules-row"><span>大（8–K）</span><span>1 : 1</span></div>
+              <div className="dt-rules-row"><span>小（A–6）</span><span>1 : 1</span></div>
+              <div className="dt-rules-note">7 點＝退注</div>
+            </div>
+
+            <div className="dt-rules-section">
+              <div className="dt-rules-section-title">單 / 雙（副注）</div>
+              <div className="dt-rules-row"><span>單數點</span><span>1 : 1</span></div>
+              <div className="dt-rules-row"><span>雙數點</span><span>1 : 1</span></div>
+              <div className="dt-rules-note">7 點＝退注</div>
+            </div>
+
+            <div className="dt-rules-section">
+              <div className="dt-rules-section-title">花色（副注）</div>
+              <div className="dt-rules-row"><span>♠ ♥ ♣ ♦ 任一</span><span>1 : 3</span></div>
+            </div>
+
+            <div className="dt-rules-section">
+              <div className="dt-rules-section-title">下注限制</div>
+              <div className="dt-rules-note">・龍與虎不可同時下注</div>
+              <div className="dt-rules-note">・同側大與小不可同時下注</div>
+              <div className="dt-rules-note">・同側單與雙不可同時下注</div>
+              <div className="dt-rules-note">・同側四種花色不可全押</div>
+            </div>
+          </div>
+        </div>
+        <img src="/DragonTiger/scrollBottom.png.png" alt="" className="dt-scroll-bottom" draggable={false} />
+      </div>
+    </div>
+  )
+}
+
+
 function ResultOverlay({ result, myPayout, myTotalBet }) {
+  useEffect(() => {
+    if (!result) return
+    const net = myPayout - myTotalBet
+    const { sfxVolume, sfxMuted } = getAudioSettings()
+
+    function playStamp(el) {
+      if (sfxMuted) return
+      el.volume = 0.85 * sfxVolume
+      el.currentTime = 0
+      el.play().catch(() => {})
+    }
+
+    playStamp(_stamp1)
+    const t3 = setTimeout(() => {
+      if (myTotalBet > 0) {
+        if (net > 0) {
+          _winSfx.volume = 0.85 * sfxVolume; _winSfx.currentTime = 0; _winSfx.play().catch(() => {})
+        } else if (net < 0) {
+          _loseSfx.volume = 0.85 * sfxVolume; _loseSfx.currentTime = 0; _loseSfx.play().catch(() => {})
+        }
+      }
+    }, 950)
+
+    return () => { clearTimeout(t3) }
+  }, [result])  // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!result) return null
 
-  const net  = myPayout - myTotalBet
-  const won  = net > 0
-  const isTie = result === 'tie'
+  const net    = myPayout - myTotalBet
+  const won    = net > 0
+  const isTie  = result === 'tie'
 
   const resultImg  = result === 'dragon' ? '/DragonTiger/game/dragon.png'
     : result === 'tiger'  ? '/DragonTiger/game/tiger.png'
@@ -103,29 +337,32 @@ function ResultOverlay({ result, myPayout, myTotalBet }) {
   let netClass = 'is-tie'
   let netText  = '本局損益：0'
   if (myTotalBet > 0) {
-    if (won)      { netClass = 'is-win';  netText = `本局損益：+${fmt(net)}` }
+    if (won)        { netClass = 'is-win';  netText = `本局損益：+${fmt(net)}` }
     else if (net < 0) { netClass = 'is-lose'; netText = `本局損益：-${fmt(Math.abs(net))}` }
   }
 
   return (
-    <div className="dt-result-overlay">
-      <div className="dt-result-inner">
-        <div className="dt-result-chars">
-          <img src={resultImg}  alt={result}  className="dt-result-char" />
-          <img src={outcomeImg} alt="outcome" className="dt-result-char" />
+    <>
+      <div className="dt-result-bg" />
+      <div className="dt-result-overlay">
+        <div className="dt-result-inner">
+          <div className="dt-result-chars">
+            <img src={resultImg}  alt={result}  className="dt-result-char dt-char-1" />
+            <img src={outcomeImg} alt="outcome" className="dt-result-char dt-char-2" />
+          </div>
+          {myTotalBet > 0 && (
+            <div className={`dt-result-net ${netClass}`}>{netText}</div>
+          )}
         </div>
-        {myTotalBet > 0 && (
-          <div className={`dt-result-net ${netClass}`}>{netText}</div>
-        )}
       </div>
-    </div>
+    </>
   )
 }
 
 export default function DragonTigerPage({ auth }) {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const buyIn     = location.state?.buyIn ?? 3000
+  const buyIn     = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
   const { play, preload } = useAudio()
 
   const {
@@ -135,21 +372,59 @@ export default function DragonTigerPage({ auth }) {
   } = useDragonTigerSocket({ minBuyIn: buyIn })
 
   const [selectedChip,    setSelectedChip]    = useState(CHIPS[0])
-  const [chipPlacements,  setChipPlacements]  = useState({ dragon: [], tie: [], tiger: [] })
+  const [chipPlacements,  setChipPlacements]  = useState(emptyPlacements)
   const [betActivities,   setBetActivities]   = useState([])
   const [flashingPlayers, setFlashingPlayers] = useState(new Set())
   const [showAllPlayers,  setShowAllPlayers]  = useState(false)
+  const [showRules,      setShowRules]      = useState(false)
+  const [showDragonWin,  setShowDragonWin]  = useState(false)
+  const [showTigerWin,   setShowTigerWin]   = useState(false)
+  const [dtBgmMuted,     setDtBgmMuted]     = useState(false)
+  const dtBgmRef = useRef(null)
 
   const joinedRef         = useRef(false)
   const prevPhase         = useRef(null)
   const prevRound         = useRef(null)
   const chipZRef          = useRef(1)
+  const dingdingFiredRef  = useRef(false)
   const prevPlayerBetsRef = useRef({})
 
-  // Preload audio on mount
   useEffect(() => {
-    preload(['dt_deal', 'dt_chips', 'dt_flip'])
+    preload(['dt_deal', 'dt_chips', 'dt_flip', 'dt_dingding', 'dt_stamp', 'dt_win', 'dt_lose'])
   }, [preload])
+
+  // Dragon Tiger BGM — raw Audio element with click fallback
+  useEffect(() => {
+    const { bgmVolume } = getAudioSettings()
+    const audio = new Audio('/audio/DragonTiger/dragon-tiger-bg.mp3')
+    audio.loop   = true
+    audio.muted  = false
+    audio.volume = 0.30 * bgmVolume
+    dtBgmRef.current = audio
+
+    const tryPlay = () => {
+      if (!dtBgmRef.current || !dtBgmRef.current.paused) return
+      dtBgmRef.current.play().catch(() => {})
+    }
+    tryPlay()
+    document.addEventListener('click', tryPlay)
+
+    return () => {
+      document.removeEventListener('click', tryPlay)
+      audio.pause()
+      audio.src = ''
+      dtBgmRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!dtBgmRef.current) return
+    const { bgmVolume } = getAudioSettings()
+    dtBgmRef.current.muted  = dtBgmMuted
+    dtBgmRef.current.volume = dtBgmMuted ? 0 : 0.30 * bgmVolume
+  }, [dtBgmMuted])
+
+  const toggleDtBgm = () => setDtBgmMuted(m => !m)
 
   // Auto-join a dragon-tiger room
   useEffect(() => {
@@ -164,7 +439,6 @@ export default function DragonTigerPage({ auth }) {
     }
   }, [status, rooms, roomId, buyIn, joinRoom, createRoom])
 
-  // Refresh rooms once connected
   useEffect(() => {
     if (status === 'connected' && !roomId && !joinedRef.current) {
       refreshRooms()
@@ -177,24 +451,37 @@ export default function DragonTigerPage({ auth }) {
     const { phase, roundId } = gameState
 
     if (roundId !== prevRound.current) {
-      setChipPlacements({ dragon: [], tie: [], tiger: [] })
-      chipZRef.current = 1
-      prevRound.current = roundId
+      setChipPlacements(emptyPlacements())
+      setShowDragonWin(false)
+      setShowTigerWin(false)
+      chipZRef.current       = 1
+      dingdingFiredRef.current = false
+      prevRound.current      = roundId
+    }
+
+    // Dingding on last second before dealing
+    if (phase === 'betting' && gameState.countdown === 1 && !dingdingFiredRef.current) {
+      dingdingFiredRef.current = true
+      play('dt_dingding')
     }
 
     if (phase !== prevPhase.current) {
       if (phase === 'betting' && prevPhase.current !== null) {
-        play('dt_deal')                          // new cards placed face-down (skip on first connect)
+        play('dt_deal')
       }
       if (phase === 'dealing') {
-        play('dt_flip')                          // dragon flips immediately
-        setTimeout(() => play('dt_flip'), 600)   // tiger flips 600ms later
+        play('dt_flip')
+        setTimeout(() => play('dt_flip'), 600)
+      }
+      if (phase === 'result') {
+        if (gameState.result === 'dragon') setTimeout(() => setShowDragonWin(true), 700)
+        if (gameState.result === 'tiger')  setTimeout(() => setShowTigerWin(true),  700)
       }
       prevPhase.current = phase
     }
   }, [gameState, play])
 
-  // Bet activity feed + player card flash detection
+  // Bet activity feed + chip visuals (all players, driven by server state_update)
   useEffect(() => {
     if (!gameState || gameState.phase !== 'betting') {
       prevPlayerBetsRef.current = {}
@@ -206,26 +493,26 @@ export default function DragonTigerPage({ auth }) {
       const prev = prevPlayerBetsRef.current[p.id]
       if (prev) {
         let changed = false
-        for (const z of ['dragon', 'tie', 'tiger']) {
+        for (const z of ZONE_KEYS) {
           const diff = (p.bets[z] || 0) - (prev[z] || 0)
           if (diff > 0) {
             changed = true
-            if (p.id !== myId) {
-              // Chip visual for other player
-              const chipImg = [...CHIPS].reverse().find(c => c.value <= diff)?.img ?? CHIPS[0].img
-              const chipId  = Date.now() + Math.random()
-              setChipPlacements(prev => ({
-                ...prev,
-                [z]: [...prev[z], {
-                  id:  chipId,
-                  img: chipImg,
-                  x:   rnd(25, 75),
-                  y:   rnd(30, 70),
-                  rot: rnd(-20, 20),
-                  z:   chipZRef.current++,
-                }],
-              }))
-              // Activity feed toast
+            const chipImg = [...CHIPS].reverse().find(c => c.value <= diff)?.img ?? CHIPS[0].img
+            const chipId  = Date.now() + Math.random()
+            setChipPlacements(cp => ({
+              ...cp,
+              [z]: [...cp[z], {
+                id:  chipId,
+                img: chipImg,
+                x:   rnd(30, 70),
+                y:   rnd(30, 70),
+                rot: rnd(-20, 20),
+                z:   chipZRef.current++,
+              }],
+            }))
+            if (p.id === myId) {
+              play('dt_chips')
+            } else {
               const id   = chipId + 0.1
               const text = `${p.username} 押${BET_LABELS[z]} ${fmt(diff)}`
               setBetActivities(a => [...a.slice(-2), { id, text }])
@@ -242,7 +529,7 @@ export default function DragonTigerPage({ auth }) {
       setFlashingPlayers(flashSet)
       setTimeout(() => setFlashingPlayers(new Set()), 500)
     }
-  }, [gameState, myId])
+  }, [gameState, myId, play])
 
   const handleLeave = () => {
     leaveRoom()
@@ -252,16 +539,6 @@ export default function DragonTigerPage({ auth }) {
   const handleZoneTap = (zone) => {
     if (gameState?.phase !== 'betting') return
     placeBet(zone, selectedChip.value)
-    play('dt_chips')
-    const placement = {
-      id:  Date.now() + Math.random(),
-      img: selectedChip.img,
-      x:   rnd(25, 75),
-      y:   rnd(30, 70),
-      rot: rnd(-20, 20),
-      z:   chipZRef.current++,
-    }
-    setChipPlacements(prev => ({ ...prev, [zone]: [...prev[zone], placement] }))
   }
 
   // ── Derived state ──────────────────────────────────────────
@@ -273,16 +550,17 @@ export default function DragonTigerPage({ auth }) {
   const tigerCard  = gameState?.tigerCard  ?? null
   const result     = gameState?.result     ?? null
 
-  const me = players.find(p => p.id === myId)
-  const myBets     = me?.bets     ?? { dragon: 0, tie: 0, tiger: 0 }
-  const myPayout   = me?.payout   ?? 0
-  const myTotalBet = myBets.dragon + myBets.tie + myBets.tiger
+  const me         = players.find(p => p.id === myId)
+  const myBets     = me?.bets ?? Object.fromEntries(ZONE_KEYS.map(z => [z, 0]))
+  const myPayout       = me?.payout ?? 0
+  const myTotalBet     = ZONE_KEYS.reduce((s, z) => s + (myBets[z] || 0), 0)
+  const myRoundTotalBet = me?.roundTotalBet ?? myTotalBet
 
-  const zoneTotals = { dragon: [], tie: [], tiger: [] }
+  const zoneTotals = Object.fromEntries(ZONE_KEYS.map(z => [z, 0]))
   for (const p of players) {
-    if (p.bets.dragon > 0) zoneTotals.dragon.push(p.bets.dragon)
-    if (p.bets.tie    > 0) zoneTotals.tie.push(p.bets.tie)
-    if (p.bets.tiger  > 0) zoneTotals.tiger.push(p.bets.tiger)
+    for (const z of ZONE_KEYS) {
+      zoneTotals[z] += (p.bets?.[z] || 0)
+    }
   }
 
   const sortedPlayers  = me ? [me, ...players.filter(p => p.id !== myId)] : [...players]
@@ -291,7 +569,6 @@ export default function DragonTigerPage({ auth }) {
 
   const isBetting = phase === 'betting'
   const isResult  = phase === 'result'
-  // Cards face-up during dealing (flip animation) and result; face-down during betting
   const faceDown  = phase !== 'result' && phase !== 'dealing'
 
   // ── Render ─────────────────────────────────────────────────
@@ -344,31 +621,43 @@ export default function DragonTigerPage({ auth }) {
           draggable={false}
         />
 
+        {/* BGM toggle */}
+        <button type="button" className="dt-bgm-btn" onClick={toggleDtBgm} data-no-global-click="true">
+          <img src={dtBgmMuted ? '/enable-sound.png' : '/volume.png'} alt="bgm" draggable={false} />
+        </button>
+
+        {/* Rule button */}
+        <button type="button" className="dt-rule-btn" onClick={() => setShowRules(true)} data-no-global-click="true">
+          <img src="/DragonTiger/ruleIcon.png" alt="規則" draggable={false} />
+        </button>
+
         {/* Cards */}
         <div className="dt-cards-area">
-          <div className="dt-card-label dt-label-dragon">龍</div>
+          <img src="/DragonTiger/DragonIcon.png" alt="龍" className="dt-card-label dt-label-dragon" draggable={false} />
           <div className="dt-cards-row">
             <PlayingCard card={dragonCard} faceDown={faceDown} delay={0} />
             <PlayingCard card={tigerCard}  faceDown={faceDown} delay={600} />
           </div>
-          <div className="dt-card-label dt-label-tiger">虎</div>
+          <img src="/DragonTiger/TigerIcon.png" alt="虎" className="dt-card-label dt-label-tiger" draggable={false} />
         </div>
 
-        {/* Bet zones */}
+        {/* Bet zones — absolutely positioned over background */}
         <div className="dt-zones-area">
-          {['dragon', 'tie', 'tiger'].map(key => (
+          {ZONE_KEYS.map(zone => (
             <button
-              key={key}
+              key={zone}
               type="button"
-              className={`dt-zone dt-zone-${key} ${isBetting ? 'is-active' : ''}`}
-              onClick={() => handleZoneTap(key)}
+              className={`dt-zone dt-zone-${zone}${isBetting ? ' is-active' : ''}`}
+              style={ZONE_DEFS[zone]}
+              onClick={() => handleZoneTap(zone)}
               disabled={!isBetting}
               data-no-global-click="true"
             >
               <ZoneBetDisplay
-                placements={chipPlacements[key]}
-                totalBet={zoneTotals[key].reduce((a, b) => a + b, 0)}
-                myBet={myBets[key]}
+                placements={chipPlacements[zone]}
+                totalBet={zoneTotals[zone]}
+                myBet={myBets[zone]}
+                small={isSuitZone(zone)}
               />
             </button>
           ))}
@@ -379,7 +668,7 @@ export default function DragonTigerPage({ auth }) {
           <ResultOverlay
             result={result}
             myPayout={myPayout}
-            myTotalBet={myTotalBet}
+            myTotalBet={myRoundTotalBet}
           />
         )}
 
@@ -409,18 +698,23 @@ export default function DragonTigerPage({ auth }) {
         )}
       </div>
 
-      {/* My bets summary — under player cards */}
+      {/* My bets summary */}
       {myTotalBet > 0 && (
         <div className="dt-bet-summary-bar">
-          {myBets.dragon > 0 && <span className="dt-bet-tag dt-bet-dragon">龍：{fmt(myBets.dragon)}</span>}
-          {myBets.tie    > 0 && <span className="dt-bet-tag dt-bet-tie">和：{fmt(myBets.tie)}</span>}
-          {myBets.tiger  > 0 && <span className="dt-bet-tag dt-bet-tiger">虎：{fmt(myBets.tiger)}</span>}
+          {ZONE_KEYS.filter(z => (myBets[z] || 0) > 0).map(z => (
+            <span
+              key={z}
+              className={`dt-bet-tag dt-bet-${z.split('_')[0]}`}
+            >
+              {BET_LABELS[z]}：{fmt(myBets[z])}
+            </span>
+          ))}
         </div>
       )}
 
       {/* Bottom panel */}
-      {phase === 'betting' && (
-        <div className="dt-bottom-panel">
+      {(phase === 'betting' || phase === 'dealing') && (
+        <div className={`dt-bottom-panel${phase === 'dealing' ? ' is-dealing' : ''}`}>
           <div className="dt-chip-tray">
             {CHIPS.map(chip => (
               <button
@@ -465,6 +759,13 @@ export default function DragonTigerPage({ auth }) {
           已結算 — 帳戶餘額 {fmt(cashoutBalance)}
         </div>
       )}
+
+      {/* Dragon / Tiger win animations */}
+      {showDragonWin && <DragonWinAnim onDone={() => setShowDragonWin(false)} />}
+      {showTigerWin  && <TigerWinAnim  onDone={() => setShowTigerWin(false)}  />}
+
+      {/* Rules modal */}
+      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
 
       {/* All-players modal */}
       {showAllPlayers && (

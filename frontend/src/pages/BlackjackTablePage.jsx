@@ -431,7 +431,7 @@ function WaitingView({ gameState, myId, onReady, onUnready, onLeaveRoom }) {
 export default function BlackjackTablePage({ auth }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const minBuyIn = location.state?.buyIn ?? 3000
+  const minBuyIn = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
 
   const { play, preload } = useAudio()
   const bgmRef = useRef(null)

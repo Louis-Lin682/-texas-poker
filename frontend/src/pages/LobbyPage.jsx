@@ -41,11 +41,19 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
   const [isEventDrawerOpen, setIsEventDrawerOpen] = useState(false)
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
   const { games, featuredGames, isLoadingGames } = useGames()
-  const [minBuyIn, setMinBuyIn] = useState(2000)
+  const [minBuyIn, setMinBuyIn] = useState(() => {
+    const cached = localStorage.getItem('cfg_min_buy_in')
+    return cached ? parseInt(cached, 10) : 3000
+  })
   const [showFloatTop, setShowFloatTop] = useState(false)
 
   useEffect(() => {
-    getConfig().then(cfg => { if (cfg.minBuyIn) setMinBuyIn(cfg.minBuyIn) }).catch(() => {})
+    getConfig().then(cfg => {
+      if (cfg.minBuyIn) {
+        setMinBuyIn(cfg.minBuyIn)
+        localStorage.setItem('cfg_min_buy_in', String(cfg.minBuyIn))
+      }
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
