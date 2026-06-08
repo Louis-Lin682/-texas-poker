@@ -381,9 +381,10 @@ function ResultOverlay({ result, myPayout, myTotalBet }) {
     }
 
     playStamp(_stamp1)
-    // Dragon/tiger results have their own win animation SFX; only play
-    // generic win/lose for tie (no animation) to avoid audio overlap
-    const t3 = result === 'tie' ? setTimeout(() => {
+    // Tie: play win/lose quickly; dragon/tiger: delay 2s so animation
+    // SFX plays first without overlap
+    const delay = result === 'tie' ? 950 : 2000
+    const t3 = setTimeout(() => {
       if (myTotalBet > 0) {
         if (net > 0) {
           _winSfx.volume = 0.85 * sfxVolume; _winSfx.currentTime = 0; _winSfx.play().catch(() => {})
@@ -391,7 +392,7 @@ function ResultOverlay({ result, myPayout, myTotalBet }) {
           _loseSfx.volume = 0.85 * sfxVolume; _loseSfx.currentTime = 0; _loseSfx.play().catch(() => {})
         }
       }
-    }, 950) : null
+    }, delay)
 
     return () => { clearTimeout(t3) }
   }, [result])  // eslint-disable-line react-hooks/exhaustive-deps
