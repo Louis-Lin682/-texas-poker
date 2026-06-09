@@ -140,7 +140,7 @@ export default function AdminAnnouncementsPage() {
         okText={editing ? '儲存' : '新增'}
         cancelText="取消"
         width={500}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" style={{ marginTop: 12 }}>
           <Form.Item name="content" label="公告內容" rules={[{ required: true, message: '請輸入內容' }]}>

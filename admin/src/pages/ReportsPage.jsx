@@ -11,6 +11,8 @@ const GAME_OPTIONS = [
   { value: '', label: '全部遊戲' },
   { value: 'texas-holdem',  label: '德州撲克' },
   { value: 'big-two',       label: '大老二' },
+  { value: 'dragon-tiger',  label: '龍虎鬥' },
+  { value: 'blackjack',     label: '21點' },
   { value: 'thunder-joker', label: 'Thunder Joker' },
 ]
 

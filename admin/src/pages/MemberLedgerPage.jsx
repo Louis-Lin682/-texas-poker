@@ -9,6 +9,89 @@ import { DATE_CHIPS, getPresetRange } from '../utils/dateRange'
 const { Title, Text } = Typography
 const { RangePicker } = DatePicker
 
+const BJ_SUIT = { h: '♥', d: '♦', c: '♣', s: '♠' }
+const BJ_RED  = new Set(['h', 'd'])
+const BJ_RESULT = { win: '勝', lose: '負', push: '平', blackjack: 'BJ', fivecard: '5張', bust: '爆' }
+const BJ_RESULT_COLOR = { win: '#52c41a', lose: '#ff4d4f', push: '#aaa', blackjack: '#ffd700', fivecard: '#52c41a', bust: '#ff4d4f' }
+function bjCard(c) {
+  const rank = c.slice(0, -1), suit = c.slice(-1)
+  return { text: (rank === 'T' ? '10' : rank) + (BJ_SUIT[suit] ?? suit), red: BJ_RED.has(suit) }
+}
+
+const DT_RESULT = { dragon: '龍勝', tiger: '虎勝', tie: '和局' }
+const DT_RESULT_COLOR = { dragon: '#5b8cff', tiger: '#ff7c5b', tie: '#c8a84b' }
+const DT_BET_LABEL = {
+  dragon: '龍', tiger: '虎', tie: '和',
+  dragon_big: '龍大', dragon_small: '龍小', dragon_odd: '龍單', dragon_even: '龍雙',
+  dragon_spade: '龍♠', dragon_heart: '龍♥', dragon_club: '龍♣', dragon_diamond: '龍♦',
+  tiger_big: '虎大', tiger_small: '虎小', tiger_odd: '虎單', tiger_even: '虎雙',
+  tiger_spade: '虎♠', tiger_heart: '虎♥', tiger_club: '虎♣', tiger_diamond: '虎♦',
+}
+const SUIT_RED = new Set(['♥', '♦'])
+
+function DetailCell({ game, detail }) {
+  if (!detail) return null
+  const s = { fontSize: 12, color: '#aaa', lineHeight: 1.8 }
+
+  if (game === 'blackjack') {
+    const d = detail
+    return (
+      <div style={s}>
+        <div>
+          <span style={{ color: '#888', marginRight: 4 }}>莊</span>
+          {(d.dealerCards ?? []).map((c, i) => {
+            const { text, red } = bjCard(c)
+            return <span key={i} style={{ color: red ? '#e05050' : '#e8e0cc', marginRight: 3 }}>{text}</span>
+          })}
+          <span style={{ color: '#666' }}>({d.dealerScore})</span>
+        </div>
+        {(d.hands ?? []).map((h, i) => (
+          <div key={i}>
+            <span style={{ color: '#888', marginRight: 4 }}>{(d.hands?.length ?? 0) > 1 ? `手${i + 1}` : '自'}</span>
+            {(h.cards ?? []).map((c, j) => {
+              const { text, red } = bjCard(c)
+              return <span key={j} style={{ color: red ? '#e05050' : '#e8e0cc', marginRight: 3 }}>{text}</span>
+            })}
+            <span style={{ color: '#666', marginRight: 6 }}>({h.score})</span>
+            <span style={{ color: BJ_RESULT_COLOR[h.result] ?? '#aaa', fontWeight: 600 }}>
+              {BJ_RESULT[h.result] ?? h.result}
+            </span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (game === 'dragon-tiger') {
+    const d = detail
+    const dc = d.dragonCard, tc = d.tigerCard
+    const bets = d.bets ? Object.entries(d.bets).filter(([, v]) => v > 0) : []
+    return (
+      <div style={s}>
+        <div>
+          <span style={{ color: DT_RESULT_COLOR[d.result] ?? '#aaa', fontWeight: 600, marginRight: 8 }}>
+            {DT_RESULT[d.result] ?? d.result}
+          </span>
+          <span style={{ color: SUIT_RED.has(dc?.suit) ? '#e05050' : '#e8e0cc' }}>
+            龍 {dc ? `${dc.rank}${dc.suit}` : '—'}
+          </span>
+          <span style={{ color: '#666', margin: '0 6px' }}>vs</span>
+          <span style={{ color: SUIT_RED.has(tc?.suit) ? '#e05050' : '#e8e0cc' }}>
+            虎 {tc ? `${tc.rank}${tc.suit}` : '—'}
+          </span>
+        </div>
+        {bets.length > 0 && (
+          <div style={{ color: '#888' }}>
+            {bets.map(([z, v]) => `${DT_BET_LABEL[z] ?? z} ${v.toLocaleString()}`).join('・')}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return null
+}
+
 const TYPE_OPTIONS = [
   { value: '', label: '全部類型' },
   { value: 'buy_in',    label: '進場' },
@@ -120,10 +203,14 @@ export default function MemberLedgerPage() {
         </span>
       ),
     },
-    { title: '遊戲', dataIndex: 'game', key: 'game', width: 110, render: v => v || '—' },
-    { title: '房間', dataIndex: 'room_id', key: 'room_id', width: 80, render: v => v ? `#${v}` : '—' },
+    { title: '遊戲', dataIndex: 'game', key: 'game', width: 90, render: v => v || '—' },
+    { title: '房間', dataIndex: 'room_id', key: 'room_id', width: 70, render: v => v ? `#${v}` : '—' },
     {
-      title: '時間', dataIndex: 'created_at', key: 'created_at',
+      title: '投注明細', key: 'detail',
+      render: (_, r) => <DetailCell game={r.game} detail={r.detail} />,
+    },
+    {
+      title: '時間', dataIndex: 'created_at', key: 'created_at', width: 160,
       render: v => new Date(v).toLocaleString('zh-TW', { hour12: false }),
     },
   ]

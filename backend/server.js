@@ -827,6 +827,14 @@ const server = http.createServer(async (request, response) => {
       return
     }
 
+    // ── 跑馬燈公告 (public) ──
+    if (request.method === 'GET' && pathname === '/announcements') {
+      const { rows } = await query(
+        `SELECT id, content FROM announcements WHERE is_active = true ORDER BY sort_order ASC, created_at ASC`
+      )
+      sendJson(response, 200, { announcements: rows }, effectiveCors); return
+    }
+
     // ── 活動列表 (public) ──
     if (request.method === 'GET' && pathname === '/events') {
       const { rows } = await query(`
@@ -1092,7 +1100,7 @@ const server = http.createServer(async (request, response) => {
         if (dateTo)   { vals.push(dateTo);   where += ` AND created_at <  $${vals.length}` }
         if (type)     { vals.push(type);     where += ` AND type = $${vals.length}` }
         const { rows: ledger } = await query(
-          `SELECT id, type, amount, game, room_id, bet, created_at FROM ledger
+          `SELECT id, type, amount, game, room_id, bet, detail, created_at FROM ledger
            ${where} ORDER BY created_at DESC LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
           [...vals, limit, offset]
         )
@@ -1349,14 +1357,6 @@ const server = http.createServer(async (request, response) => {
         )
         if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
         sendJson(response, 200, { news: rows[0] }, effectiveCors); return
-      }
-
-      // ── 跑馬燈公告 (public) ──
-      if (request.method === 'GET' && pathname === '/announcements') {
-        const { rows } = await query(
-          `SELECT id, content FROM announcements WHERE is_active = true ORDER BY sort_order ASC, created_at ASC`
-        )
-        sendJson(response, 200, { announcements: rows }, effectiveCors); return
       }
 
       // ── Admin 跑馬燈公告管理 ──

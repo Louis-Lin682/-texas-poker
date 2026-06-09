@@ -193,7 +193,7 @@ export default function AdminNewsPage() {
         okText={editing ? '儲存' : '新增'}
         cancelText="取消"
         width={560}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" style={{ marginTop: 12 }}>
           <Form.Item name="title" label="標題" rules={[{ required: true, message: '請輸入標題' }]}>
