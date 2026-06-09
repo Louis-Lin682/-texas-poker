@@ -429,7 +429,7 @@ function HistoryModal({ history, onClose }) {
                       {tc ? `${tc.rank}${tc.suit}` : '—'}
                     </span>
                   </div>
-                  {r.bets.length > 0 && (
+                  {r.bets?.length > 0 && (
                     <div className="dt-history-bets">
                       {r.bets.map(b => (
                         <span key={b.zone} className="dt-history-bet-tag">
@@ -573,7 +573,7 @@ export default function DragonTigerPage({ auth }) {
   const { play, preload } = useAudio()
 
   const {
-    status, rooms, roomId, myId, gameState, error,
+    status, rooms, roomsReady, roomId, myId, gameState, error,
     cashoutBalance, refreshRooms, createRoom, joinRoom, leaveRoom,
     placeBet, cancelLastBet, cancelBets,
   } = useDragonTigerSocket({ minBuyIn: buyIn })
@@ -684,23 +684,26 @@ export default function DragonTigerPage({ auth }) {
 
   const toggleDtBgm = () => setDtBgmMuted(m => !m)
 
-  // When room is lost, re-enable auto-join
+  // When room is lost or WS reconnects, re-enable auto-join
   useEffect(() => {
     if (!roomId) joinedRef.current = false
   }, [roomId])
-
-  // Auto-join a dragon-tiger room
   useEffect(() => {
-    if (status !== 'connected' || joinedRef.current || roomId) return
+    if (!roomsReady) joinedRef.current = false
+  }, [roomsReady])
+
+  // Auto-join a dragon-tiger room — wait for first room_list before acting
+  useEffect(() => {
+    if (status !== 'connected' || !roomsReady || joinedRef.current || roomId) return
     const dtRoom = rooms.find(r => r.gameType === 'dragon-tiger' && r.playerCount < r.maxPlayers)
     if (dtRoom) {
       joinedRef.current = true
       joinRoom(dtRoom.id, buyIn)
-    } else if (rooms.length === 0) {
+    } else {
       joinedRef.current = true
       createRoom({ buyIn })
     }
-  }, [status, rooms, roomId, buyIn, joinRoom, createRoom])
+  }, [status, roomsReady, rooms, roomId, buyIn, joinRoom, createRoom])
 
   useEffect(() => {
     if (status === 'connected' && !roomId && !joinedRef.current) {

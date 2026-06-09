@@ -14,6 +14,7 @@ export function useDragonTigerSocket({ minBuyIn = 3000 } = {}) {
 
   const [status,         setStatus]         = useState('idle')
   const [rooms,          setRooms]          = useState([])
+  const [roomsReady,     setRoomsReady]     = useState(false)
   const [roomId,         setRoomId]         = useState(null)
   const [myId,           setMyId]           = useState(null)
   const [gameState,      setGameState]      = useState(null)
@@ -53,6 +54,7 @@ export function useDragonTigerSocket({ minBuyIn = 3000 } = {}) {
         if (destroyed) return
         wsRef.current = null
         setStatus('connecting')
+        setRoomsReady(false)
         retryTimer = setTimeout(connect, 3000)
       }
 
@@ -66,6 +68,7 @@ export function useDragonTigerSocket({ minBuyIn = 3000 } = {}) {
         switch (msg.type) {
           case 'room_list':
             setRooms(msg.rooms.filter(r => r.gameType === 'dragon-tiger'))
+            setRoomsReady(true)
             break
           case 'room_joined':
             setRoomId(msg.roomId)
@@ -146,7 +149,7 @@ export function useDragonTigerSocket({ minBuyIn = 3000 } = {}) {
   }, [send])
 
   return {
-    status, rooms, roomId, myId, gameState, error, cashoutBalance,
+    status, rooms, roomsReady, roomId, myId, gameState, error, cashoutBalance,
     refreshRooms, createRoom, joinRoom, leaveRoom, setReady, placeBet, cancelLastBet, cancelBets,
   }
 }
