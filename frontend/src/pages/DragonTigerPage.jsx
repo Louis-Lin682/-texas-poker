@@ -159,7 +159,7 @@ function DragonWinAnim({ onDone }) {
 
   useEffect(() => {
     const { sfxVolume, sfxMuted } = getAudioSettings()
-    if (!sfxMuted) { _dragonWinSfx.volume = 0.85 * sfxVolume; _dragonWinSfx.currentTime = 0; _dragonWinSfx.play().catch(() => {}) }
+    if (!sfxMuted) { _dragonWinSfx.volume = 0.85 * sfxVolume; _dragonWinSfx.play().catch(() => {}) }
 
     const img = new Image()
     img.src = '/DragonTiger/win/dragon_win.png'
@@ -188,7 +188,12 @@ function DragonWinAnim({ onDone }) {
     img.onload = () => {}
 
     const t = setTimeout(() => { cancelAnimationFrame(animId); onDoneRef.current?.() }, 4000)
-    return () => { cancelAnimationFrame(animId); clearTimeout(t) }
+    return () => {
+      cancelAnimationFrame(animId)
+      clearTimeout(t)
+      _dragonWinSfx.pause()
+      _dragonWinSfx.currentTime = 0
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -206,7 +211,7 @@ function TigerWinAnim({ onDone }) {
   // Phase 1: sprite walk-in (2s)
   useEffect(() => {
     const { sfxVolume, sfxMuted } = getAudioSettings()
-    if (!sfxMuted) { _tigerWinSfx.volume = 0.85 * sfxVolume; _tigerWinSfx.currentTime = 0; _tigerWinSfx.play().catch(() => {}) }
+    if (!sfxMuted) { _tigerWinSfx.volume = 0.85 * sfxVolume; _tigerWinSfx.play().catch(() => {}) }
 
     const img = new Image()
     img.src = '/DragonTiger/win/tiger_walk.png'
@@ -233,7 +238,12 @@ function TigerWinAnim({ onDone }) {
     animId = requestAnimationFrame(tick)
 
     const t = setTimeout(() => { cancelAnimationFrame(animId); setPhase('final') }, 2000)
-    return () => { cancelAnimationFrame(animId); clearTimeout(t) }
+    return () => {
+      cancelAnimationFrame(animId)
+      clearTimeout(t)
+      _tigerWinSfx.pause()
+      _tigerWinSfx.currentTime = 0
+    }
   }, [])
 
   // Phase 2: final image burst (2s) then done
