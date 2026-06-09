@@ -10201,7 +10201,7 @@ button.is-pressing {
 }
 
 @keyframes dt-dragon-fly {
-  0%   { transform: translateX(-50%) translateY(110%); opacity: 0; }
+  0%   { transform: translateX(-50%) translateY(100vh); opacity: 0; }
   12%  { opacity: 1; }
   60%  { transform: translateX(-50%) translateY(-35vh); opacity: 1; }
   100% { transform: translateX(-50%) translateY(-90vh); opacity: 0; }

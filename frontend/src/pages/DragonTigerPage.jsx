@@ -5,6 +5,9 @@ import { useAudio, getAudioSettings } from '../hooks/useAudio'
 
 // Pre-load SFX at module import time for reliable playback
 function _mkAudio(src) { const a = new Audio(src); a.preload = 'auto'; a.load(); return a }
+function _mkImg(src)   { const i = new Image(); i.src = src; return i }
+const _dragonWinImg = _mkImg('/DragonTiger/win/dragon_win.png')
+const _tigerWalkImg = _mkImg('/DragonTiger/win/tiger_walk.png')
 const _stamp1  = _mkAudio('/audio/DragonTiger/stamp.mp3')
 const _winSfx  = _mkAudio('/audio/DragonTiger/win.mp3')
 const _loseSfx = _mkAudio('/audio/DragonTiger/lose.mp3')
@@ -161,8 +164,7 @@ function DragonWinAnim({ onDone }) {
     const { sfxVolume, sfxMuted } = getAudioSettings()
     if (!sfxMuted) { _dragonWinSfx.volume = 0.85 * sfxVolume; _dragonWinSfx.play().catch(() => {}) }
 
-    const img = new Image()
-    img.src = '/DragonTiger/win/dragon_win.png'
+    const img = _dragonWinImg
 
     const FRAME_W = 1086, FRAME_H = 1448, COLS = 4, TOTAL = 8
     let frame = 0, animId = null, last = 0
@@ -185,7 +187,6 @@ function DragonWinAnim({ onDone }) {
       animId = requestAnimationFrame(tick)
     }
     animId = requestAnimationFrame(tick)
-    img.onload = () => {}
 
     const t = setTimeout(() => { cancelAnimationFrame(animId); onDoneRef.current?.() }, 4000)
     return () => {
@@ -213,8 +214,7 @@ function TigerWinAnim({ onDone }) {
     const { sfxVolume, sfxMuted } = getAudioSettings()
     if (!sfxMuted) { _tigerWinSfx.volume = 0.85 * sfxVolume; _tigerWinSfx.play().catch(() => {}) }
 
-    const img = new Image()
-    img.src = '/DragonTiger/win/tiger_walk.png'
+    const img = _tigerWalkImg
     const FRAME_W = 1086, FRAME_H = 1448, COLS = 4, TOTAL = 8
     let frame = 0, animId = null, last = 0
     const INTERVAL = 100
