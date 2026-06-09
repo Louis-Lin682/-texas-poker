@@ -584,6 +584,7 @@ export default function DragonTigerPage({ auth }) {
   const [betActivities,   setBetActivities]   = useState([])
   const [flashingPlayers, setFlashingPlayers] = useState(new Set())
   const [showAllPlayers,  setShowAllPlayers]  = useState(false)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const [showRules,      setShowRules]      = useState(false)
   const [showHistory,    setShowHistory]    = useState(false)
   const [roundHistory,   setRoundHistory]   = useState([])
@@ -598,6 +599,20 @@ export default function DragonTigerPage({ auth }) {
   useEffect(() => {
     if (!location.state) navigate('/', { replace: true })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Intercept browser / mobile back button
+  const roomIdRef = useRef(null)
+  useEffect(() => { roomIdRef.current = roomId }, [roomId])
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href)
+    const onPop = () => {
+      window.history.pushState(null, '', window.location.href)
+      if (roomIdRef.current) setShowLeaveConfirm(true)
+      else navigate('/')
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [navigate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const joinedRef         = useRef(false)
   const prevPhase         = useRef(null)
@@ -831,6 +846,12 @@ export default function DragonTigerPage({ auth }) {
   }, [gameState, myId])
 
   const handleLeave = () => {
+    if (roomId) { setShowLeaveConfirm(true); return }
+    navigate('/')
+  }
+
+  const confirmLeave = () => {
+    setShowLeaveConfirm(false)
     leaveRoom()
     navigate('/')
   }
@@ -911,6 +932,20 @@ export default function DragonTigerPage({ auth }) {
 
   return (
     <div className="dt-page">
+      {/* Leave confirm modal */}
+      {showLeaveConfirm && (
+        <div className="pt-modal-overlay" onClick={() => setShowLeaveConfirm(false)}>
+          <div className="pt-modal" onClick={e => e.stopPropagation()}>
+            <p className="pt-modal-title">確定離開遊戲？</p>
+            <p className="pt-modal-body">離開後將結算籌碼並返回大廳。</p>
+            <div className="pt-modal-btns">
+              <button type="button" className="pt-modal-cancel" onClick={() => setShowLeaveConfirm(false)}>繼續遊戲</button>
+              <button type="button" className="pt-modal-confirm" onClick={confirmLeave}>確定離開</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Reconnecting overlay */}
       {status === 'connecting' && (
         <div className="dt-reconnecting-overlay">
