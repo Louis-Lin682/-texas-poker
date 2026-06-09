@@ -6,8 +6,6 @@ import {
   getAudioSettings,
   setGlobalBgmMuted,
   setGlobalBgmVolume,
-  setGlobalSfxMuted,
-  setGlobalSfxVolume,
 } from '../hooks/useAudio'
 
 const TOKEN_KEY = 'texas_holdem_auth_token'
@@ -120,9 +118,7 @@ export default function SettingsPage() {
 
   const init = getAudioSettings()
   const [bgmOn,  setBgmOn]  = useState(!init.bgmMuted)
-  const [sfxOn,  setSfxOn]  = useState(!init.sfxMuted)
   const [bgmVol, setBgmVol] = useState(init.bgmVolume)
-  const [sfxVol, setSfxVol] = useState(init.sfxVolume)
 
   const [pushOn,   setPushOn]   = useState(true)
   const [pwdOpen,  setPwdOpen]  = useState(false)
@@ -136,19 +132,9 @@ export default function SettingsPage() {
     setGlobalBgmMuted(!on)
   }
 
-  function handleSfxToggle(on) {
-    setSfxOn(on)
-    setGlobalSfxMuted(!on)
-  }
-
   function handleBgmVol(v) {
     setBgmVol(v)
     setGlobalBgmVolume(v)
-  }
-
-  function handleSfxVol(v) {
-    setSfxVol(v)
-    setGlobalSfxVolume(v)
   }
 
   async function handleChangePwd(e) {
@@ -181,14 +167,6 @@ export default function SettingsPage() {
           onToggle={handleBgmToggle}
           volume={bgmVol}
           onVolume={handleBgmVol}
-        />
-        <div className="settings-divider" />
-        <AudioBlock
-          label="遊戲音效"
-          enabled={sfxOn}
-          onToggle={handleSfxToggle}
-          volume={sfxVol}
-          onVolume={handleSfxVol}
         />
       </SettingsSection>
 

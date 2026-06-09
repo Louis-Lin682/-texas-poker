@@ -436,7 +436,7 @@ export default function BlackjackTablePage({ auth }) {
   const { play, preload } = useAudio()
   const bgmRef = useRef(null)
 
-  const [isGameMuted, setIsGameMuted] = useState(() => getAudioSettings().bgmMuted)
+  const [isGameMuted, setIsGameMuted] = useState(false)
   const toggleGameMute = () => setIsGameMuted(m => !m)
 
   useEffect(() => {
@@ -445,11 +445,11 @@ export default function BlackjackTablePage({ auth }) {
 
   // Game BGM — same track as Texas Hold'em table
   useEffect(() => {
-    const { bgmMuted, bgmVolume } = getAudioSettings()
+    const { bgmVolume } = getAudioSettings()
     const audio = new Audio('/audio/game/gameBgSound.mp3')
     audio.loop   = true
-    audio.muted  = bgmMuted
-    audio.volume = bgmMuted ? 0 : 0.28 * bgmVolume
+    audio.muted  = false
+    audio.volume = 0.28 * bgmVolume
     bgmRef.current = audio
     const tryPlay = () => { if (!bgmRef.current?.paused) return; bgmRef.current?.play().catch(() => {}) }
     document.addEventListener('click', tryPlay, { once: true })

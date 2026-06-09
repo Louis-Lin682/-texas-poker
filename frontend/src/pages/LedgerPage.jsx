@@ -29,9 +29,21 @@ const GAME_LABEL = {
   'texas-holdem': '德州撲克',
   'big-two':      '大老二',
   'dragon-tiger': '龍虎鬥',
+  'blackjack':    '21點',
 }
 
 const SUIT_RED  = new Set(['♥', '♦'])
+
+// Blackjack card helpers
+const BJ_SUIT_SYM = { h: '♥', d: '♦', c: '♣', s: '♠' }
+const BJ_SUIT_RED = new Set(['h', 'd'])
+const BJ_RESULT_LABEL = { win: '勝', lose: '負', push: '平', blackjack: 'BJ', fivecard: '5張', bust: '爆' }
+function bjCard(c) {
+  const rank = c.slice(0, -1)
+  const suit = c.slice(-1)
+  return (rank === 'T' ? '10' : rank) + (BJ_SUIT_SYM[suit] ?? suit)
+}
+function bjRed(c) { return BJ_SUIT_RED.has(c.slice(-1)) }
 const DT_RESULT = { dragon: '龍勝', tiger: '虎勝', tie: '和局' }
 const DT_BET_LABEL = {
   dragon: '龍', tiger: '虎', tie: '和',
@@ -403,6 +415,32 @@ function LedgerPage() {
                       {e.room_id && <span className="ledger-room">#{e.room_id}</span>}
                       <span className="ledger-time">{dateFmt(e.created_at)}</span>
                       {note && <span className="ledger-note">{note}</span>}
+                      {e.detail && e.game === 'blackjack' && (() => {
+                        const d = e.detail
+                        return (
+                          <div className="ledger-bj-detail">
+                            <span className="ledger-bj-row">
+                              <span className="ledger-bj-side">莊</span>
+                              {(d.dealerCards ?? []).map((c, i) => (
+                                <span key={i} style={{ color: bjRed(c) ? '#e05050' : '#e8e0cc' }}>{bjCard(c)}</span>
+                              ))}
+                              <span className="ledger-bj-score">({d.dealerScore})</span>
+                            </span>
+                            {(d.hands ?? []).map((h, i) => (
+                              <span key={i} className="ledger-bj-row">
+                                <span className="ledger-bj-side">{d.hands.length > 1 ? `手${i + 1}` : '自'}</span>
+                                {(h.cards ?? []).map((c, j) => (
+                                  <span key={j} style={{ color: bjRed(c) ? '#e05050' : '#e8e0cc' }}>{bjCard(c)}</span>
+                                ))}
+                                <span className="ledger-bj-score">({h.score})</span>
+                                <span className={`ledger-bj-result ledger-bj-${h.result}`}>
+                                  {BJ_RESULT_LABEL[h.result] ?? h.result}
+                                </span>
+                              </span>
+                            ))}
+                          </div>
+                        )
+                      })()}
                       {e.detail && e.game === 'dragon-tiger' && (() => {
                         const d = e.detail
                         const dc = d.dragonCard, tc = d.tigerCard

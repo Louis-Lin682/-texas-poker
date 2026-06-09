@@ -14,6 +14,8 @@ export class RoomManager {
     this.clients = new Map()
     // roomId → setTimeout handle (AFK auto-pass for Big Two)
     this._afkTimers = new Map()
+    // userId → { timer, roomId } — 30s reconnect grace for Dragon Tiger
+    this._graceTimers = new Map()
     // injected after construction
     this.botManager = null
     this.pool = pool
@@ -70,7 +72,12 @@ export class RoomManager {
   unregisterClient(ws) {
     const info = this.clients.get(ws)
     if (info?.roomId) {
-      this._leaveRoom(ws, info)
+      const game = this.rooms.get(info.roomId)
+      if (game?.gameSlug === 'dragon-tiger') {
+        this._startGracePeriod(info.userId, info.roomId)
+      } else {
+        this._leaveRoom(ws, info)
+      }
     }
     this.clients.delete(ws)
   }
@@ -186,6 +193,31 @@ export class RoomManager {
   async _joinRoom(ws, info, roomId, buyIn) {
     if (info.roomId) this._leaveRoom(ws, info)
 
+    // Dragon Tiger grace-period reconnect
+    const grace = this._graceTimers.get(info.userId)
+    if (grace) {
+      clearTimeout(grace.timer)
+      this._graceTimers.delete(info.userId)
+      if (grace.roomId === roomId) {
+        // Same DT room — restore session without DB deduction
+        const game = this.rooms.get(roomId)
+        if (game) {
+          info.roomId = roomId
+          this._send(ws, {
+            type:   'room_joined',
+            roomId,
+            myId:   info.userId,
+            state:  game.stateForPlayer(info.userId),
+          })
+          this._broadcastRoomList()
+          return
+        }
+      } else {
+        // Joining a different room — flush grace immediately
+        this._expireGrace(info.userId, grace.roomId)
+      }
+    }
+
     // Reject suspended users
     if (this.pool) {
       const { rows } = await dbQuery('SELECT suspended_at FROM users WHERE id = $1', [info.userId])
@@ -262,11 +294,11 @@ export class RoomManager {
       }
     }
 
-    // Check how many human connections remain in this room
-    const humansLeft = [...this.clients.values()]
-      .filter(c => c.roomId === roomId).length
+    // Check how many human connections (or grace-period players) remain in this room
+    const humansLeft = [...this.clients.values()].filter(c => c.roomId === roomId).length
+    const graceLeft  = [...this._graceTimers.values()].filter(g => g.roomId === roomId).length
 
-    if (humansLeft === 0) {
+    if (humansLeft === 0 && graceLeft === 0) {
       // Cancel AFK timer before closing
       const afk = this._afkTimers.get(roomId)
       if (afk) { clearTimeout(afk); this._afkTimers.delete(roomId) }
@@ -281,6 +313,54 @@ export class RoomManager {
       this.botManager?.notifyRoomClosed(roomId)
     }
     this._broadcastRoomList()
+  }
+
+  _startGracePeriod(userId, roomId) {
+    const existing = this._graceTimers.get(userId)
+    if (existing) clearTimeout(existing.timer)
+
+    const timer = setTimeout(() => {
+      this._graceTimers.delete(userId)
+      this._expireGrace(userId, roomId)
+    }, 30_000)
+
+    this._graceTimers.set(userId, { timer, roomId })
+  }
+
+  _expireGrace(userId, roomId) {
+    const game = this.rooms.get(roomId)
+    if (!game) return
+
+    const player  = game.players.find(p => p.id === userId)
+    const cashout = player?.balance ?? 0
+
+    game.removePlayer(userId)
+
+    if (this.pool) {
+      const gameSlug = game.gameSlug
+      if (cashout > 0) {
+        dbQuery(
+          'UPDATE users SET balance = balance + $1 WHERE id = $2',
+          [cashout, userId],
+        ).catch(err => console.error('[grace expire cash-out]', err))
+      }
+      dbQuery(
+        'INSERT INTO ledger (user_id, type, amount, room_id, game) VALUES ($1, $2, $3, $4, $5)',
+        [userId, 'cash_out', cashout, roomId, gameSlug],
+      ).catch(err => console.error('[ledger grace expire]', err))
+    }
+
+    // Close room if no humans remain (connected or in grace)
+    const humansLeft = [...this.clients.values()].filter(c => c.roomId === roomId).length
+    const graceLeft  = [...this._graceTimers.values()].filter(g => g.roomId === roomId).length
+    if (humansLeft === 0 && graceLeft === 0) {
+      const afk = this._afkTimers.get(roomId)
+      if (afk) { clearTimeout(afk); this._afkTimers.delete(roomId) }
+      game.destroy()
+      this.rooms.delete(roomId)
+      this.botManager?.notifyRoomClosed(roomId)
+      this._broadcastRoomList()
+    }
   }
 
   _roomOf(info) {
@@ -378,6 +458,16 @@ export class RoomManager {
             'INSERT INTO ledger (user_id, type, amount, bet, room_id, game, detail) VALUES ($1, $2, $3, $4, $5, $6, $7)',
             [r.id, entryType, net, r.totalBet, roomId, game.gameSlug, r.detail ? JSON.stringify(r.detail) : null],
           ).catch(err => console.error('[ledger round]', err))
+        }
+        // Record DT round to shared history table
+        if (game.gameSlug === 'dragon-tiger') {
+          const st = data.state
+          if (st?.dragonCard && st?.tigerCard && st?.result) {
+            dbQuery(
+              'INSERT INTO dt_round_history (result, dragon_rank, dragon_suit, tiger_rank, tiger_suit) VALUES ($1,$2,$3,$4,$5)',
+              [st.result, st.dragonCard.rank, st.dragonCard.suit, st.tigerCard.rank, st.tigerCard.suit],
+            ).catch(err => console.error('[dt history]', err))
+          }
         }
       }
       return  // no need to broadcast this event to clients

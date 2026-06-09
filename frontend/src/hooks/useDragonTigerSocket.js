@@ -90,7 +90,7 @@ export function useDragonTigerSocket({ minBuyIn = 3000 } = {}) {
             setTimeout(() => setError(null), 3500)
             if (msg.message.includes('遊戲進行中') || msg.message === '房間不存在') {
               sessionStorage.removeItem(ROOM_KEY)
-              setRoomId(null)
+              setRoomId(null); setMyId(null); setGameState(null)
             }
             break
         }

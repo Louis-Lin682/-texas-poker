@@ -1775,6 +1775,42 @@ button.is-pressing {
   color: rgba(225,215,178,.45);
 }
 
+.ledger-bj-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 3px;
+}
+.ledger-bj-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .5px;
+}
+.ledger-bj-side {
+  font-size: 11px;
+  color: rgba(225,215,178,.5);
+  min-width: 18px;
+}
+.ledger-bj-score {
+  font-size: 11px;
+  color: rgba(225,215,178,.45);
+}
+.ledger-bj-result {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 0 6px;
+}
+.ledger-bj-win      { color: #4caf8a; background: rgba(76,175,138,.12); border: 1px solid rgba(76,175,138,.3); }
+.ledger-bj-blackjack{ color: #f0c96b; background: rgba(240,201,107,.12); border: 1px solid rgba(240,201,107,.4); }
+.ledger-bj-fivecard { color: #7ec8e3; background: rgba(126,200,227,.12); border: 1px solid rgba(126,200,227,.3); }
+.ledger-bj-push     { color: rgba(225,215,178,.6); background: rgba(225,215,178,.08); border: 1px solid rgba(225,215,178,.2); }
+.ledger-bj-lose     { color: #e05050; background: rgba(224,80,80,.12); border: 1px solid rgba(224,80,80,.3); }
+.ledger-bj-bust     { color: #e05050; background: rgba(224,80,80,.12); border: 1px solid rgba(224,80,80,.3); }
+
 .ledger-empty {
   margin: 8px 0 4px;
   color: rgba(225, 215, 178, 0.4);
@@ -9645,6 +9681,23 @@ button.is-pressing {
 .dt-balance-label { font-size: 10px; color: #8a7050; }
 .dt-balance-val   { font-size: 15px; font-weight: 800; color: #f0c96b; }
 
+.dt-reconnecting-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0,0,0,.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dt-reconnecting-overlay span {
+  color: #f0c96b;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px rgba(0,0,0,.8);
+}
+
 .dt-error-toast {
   position: fixed;
   top: 60px;
@@ -10033,24 +10086,101 @@ button.is-pressing {
   color: #a08050;
 }
 
-.dt-bottom-panel {
-  padding: 0 0 8px;
+/* Floating chip tray */
+.dt-chip-float {
+  position: fixed;
+  right: 16px;
+  bottom: 80px;
+  z-index: 200;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+  overflow: hidden;
+  /* box-shadow: 0 4px 20px rgba(0,0,0,.6); */
+  width: 85%;
+  height: auto;
+}
+.dt-chip-float.is-placed {
+  right: auto;
+  bottom: auto;
+}
+.dt-chip-float:active { cursor: grabbing; }
+
+/* Bead road */
+.dt-bead-road-wrap {
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  position: relative;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0,0,0,.35);
+  border-top: 1px solid rgba(200,160,50,.15);
 }
-
-.dt-bottom-panel.is-dealing::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  backdrop-filter: blur(6px);
-  background: rgba(0, 0, 0, 0.30);
-  z-index: 1;
-  pointer-events: none;
-  border-radius: 12px;
+.dt-bead-road-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(200,160,50,.55);
+  letter-spacing: .5px;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+.dt-bead-road-scroll {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.dt-bead-road-scroll::-webkit-scrollbar { display: none; }
+.dt-bead-road-grid {
+  display: grid;
+  grid-template-rows: repeat(6, 34px);
+  grid-auto-flow: column;
+  grid-auto-columns: 34px;
+  gap: 3px;
+  min-width: max-content;
+}
+.dt-bead {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+.dt-bead-rank {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  letter-spacing: -.5px;
+}
+.dt-bead-suit {
+  font-size: 9px;
+  line-height: 1;
+  color: rgba(255,255,255,.75);
+  margin-top: 1px;
+}
+.dt-bead-suit.is-red { color: #ffb0b0; }
+/* 龍=藍 虎=紅 和=綠 */
+.dt-bead-dragon {
+  background: radial-gradient(circle at 35% 35%, #5ab0f0, #1050a0);
+  box-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+.dt-bead-tiger {
+  background: radial-gradient(circle at 35% 35%, #ff7070, #b02020);
+  box-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+.dt-bead-tie {
+  background: radial-gradient(circle at 35% 35%, #60d888, #207a40);
+  box-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+.dt-bead-empty {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
 }
 
 .dt-chip-tray {

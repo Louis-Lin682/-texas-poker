@@ -197,6 +197,16 @@ export async function initDb() {
       value TEXT NOT NULL
     );
     INSERT INTO support_config (key, value) VALUES ('auto_close_days', '7') ON CONFLICT DO NOTHING;
+
+    CREATE TABLE IF NOT EXISTS dt_round_history (
+      id          BIGSERIAL PRIMARY KEY,
+      result      TEXT NOT NULL,
+      dragon_rank TEXT NOT NULL,
+      dragon_suit TEXT NOT NULL,
+      tiger_rank  TEXT NOT NULL,
+      tiger_suit  TEXT NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
   `)
 }
 

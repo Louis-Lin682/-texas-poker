@@ -641,7 +641,7 @@ function BigTwoTablePage({ auth }) {
 
   // ── BGM ──
   const { play, preload } = useAudio()
-  const [isGameMuted, setIsGameMuted] = useState(() => getAudioSettings().bgmMuted)
+  const [isGameMuted, setIsGameMuted] = useState(false)
   const bgmRef = useRef(null)
 
   useEffect(() => {
@@ -649,11 +649,11 @@ function BigTwoTablePage({ auth }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const { bgmMuted, bgmVolume } = getAudioSettings()
+    const { bgmVolume } = getAudioSettings()
     const audio = new Audio('/audio/big-two/bigTwoGameBg.mp3')
     audio.loop   = true
-    audio.muted  = bgmMuted
-    audio.volume = bgmMuted ? 0 : 0.28 * bgmVolume
+    audio.muted  = false
+    audio.volume = 0.28 * bgmVolume
     bgmRef.current = audio
 
     const tryPlay = () => {

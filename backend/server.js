@@ -547,6 +547,30 @@ const server = http.createServer(async (request, response) => {
       return
     }
 
+    if (request.method === 'GET' && pathname === '/dt-history') {
+      const limit  = Math.min(Number(url.searchParams.get('limit')  || 60), 120)
+      const offset = Math.max(Number(url.searchParams.get('offset') || 0),  0)
+      const { rows } = await query(
+        `SELECT result, dragon_rank, dragon_suit, tiger_rank, tiger_suit
+         FROM dt_round_history
+         ORDER BY id DESC
+         LIMIT $1 OFFSET $2`,
+        [limit + 1, offset],
+      )
+      const hasMore = rows.length > limit
+      sendJson(response, 200, {
+        rounds: rows.slice(0, limit).map(r => ({
+          result:     r.result,
+          dragonRank: r.dragon_rank,
+          dragonSuit: r.dragon_suit,
+          tigerRank:  r.tiger_rank,
+          tigerSuit:  r.tiger_suit,
+        })),
+        hasMore,
+      }, effectiveCors)
+      return
+    }
+
     if (request.method === 'GET' && pathname === '/slots/session') {
       const user = await getSessionUser(request)
       if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }); return }

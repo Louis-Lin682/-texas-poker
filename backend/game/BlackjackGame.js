@@ -389,7 +389,19 @@ export class BlackjackGame {
       else if (allResults.every(r => r === 'push')) p.result = 'push'
       else p.result = 'lose'
 
-      roundResults.push({ id: p.id, totalBet, totalReturn })
+      roundResults.push({
+        id: p.id, totalBet, totalReturn,
+        detail: {
+          dealerCards: this.dealer.cards,
+          dealerScore: dScore,
+          hands: p.hands.map(h => ({
+            cards:  h.cards,
+            score:  handScore(h.cards),
+            result: h.result,
+            bet:    h.bet,
+          })),
+        },
+      })
     }
 
     this._emit(this.publicState())

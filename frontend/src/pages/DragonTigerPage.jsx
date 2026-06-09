@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDragonTigerSocket } from '../hooks/useDragonTigerSocket'
 import { useAudio, getAudioSettings } from '../hooks/useAudio'
+import { API_BASE_URL } from '../services/apiClient'
 
 // Pre-load SFX at module import time for reliable playback
 function _mkAudio(src) { const a = new Audio(src); a.preload = 'auto'; a.load(); return a }
@@ -81,6 +82,129 @@ function emptyPlacements() {
 function isSuitZone(zone) {
   return zone.endsWith('_spade') || zone.endsWith('_heart') ||
     zone.endsWith('_club')  || zone.endsWith('_diamond')
+}
+
+// ── Floating draggable chip tray ───────────────────────────
+function DraggableChipTray({ selectedChip, onSelectChip, visible }) {
+  const trayRef    = useRef(null)
+  const isDragging = useRef(false)
+  const wasDragged = useRef(false) // suppresses chip onClick after a drag gesture
+  const origin     = useRef({ px: 0, py: 0, ex: 0, ey: 0 })
+  const [pos, setPos] = useState(null) // null = CSS default (bottom-right)
+
+  function onPointerDown(e) {
+    const el = trayRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    isDragging.current = false
+    wasDragged.current = false
+    origin.current = { px: e.clientX, py: e.clientY, ex: rect.left, ey: rect.top }
+    el.setPointerCapture(e.pointerId)
+  }
+
+  function onPointerMove(e) {
+    const dx = e.clientX - origin.current.px
+    const dy = e.clientY - origin.current.py
+    // Start drag only after moving > 6px
+    if (!isDragging.current && Math.sqrt(dx * dx + dy * dy) > 6) {
+      isDragging.current = true
+      wasDragged.current = true
+    }
+    if (!isDragging.current || !trayRef.current) return
+    const { width, height } = trayRef.current.getBoundingClientRect()
+    const x = Math.max(0, Math.min(window.innerWidth  - width,  origin.current.ex + dx))
+    const y = Math.max(0, Math.min(window.innerHeight - height, origin.current.ey + dy))
+    setPos({ x, y })
+    e.preventDefault()
+  }
+
+  function onPointerUp() { isDragging.current = false }
+
+  if (!visible) return null
+  return (
+    <div
+      ref={trayRef}
+      className={`dt-chip-float${pos ? ' is-placed' : ''}`}
+      style={pos ? { left: pos.x, top: pos.y } : {}}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      data-no-global-click="true"
+    >
+      <div className="dt-chip-tray">
+        {CHIPS.map(chip => (
+          <button
+            key={chip.value}
+            type="button"
+            className={`dt-chip-btn ${selectedChip.value === chip.value ? 'is-selected' : ''}`}
+            onClick={() => { if (wasDragged.current) return; onSelectChip(chip) }}
+            data-no-global-click="true"
+          >
+            <img src={chip.img} alt={chip.label} className="dt-chip-img" />
+            <span className={`dt-chip-label ${selectedChip.value === chip.value ? 'is-selected' : ''}`}>
+              {chip.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Bead road (珠盤路) ─────────────────────────────────────
+const BEAD_ROWS = 6
+const RED_SUITS = new Set(['♥', '♦'])
+
+function BeadRoad({ history, onLoadMore, hasMore }) {
+  const scrollRef   = useRef(null)
+  const prevWidth   = useRef(0)
+
+  const prevLen = useRef(0)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const delta = history.length - prevLen.current
+    if (delta === 1 || prevLen.current === 0) {
+      // Single live round added, or initial load — scroll to show newest (rightmost)
+      el.scrollLeft = el.scrollWidth
+    } else if (delta > 1 && el.scrollWidth > prevWidth.current) {
+      // Bulk DB load — older rounds appeared on the left, keep viewport steady
+      el.scrollLeft += el.scrollWidth - prevWidth.current
+    }
+    prevLen.current   = history.length
+    prevWidth.current = el.scrollWidth
+  }, [history.length])
+
+  function onScroll(e) {
+    if (e.currentTarget.scrollLeft < 80 && hasMore) onLoadMore?.()
+  }
+
+  // history is newest-first; reverse for left(old)→right(new) display
+  const items = [...history].reverse()
+  const pad = (BEAD_ROWS - (items.length % BEAD_ROWS)) % BEAD_ROWS
+
+  return (
+    <div className="dt-bead-road-wrap">
+      <span className="dt-bead-road-label">珠盤路</span>
+      <div className="dt-bead-road-scroll" ref={scrollRef} onScroll={onScroll}>
+        <div className="dt-bead-road-grid">
+          {items.map((r, i) => {
+            const card = r.result === 'tiger' ? r.tigerCard : r.dragonCard
+            const suit = card?.suit ?? ''
+            return (
+              <div key={r.roundId ?? i} className={`dt-bead dt-bead-${r.result}`}>
+                <span className="dt-bead-rank">{card?.rank ?? '—'}</span>
+                <span className={`dt-bead-suit ${RED_SUITS.has(suit) ? 'is-red' : ''}`}>{suit}</span>
+              </div>
+            )
+          })}
+          {Array.from({ length: pad }).map((_, i) => (
+            <div key={`pad-${i}`} className="dt-bead dt-bead-empty" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function PlayingCard({ card, faceDown, delay = 0 }) {
@@ -463,6 +587,9 @@ export default function DragonTigerPage({ auth }) {
   const [showRules,      setShowRules]      = useState(false)
   const [showHistory,    setShowHistory]    = useState(false)
   const [roundHistory,   setRoundHistory]   = useState([])
+  const [hasMoreDb,      setHasMoreDb]      = useState(true)
+  const [loadingDb,      setLoadingDb]      = useState(false)
+  const dbCountRef = useRef(0)  // tracks how many DB rounds are loaded (for offset)
   const [showDragonWin,  setShowDragonWin]  = useState(false)
   const [showTigerWin,   setShowTigerWin]   = useState(false)
   const [dtBgmMuted,     setDtBgmMuted]     = useState(false)
@@ -483,16 +610,46 @@ export default function DragonTigerPage({ auth }) {
     preload(['dt_deal', 'dt_chips', 'dt_flip', 'dt_dingding', 'dt_stamp', 'dt_win', 'dt_lose'])
   }, [preload])
 
-  // Warmup: play all SFX silently on mount so the browser decodes and caches
-  // them before they're first needed — fixes cold-start silent audio
+  // Load shared DT history from backend on mount
   useEffect(() => {
-    const all = [_stamp1, _winSfx, _loseSfx, _dingding, _chipSrc,
-                 _dealSfx, _flip1, _flip2, _dragonWinSfx, _tigerWinSfx]
-    all.forEach(a => {
-      a.volume = 0
-      a.play().then(() => { a.pause(); a.currentTime = 0 }).catch(() => {})
-    })
+    async function init() {
+      setLoadingDb(true)
+      try {
+        const res  = await fetch(`${API_BASE_URL}/dt-history?limit=60`)
+        const data = await res.json()
+        dbCountRef.current = data.rounds.length
+        setHasMoreDb(data.hasMore)
+        setRoundHistory(data.rounds.map(r => ({
+          result:     r.result,
+          dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
+          tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
+        })))
+      } catch {}
+      setLoadingDb(false)
+    }
+    init()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadMoreHistory = useCallback(async () => {
+    if (loadingDb || !hasMoreDb) return
+    setLoadingDb(true)
+    try {
+      const res  = await fetch(`${API_BASE_URL}/dt-history?limit=60&offset=${dbCountRef.current}`)
+      const data = await res.json()
+      dbCountRef.current += data.rounds.length
+      setHasMoreDb(data.hasMore)
+      setRoundHistory(h => [
+        ...h,
+        ...data.rounds.map(r => ({
+          result:     r.result,
+          dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
+          tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
+        })),
+      ])
+    } catch {}
+    setLoadingDb(false)
+  }, [loadingDb, hasMoreDb])
+
 
   // Dragon Tiger BGM — raw Audio element with click fallback
   useEffect(() => {
@@ -526,6 +683,11 @@ export default function DragonTigerPage({ auth }) {
   }, [dtBgmMuted])
 
   const toggleDtBgm = () => setDtBgmMuted(m => !m)
+
+  // When room is lost, re-enable auto-join
+  useEffect(() => {
+    if (!roomId) joinedRef.current = false
+  }, [roomId])
 
   // Auto-join a dragon-tiger room
   useEffect(() => {
@@ -589,7 +751,7 @@ export default function DragonTigerPage({ auth }) {
           ? ZONE_KEYS.filter(z => (meNow.bets[z] || 0) > 0).map(z => ({ zone: z, amount: meNow.bets[z] }))
           : []
         const totalBet = bets.reduce((s, b) => s + b.amount, 0)
-        setRoundHistory(h => [{
+        const newEntry = {
           roundId:    gameState.roundId,
           dragonCard: gameState.dragonCard,
           tigerCard:  gameState.tigerCard,
@@ -599,7 +761,8 @@ export default function DragonTigerPage({ auth }) {
           payout:     meNow?.payout ?? 0,
           net:        (meNow?.payout ?? 0) - totalBet,
           ts:         Date.now(),
-        }, ...h].slice(0, 50))
+        }
+        setRoundHistory(h => [newEntry, ...h])
       }
       prevPhase.current = phase
     }
@@ -742,6 +905,13 @@ export default function DragonTigerPage({ auth }) {
 
   return (
     <div className="dt-page">
+      {/* Reconnecting overlay */}
+      {status === 'connecting' && (
+        <div className="dt-reconnecting-overlay">
+          <span>重新連線中...</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="dt-header">
         <button type="button" className="dt-back-btn" onClick={handleLeave}>
@@ -886,46 +1056,15 @@ export default function DragonTigerPage({ auth }) {
         </div>
       )}
 
-      {/* Bottom panel */}
-      {(phase === 'betting' || phase === 'dealing') && (
-        <div className={`dt-bottom-panel${phase === 'dealing' ? ' is-dealing' : ''}`}>
-          <div className="dt-chip-hint">已選面額：{fmt(selectedChip.value)}</div>
-          <div className="dt-chip-tray">
-            {CHIPS.map(chip => (
-              <button
-                key={chip.value}
-                type="button"
-                className={`dt-chip-btn ${selectedChip.value === chip.value ? 'is-selected' : ''}`}
-                onClick={() => setSelectedChip(chip)}
-                data-no-global-click="true"
-              >
-                <img src={chip.img} alt={chip.label} className="dt-chip-img" />
-                <span className={`dt-chip-label ${selectedChip.value === chip.value ? 'is-selected' : ''}`}>
-                  {chip.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Bead road — always visible at the bottom */}
+      <BeadRoad history={roundHistory} onLoadMore={loadMoreHistory} hasMore={hasMoreDb} />
 
-      {phase === 'result' && (
-        <div className="dt-action-bar">
-          <div className="dt-wait-next-round">
-            <img src="/DragonTiger/DragonTigerBtn.png" alt="" className="dt-ready-btn-bg" draggable={false} />
-            <span className="dt-ready-btn-text dt-wait-text">結算中…</span>
-          </div>
-        </div>
-      )}
-
-      {phase === 'idle' && (
-        <div className="dt-action-bar">
-          <div className="dt-wait-next-round">
-            <img src="/DragonTiger/DragonTigerBtn.png" alt="" className="dt-ready-btn-bg" draggable={false} />
-            <span className="dt-ready-btn-text dt-wait-text">等待下一局…</span>
-          </div>
-        </div>
-      )}
+      {/* Floating chip tray */}
+      <DraggableChipTray
+        selectedChip={selectedChip}
+        onSelectChip={setSelectedChip}
+        visible={isBetting}
+      />
 
       {/* Cashout notice */}
       {cashoutBalance !== null && (

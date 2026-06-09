@@ -28,7 +28,7 @@ export const audioMap = {
   bj_blackjack:   { src: '/audio/blackjack/game/blackjack.mp3',       volume: 0.85 },
   bj_tie:         { src: '/audio/blackjack/game/tie.mp3',             volume: 0.85 },
   bj_bust:        { src: '/audio/blackjack/game/Bust.mp3',            volume: 0.85 },
-  bj_lose:        { src: '/audio/blackjack/game/lose.mp3',            volume: 0.85 },
+  bj_lose:        { src: '/audio/blackjack/game/lose.mp3',            volume: 0.9 },
   bj_fivecard:    { src: '/audio/blackjack/game/Five-Passes.mp3',     volume: 0.85 },
   bj_dealerBust:  { src: '/audio/blackjack/game/dealer-exploded.mp3', volume: 0.85 },
   bj_nowYou:      { src: '/audio/blackjack/game/now-you.mp3',         volume: 0.85 },
