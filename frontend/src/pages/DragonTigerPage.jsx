@@ -192,7 +192,7 @@ function BeadRoad({ history, onLoadMore, hasMore }) {
             const card = r.result === 'tiger' ? r.tigerCard : r.dragonCard
             const suit = card?.suit ?? ''
             return (
-              <div key={r.roundId ?? i} className={`dt-bead dt-bead-${r.result}`}>
+              <div key={r._key ?? i} className={`dt-bead dt-bead-${r.result}`}>
                 <span className="dt-bead-rank">{card?.rank ?? '—'}</span>
                 <span className={`dt-bead-suit ${RED_SUITS.has(suit) ? 'is-red' : ''}`}>{suit}</span>
               </div>
@@ -406,7 +406,7 @@ function HistoryModal({ history, onClose }) {
               const dc = r.dragonCard
               const tc = r.tigerCard
               return (
-                <div key={`${r.roundId}-${r.ts}`} className="dt-history-row">
+                <div key={r._key ?? `${r.roundId}-${r.ts}`} className="dt-history-row">
                   <div className="dt-history-row-top">
                     <span className="dt-history-round">第 {r.roundId} 局</span>
                     <span className="dt-history-result" style={{ color: RESULT_COLOR[r.result] }}>
@@ -620,6 +620,7 @@ export default function DragonTigerPage({ auth }) {
         dbCountRef.current = data.rounds.length
         setHasMoreDb(data.hasMore)
         setRoundHistory(data.rounds.map(r => ({
+          _key:       `db-${r.dbId}`,
           result:     r.result,
           dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
           tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
@@ -641,6 +642,7 @@ export default function DragonTigerPage({ auth }) {
       setRoundHistory(h => [
         ...h,
         ...data.rounds.map(r => ({
+          _key:       `db-${r.dbId}`,
           result:     r.result,
           dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
           tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
@@ -755,6 +757,7 @@ export default function DragonTigerPage({ auth }) {
           : []
         const totalBet = bets.reduce((s, b) => s + b.amount, 0)
         const newEntry = {
+          _key:       `live-${gameState.roundId}-${Date.now()}`,
           roundId:    gameState.roundId,
           dragonCard: gameState.dragonCard,
           tigerCard:  gameState.tigerCard,

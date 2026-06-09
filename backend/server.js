@@ -551,7 +551,7 @@ const server = http.createServer(async (request, response) => {
       const limit  = Math.min(Number(url.searchParams.get('limit')  || 60), 120)
       const offset = Math.max(Number(url.searchParams.get('offset') || 0),  0)
       const { rows } = await query(
-        `SELECT result, dragon_rank, dragon_suit, tiger_rank, tiger_suit
+        `SELECT id, result, dragon_rank, dragon_suit, tiger_rank, tiger_suit
          FROM dt_round_history
          ORDER BY id DESC
          LIMIT $1 OFFSET $2`,
@@ -560,6 +560,7 @@ const server = http.createServer(async (request, response) => {
       const hasMore = rows.length > limit
       sendJson(response, 200, {
         rounds: rows.slice(0, limit).map(r => ({
+          dbId:       Number(r.id),
           result:     r.result,
           dragonRank: r.dragon_rank,
           dragonSuit: r.dragon_suit,
