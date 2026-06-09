@@ -20,13 +20,13 @@ import PromoSection from '../components/PromoSection'
 import QuickActions from '../components/QuickActions'
 import {
   bottomNavItems,
-  noticeText,
   promoCards,
   quickActions,
 } from '../data/lobbyData'
 import { useFavorites } from '../hooks/useFavorites'
 import { useGames } from '../hooks/useGames'
 import { getConfig } from '../services/gamesApi'
+import { API_BASE_URL } from '../services/apiClient'
 
 function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnterLobby, play, pause, isMuted, toggleMute, supportUnread, onSupportRead }) {
   const navigate = useNavigate()
@@ -46,6 +46,17 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
     return cached ? parseInt(cached, 10) : 3000
   })
   const [showFloatTop, setShowFloatTop] = useState(false)
+  const [marqueeText, setMarqueeText] = useState('')
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/announcements`)
+      .then(r => r.json())
+      .then(d => {
+        const items = d.announcements ?? []
+        if (items.length > 0) setMarqueeText(items.map(a => a.content).join('　　◆　　'))
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     getConfig().then(cfg => {
@@ -131,7 +142,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
         </button>
       )}
       <div className="phone-frame phone-frame-lobby">
-        <NoticeTicker text={noticeText} isMuted={isMuted} onToggleMute={toggleMute} />
+        <NoticeTicker text={marqueeText} isMuted={isMuted} onToggleMute={toggleMute} />
         {auth.isAuthenticated ? (
           <ProfileCard
             profile={profile}

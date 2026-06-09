@@ -71,6 +71,8 @@ export default function AdminNewsPage() {
       sort_order:   n.sort_order,
       is_active:    n.is_active,
       published_at: n.published_at ? dayjs(n.published_at) : dayjs(),
+      start_at:     n.start_at ? dayjs(n.start_at) : null,
+      end_at:       n.end_at   ? dayjs(n.end_at)   : null,
     })
     setModalOpen(true)
   }
@@ -84,6 +86,8 @@ export default function AdminNewsPage() {
       content:      values.content || null,
       category:     values.category,
       published_at: values.published_at ? values.published_at.toISOString() : new Date().toISOString(),
+      start_at:     values.start_at ? values.start_at.toISOString() : null,
+      end_at:       values.end_at   ? values.end_at.toISOString()   : null,
       sort_order:   values.sort_order ?? 0,
       is_active:    Boolean(values.is_active),
     }
@@ -120,7 +124,7 @@ export default function AdminNewsPage() {
     {
       title: '分類',
       dataIndex: 'category',
-      width: 80,
+      width: 70,
       render: cat => <Tag color={CATEGORY_COLOR[cat] ?? 'default'}>{cat}</Tag>,
     },
     {
@@ -130,19 +134,31 @@ export default function AdminNewsPage() {
     {
       title: '發佈時間',
       dataIndex: 'published_at',
-      width: 150,
-      render: v => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : '—',
+      width: 140,
+      render: v => v ? dayjs(v).format('MM-DD HH:mm') : '—',
+    },
+    {
+      title: '開始',
+      dataIndex: 'start_at',
+      width: 120,
+      render: v => v ? dayjs(v).format('MM-DD HH:mm') : <span style={{ color: '#555' }}>即時</span>,
+    },
+    {
+      title: '結束',
+      dataIndex: 'end_at',
+      width: 120,
+      render: v => v ? dayjs(v).format('MM-DD HH:mm') : <span style={{ color: '#555' }}>永久</span>,
     },
     {
       title: '上架',
-      width: 70,
+      width: 60,
       render: (_, record) => (
         <Switch checked={record.is_active} size="small" onChange={() => handleToggle(record)} />
       ),
     },
     {
       title: '操作',
-      width: 90,
+      width: 80,
       render: (_, record) => (
         <Space>
           <Button icon={<EditOutlined />} size="small" type="text" onClick={() => openEdit(record)} />
@@ -191,6 +207,14 @@ export default function AdminNewsPage() {
               <Select options={CATEGORY_OPTIONS} />
             </Form.Item>
             <Form.Item name="published_at" label="發佈時間" style={{ flex: 1 }}>
+              <DatePicker showTime format="YYYY-MM-DD HH:mm" style={{ width: '100%' }} />
+            </Form.Item>
+          </Space>
+          <Space style={{ width: '100%' }} size={12}>
+            <Form.Item name="start_at" label="顯示開始（留空=即時）" style={{ flex: 1 }}>
+              <DatePicker showTime format="YYYY-MM-DD HH:mm" style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="end_at" label="顯示結束（留空=永久）" style={{ flex: 1 }}>
               <DatePicker showTime format="YYYY-MM-DD HH:mm" style={{ width: '100%' }} />
             </Form.Item>
           </Space>

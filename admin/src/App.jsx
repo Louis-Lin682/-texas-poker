@@ -8,6 +8,7 @@ import MemberDetailPage from './pages/MemberDetailPage'
 import MemberLedgerPage from './pages/MemberLedgerPage'
 import MembersPage from './pages/MembersPage'
 import AdminNewsPage from './pages/AdminNewsPage'
+import AdminAnnouncementsPage from './pages/AdminAnnouncementsPage'
 import EventsPage from './pages/EventsPage'
 import AdminSupportPage from './pages/AdminSupportPage'
 import PlaceholderPage from './pages/PlaceholderPage'
@@ -32,7 +33,8 @@ function AppRoutes() {
         <Route path="/members/:id/ledger" element={<MemberLedgerPage />} />
         <Route path="/reports"     element={<ReportsPage />} />
         <Route path="/events"      element={<EventsPage />} />
-        <Route path="/news"        element={<AdminNewsPage />} />
+        <Route path="/news"          element={<AdminNewsPage />} />
+        <Route path="/announcements" element={<AdminAnnouncementsPage />} />
         <Route path="/quests"      element={<QuestsPage />} />
         <Route path="/support"     element={<AdminSupportPage />} />
       </Route>

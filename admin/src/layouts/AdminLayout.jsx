@@ -6,6 +6,7 @@ import {
   TeamOutlined,
   TrophyOutlined,
   NotificationOutlined,
+  SoundOutlined,
 } from '@ant-design/icons'
 import { Badge, Layout, Menu, Typography, theme } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
@@ -41,7 +42,8 @@ export default function AdminLayout() {
     { key: '/members',  icon: <TeamOutlined />,            label: <Link to="/members">會員管理</Link> },
     { key: '/reports',  icon: <BarChartOutlined />,         label: <Link to="/reports">遊戲報表</Link> },
     { key: '/events',   icon: <AlertOutlined />,            label: <Link to="/events">限時活動</Link> },
-    { key: '/news',     icon: <NotificationOutlined />,     label: <Link to="/news">最新消息</Link> },
+    { key: '/news',          icon: <NotificationOutlined />, label: <Link to="/news">最新消息</Link> },
+    { key: '/announcements', icon: <SoundOutlined />,        label: <Link to="/announcements">跑馬燈公告</Link> },
     { key: '/quests',   icon: <TrophyOutlined />,           label: <Link to="/quests">任務管理</Link> },
     {
       key: '/support',

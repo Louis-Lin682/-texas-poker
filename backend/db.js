@@ -128,7 +128,17 @@ export async function initDb() {
       sort_order   INTEGER NOT NULL DEFAULT 0,
       created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
-    ALTER TABLE news ADD COLUMN IF NOT EXISTS category VARCHAR(20) NOT NULL DEFAULT '公告';
+    ALTER TABLE news ADD COLUMN IF NOT EXISTS category   VARCHAR(20) NOT NULL DEFAULT '公告';
+    ALTER TABLE news ADD COLUMN IF NOT EXISTS start_at   TIMESTAMPTZ;
+    ALTER TABLE news ADD COLUMN IF NOT EXISTS end_at     TIMESTAMPTZ;
+
+    CREATE TABLE IF NOT EXISTS announcements (
+      id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      content    TEXT NOT NULL,
+      is_active  BOOLEAN NOT NULL DEFAULT true,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
 
     CREATE TABLE IF NOT EXISTS quests (
       id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

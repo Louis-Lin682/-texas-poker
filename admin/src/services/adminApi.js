@@ -61,6 +61,12 @@ export const adminApi = {
   deleteNews:  (id)         => req(`/news/${id}`,        { method: 'DELETE' }),
   toggleNews:  (id)         => req(`/news/${id}/toggle`, { method: 'PATCH'  }),
 
+  getAnnouncements:      ()           => req('/announcements'),
+  createAnnouncement:    (body)       => req('/announcements',              { method: 'POST',   body }),
+  updateAnnouncement:    (id, body)   => req(`/announcements/${id}`,        { method: 'PUT',    body }),
+  deleteAnnouncement:    (id)         => req(`/announcements/${id}`,        { method: 'DELETE' }),
+  toggleAnnouncement:    (id)         => req(`/announcements/${id}/toggle`, { method: 'PATCH'  }),
+
   getSupportUnread:   ()            => req('/support/unread'),
   getSupportConfig:   ()            => req('/support/config'),
   updateSupportConfig:(body)        => req('/support/config', { method: 'PATCH', body }),

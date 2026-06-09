@@ -816,9 +816,11 @@ const server = http.createServer(async (request, response) => {
     // ── 最新消息 (public) ──
     if (request.method === 'GET' && pathname === '/news') {
       const { rows } = await query(`
-        SELECT id, title, content, category, published_at
+        SELECT id, title, content, category, published_at, start_at, end_at
         FROM news
         WHERE is_active = true
+          AND (start_at IS NULL OR start_at <= NOW())
+          AND (end_at   IS NULL OR end_at   >= NOW())
         ORDER BY published_at DESC, sort_order ASC
       `)
       sendJson(response, 200, { news: rows }, effectiveCors)
@@ -1292,7 +1294,7 @@ const server = http.createServer(async (request, response) => {
       // ── Admin 消息管理 ──
       if (pathname === '/admin/news' && request.method === 'GET') {
         const { rows } = await query(
-          `SELECT id, title, content, category, published_at, is_active, sort_order, created_at
+          `SELECT id, title, content, category, published_at, start_at, end_at, is_active, sort_order, created_at
            FROM news ORDER BY published_at DESC, sort_order ASC`
         )
         sendJson(response, 200, { news: rows }, effectiveCors); return
@@ -1300,13 +1302,15 @@ const server = http.createServer(async (request, response) => {
 
       if (pathname === '/admin/news' && request.method === 'POST') {
         const body = await getRequestBody(request)
-        const { title, content, category, published_at, sort_order, is_active } = body
+        const { title, content, category, published_at, start_at, end_at, sort_order, is_active } = body
         if (!title?.trim()) { sendJson(response, 400, { message: '標題為必填' }, effectiveCors); return }
         const { rows } = await query(
-          `INSERT INTO news (title,content,category,published_at,sort_order,is_active)
-           VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+          `INSERT INTO news (title,content,category,published_at,start_at,end_at,sort_order,is_active)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
           [title.trim(), content || null, category || '公告',
            published_at ? new Date(published_at) : new Date(),
+           start_at ? new Date(start_at) : null,
+           end_at   ? new Date(end_at)   : null,
            sort_order ?? 0, is_active !== false]
         )
         sendJson(response, 201, { news: rows[0] }, effectiveCors); return
@@ -1317,13 +1321,15 @@ const server = http.createServer(async (request, response) => {
         const nId = newsIdMatch[1]
         if (request.method === 'PUT') {
           const body = await getRequestBody(request)
-          const { title, content, category, published_at, sort_order, is_active } = body
+          const { title, content, category, published_at, start_at, end_at, sort_order, is_active } = body
           if (!title?.trim()) { sendJson(response, 400, { message: '標題為必填' }, effectiveCors); return }
           const { rows } = await query(
-            `UPDATE news SET title=$1,content=$2,category=$3,published_at=$4,sort_order=$5,is_active=$6
-             WHERE id=$7 RETURNING *`,
+            `UPDATE news SET title=$1,content=$2,category=$3,published_at=$4,start_at=$5,end_at=$6,sort_order=$7,is_active=$8
+             WHERE id=$9 RETURNING *`,
             [title.trim(), content || null, category || '公告',
              published_at ? new Date(published_at) : new Date(),
+             start_at ? new Date(start_at) : null,
+             end_at   ? new Date(end_at)   : null,
              sort_order ?? 0, is_active !== false, nId]
           )
           if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
@@ -1343,6 +1349,63 @@ const server = http.createServer(async (request, response) => {
         )
         if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
         sendJson(response, 200, { news: rows[0] }, effectiveCors); return
+      }
+
+      // ── 跑馬燈公告 (public) ──
+      if (request.method === 'GET' && pathname === '/announcements') {
+        const { rows } = await query(
+          `SELECT id, content FROM announcements WHERE is_active = true ORDER BY sort_order ASC, created_at ASC`
+        )
+        sendJson(response, 200, { announcements: rows }, effectiveCors); return
+      }
+
+      // ── Admin 跑馬燈公告管理 ──
+      if (pathname === '/admin/announcements' && request.method === 'GET') {
+        const { rows } = await query(
+          `SELECT id, content, is_active, sort_order, created_at FROM announcements ORDER BY sort_order ASC, created_at ASC`
+        )
+        sendJson(response, 200, { announcements: rows }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/announcements' && request.method === 'POST') {
+        const body = await getRequestBody(request)
+        const { content, sort_order, is_active } = body
+        if (!content?.trim()) { sendJson(response, 400, { message: '內容為必填' }, effectiveCors); return }
+        const { rows } = await query(
+          `INSERT INTO announcements (content, sort_order, is_active) VALUES ($1,$2,$3) RETURNING *`,
+          [content.trim(), sort_order ?? 0, is_active !== false]
+        )
+        sendJson(response, 201, { announcement: rows[0] }, effectiveCors); return
+      }
+
+      const annIdMatch = pathname.match(/^\/admin\/announcements\/([^/]+)$/)
+      if (annIdMatch) {
+        const aId = annIdMatch[1]
+        if (request.method === 'PUT') {
+          const body = await getRequestBody(request)
+          const { content, sort_order, is_active } = body
+          if (!content?.trim()) { sendJson(response, 400, { message: '內容為必填' }, effectiveCors); return }
+          const { rows } = await query(
+            `UPDATE announcements SET content=$1, sort_order=$2, is_active=$3 WHERE id=$4 RETURNING *`,
+            [content.trim(), sort_order ?? 0, is_active !== false, aId]
+          )
+          if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+          sendJson(response, 200, { announcement: rows[0] }, effectiveCors); return
+        }
+        if (request.method === 'DELETE') {
+          await query('DELETE FROM announcements WHERE id=$1', [aId])
+          sendJson(response, 200, { ok: true }, effectiveCors); return
+        }
+      }
+
+      const annToggleMatch = pathname.match(/^\/admin\/announcements\/([^/]+)\/toggle$/)
+      if (annToggleMatch && request.method === 'PATCH') {
+        const { rows } = await query(
+          'UPDATE announcements SET is_active=NOT is_active WHERE id=$1 RETURNING *',
+          [annToggleMatch[1]]
+        )
+        if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+        sendJson(response, 200, { announcement: rows[0] }, effectiveCors); return
       }
 
       // ── Admin Support ────────────────────────────────────────────────────────
