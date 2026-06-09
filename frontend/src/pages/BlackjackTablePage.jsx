@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useBlackjackSocket } from '../hooks/useBlackjackSocket'
 import { useAudio, getAudioSettings } from '../hooks/useAudio'
 import PlayingCard from '../components/PlayingCard'
+import LeaveConfirmModal from '../components/LeaveConfirmModal'
 
 function fmt(n) { return n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n) }
 function fmtNum(n) { return new Intl.NumberFormat('en-US').format(n) }
@@ -691,11 +692,24 @@ export default function BlackjackTablePage({ auth }) {
     myCurrentHand?.cards?.length === 2 && myCurrentHand?.status === 'active' &&
     (myPlayer?.balance ?? 0) >= Math.floor((myCurrentHand?.bet ?? 0) / 2)
 
+  // Intercept browser / mobile back button
+  const roomIdRef = useRef(null)
+  useEffect(() => { roomIdRef.current = roomId }, [roomId])
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href)
+    const onPop = () => {
+      window.history.pushState(null, '', window.location.href)
+      if (roomIdRef.current) setShowLeaveConfirm(true)
+      else navigate('/')
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [navigate]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleBack = useCallback(() => {
-    if (isPlaying) { setShowLeaveConfirm(true); return }
-    if (roomId) leaveRoom()
-    else navigate('/')
-  }, [isPlaying, roomId, leaveRoom, navigate])
+    if (roomId) { setShowLeaveConfirm(true); return }
+    navigate('/')
+  }, [roomId, navigate])
 
   const confirmLeave = () => { setShowLeaveConfirm(false); leaveRoom() }
 
@@ -720,16 +734,11 @@ export default function BlackjackTablePage({ auth }) {
     <div className="pt-page">
 
       {showLeaveConfirm && (
-        <div className="pt-modal-overlay">
-          <div className="pt-modal">
-            <p className="pt-modal-title">確定離開遊戲？</p>
-            <p className="pt-modal-body">遊戲進行中，離開後本局視為棄牌。</p>
-            <div className="pt-modal-btns">
-              <button type="button" className="pt-modal-cancel" onClick={() => setShowLeaveConfirm(false)}>繼續遊戲</button>
-              <button type="button" className="pt-modal-confirm" onClick={confirmLeave}>確定離開</button>
-            </div>
-          </div>
-        </div>
+        <LeaveConfirmModal
+          body="遊戲進行中，離開後本局視為棄牌。"
+          onConfirm={confirmLeave}
+          onCancel={() => setShowLeaveConfirm(false)}
+        />
       )}
 
       {isEntering && (

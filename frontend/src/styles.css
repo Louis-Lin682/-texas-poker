@@ -5454,9 +5454,10 @@ button.is-pressing {
 }
 
 .cs-cat-pills {
-  display: flex;
+  display: grid;
   flex-wrap: wrap;
   gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .cs-cat-pill {
@@ -7325,7 +7326,7 @@ button.is-pressing {
 .pt-modal-overlay {
   position: absolute;
   inset: 0;
-  z-index: 100;
+  z-index: 250;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7396,6 +7397,99 @@ button.is-pressing {
   transition: filter 120ms;
 }
 .pt-modal-confirm:hover { filter: brightness(1.15); }
+
+/* ── Leave Confirm Modal (shared, image-based) ──────────── */
+.lcm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.78);
+  backdrop-filter: blur(6px);
+  padding: 24px;
+}
+.lcm-box {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+}
+.lcm-bg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+}
+.lcm-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10% 10% 10%;
+  gap: 8px;
+}
+.lcm-title {
+  font-size: 22px;
+  font-weight: 900;
+  margin: 0;
+  background: linear-gradient(180deg, #ffe87a 0%, #d4a017 45%, #f5d060 75%, #c8861a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 1px;
+  color: #F6D37A;
+}
+.lcm-body {
+  font-size: 13px;
+  color: #B8A678;
+  line-height: 1.6;
+  margin: 0;
+  text-align: center;
+}
+.lcm-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+.lcm-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  transition: filter 120ms;
+}
+.lcm-btn:active { filter: brightness(.82); }
+.lcm-btn img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.lcm-btn-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  pointer-events: none;
+  letter-spacing: 1px;
+}
+.lcm-btn-cancel {
+  color: #FFE8A3;
+  text-shadow: 0 1px 0 #6B3F12, 0 0 8px rgba(255, 218, 120, 0.6);
+}
+.lcm-btn-confirm {
+  color: #D8C89A;
+  text-shadow: 0 1px 0 #6B3F12, 0 0 8px rgba(255, 218, 120, 0.6);
+}
 
 /* ── Connecting overlay ─────────────────────────────────── */
 .pt-connecting-overlay {

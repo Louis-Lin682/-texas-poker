@@ -3,9 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useDragonTigerSocket } from '../hooks/useDragonTigerSocket'
 import { useAudio, getAudioSettings } from '../hooks/useAudio'
 import { API_BASE_URL } from '../services/apiClient'
+import LeaveConfirmModal from '../components/LeaveConfirmModal'
 
 // Pre-load SFX at module import time for reliable playback
-function _mkAudio(src) { const a = new Audio(src); a.preload = 'auto'; a.load(); return a }
+function _mkAudio(src) { const a = new Audio(src); a.preload = 'auto'; return a }
 function _mkImg(src)   { const i = new Image(); i.src = src; return i }
 const _dragonWinImg = _mkImg('/DragonTiger/win/dragon_win.png')
 const _tigerWalkImg = _mkImg('/DragonTiger/win/tiger_walk.png')
@@ -934,16 +935,11 @@ export default function DragonTigerPage({ auth }) {
     <div className="dt-page">
       {/* Leave confirm modal */}
       {showLeaveConfirm && (
-        <div className="pt-modal-overlay" onClick={() => setShowLeaveConfirm(false)}>
-          <div className="pt-modal" onClick={e => e.stopPropagation()}>
-            <p className="pt-modal-title">確定離開遊戲？</p>
-            <p className="pt-modal-body">離開後將結算籌碼並返回大廳。</p>
-            <div className="pt-modal-btns">
-              <button type="button" className="pt-modal-cancel" onClick={() => setShowLeaveConfirm(false)}>繼續遊戲</button>
-              <button type="button" className="pt-modal-confirm" onClick={confirmLeave}>確定離開</button>
-            </div>
-          </div>
-        </div>
+        <LeaveConfirmModal
+          body="離開後將結算籌碼並返回大廳。"
+          onConfirm={confirmLeave}
+          onCancel={() => setShowLeaveConfirm(false)}
+        />
       )}
 
       {/* Reconnecting overlay */}

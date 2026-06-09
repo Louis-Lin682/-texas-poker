@@ -4,6 +4,7 @@ import { apiRequest } from '../services/apiClient'
 import { useSlotSounds } from '../hooks/useSlotSounds'
 import { getAudioSettings } from '../hooks/useAudio'
 import { CoinLayer } from '../components/CoinLayer'
+import LeaveConfirmModal from '../components/LeaveConfirmModal'
 
 // ── Symbol definitions ──────────────────────────────────────────────────────
 const SYMS = {
@@ -209,7 +210,7 @@ export default function ThunderJokerPage({ auth }) {
   const [inFreeSpins,  setInFreeSpins]  = useState(false)
   const [scene,        setScene]        = useState('base')
   const [isAuto,       setIsAuto]       = useState(false)
-  const [isMuted,      setIsMuted]      = useState(() => getAudioSettings().sfxMuted)
+  const [isBgmMuted,   setIsBgmMuted]   = useState(() => getAudioSettings().bgmMuted)
   const [lightning,    setLightning]    = useState(null)
   const [jokerMult,    setJokerMult]    = useState(1)
   const [jokerFlash,   setJokerFlash]   = useState(null)
@@ -272,7 +273,7 @@ export default function ThunderJokerPage({ auth }) {
   const reelsRef     = useRef(null)
   const multBarRef   = useRef(null)
 
-  const { play: splay, stop: sstop, startLoop, stopLoop, fadeOutLoop, playNearMiss } = useSlotSounds(isMuted)
+  const { play: splay, stop: sstop, startLoop, stopLoop, fadeOutLoop, playNearMiss } = useSlotSounds(isBgmMuted)
   const sndRef = useRef({})
   sndRef.current = { play: splay, stop: sstop, startLoop, stopLoop, fadeOutLoop, playNearMiss }
 
@@ -1148,8 +1149,8 @@ export default function ThunderJokerPage({ auth }) {
               <span>+{fsSessionWin.toLocaleString()}</span>
             </div>
           )}
-          <button type="button" className="tj-mute-btn" onClick={() => setIsMuted(m => !m)}>
-            <img src={isMuted ? '/slot-imgs/mute.png' : '/slot-imgs/unmute.png'} alt="" />
+          <button type="button" className="tj-mute-btn" onClick={() => setIsBgmMuted(m => !m)}>
+            <img src={isBgmMuted ? '/slot-imgs/mute.png' : '/slot-imgs/unmute.png'} alt="" />
           </button>
         </div>
       </header>
@@ -1562,30 +1563,21 @@ export default function ThunderJokerPage({ auth }) {
 
       {/* Leave confirm */}
       {showLeaveConfirm && (
-        <div className="pt-modal-overlay">
-          <div className="pt-modal">
-            <p className="pt-modal-title">確定離開遊戲？</p>
-            <p className="pt-modal-body">
-              {inFreeSpins
-                ? 'Free Spins 進行中，離開後本局進度將會遺失。'
-                : '確定要離開 Thunder Joker？'}
-            </p>
-            <div className="pt-modal-btns">
-              <button type="button" className="pt-modal-cancel" onClick={() => setShowLeaveConfirm(false)}>繼續遊戲</button>
-              <button type="button" className="pt-modal-confirm" onClick={() => {
-                clearAll()
-                if (buyIn != null && auth?.token) {
-                  apiRequest('/slots/ledger', {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${auth.token}` },
-                    body: JSON.stringify({ type: 'cash_out', amount: balRef.current }),
-                  }).catch(() => {})
-                }
-                navigate('/')
-              }}>確定離開</button>
-            </div>
-          </div>
-        </div>
+        <LeaveConfirmModal
+          body={inFreeSpins ? 'Free Spins 進行中，離開後本局進度將會遺失。' : '確定要離開 Thunder Joker？'}
+          onCancel={() => setShowLeaveConfirm(false)}
+          onConfirm={() => {
+            clearAll()
+            if (buyIn != null && auth?.token) {
+              apiRequest('/slots/ledger', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${auth.token}` },
+                body: JSON.stringify({ type: 'cash_out', amount: balRef.current }),
+              }).catch(() => {})
+            }
+            navigate('/')
+          }}
+        />
       )}
 
       {/* Broke modal */}

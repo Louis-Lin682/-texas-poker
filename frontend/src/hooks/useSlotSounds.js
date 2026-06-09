@@ -26,7 +26,7 @@ const DEFS = {
   'bgm-bonus':          { src: [G+'bgm-bonus.mp3'],          volume: 0.25, loop: true },
 }
 
-export function useSlotSounds(isMuted) {
+export function useSlotSounds(isBgmMuted) {
   const howls   = useRef({})
   const loopIds = useRef({})
 
@@ -51,7 +51,10 @@ export function useSlotSounds(isMuted) {
     Howler.volume(sfxVolume)
   }, [])
 
-  useEffect(() => { Howler.mute(isMuted) }, [isMuted])
+  useEffect(() => {
+    howls.current['bgm-base']?.mute(isBgmMuted)
+    howls.current['bgm-bonus']?.mute(isBgmMuted)
+  }, [isBgmMuted])
 
   const play = useCallback((name) => {
     howls.current[name]?.play()
@@ -90,7 +93,7 @@ export function useSlotSounds(isMuted) {
 
   // Synthesize near-miss: high → low descending tone (no audio file needed)
   const playNearMiss = useCallback(() => {
-    if (Howler._muted) return
+    if (getAudioSettings().sfxMuted) return
     try {
       const ctx  = new (window.AudioContext || window.webkitAudioContext)()
       const osc  = ctx.createOscillator()
