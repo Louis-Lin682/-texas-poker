@@ -5461,7 +5461,7 @@ button.is-pressing {
 }
 
 .cs-cat-pill {
-  padding: 6px 14px;
+  padding: 6px;
   border-radius: 20px;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
@@ -5470,6 +5470,7 @@ button.is-pressing {
   font-weight: 600;
   cursor: pointer;
   transition: all 150ms;
+  word-break: keep-all;
 }
 
 .cs-cat-pill.is-active {
