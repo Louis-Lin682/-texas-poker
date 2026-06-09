@@ -4,9 +4,8 @@ import { useDragonTigerSocket } from '../hooks/useDragonTigerSocket'
 import { useAudio, getAudioSettings } from '../hooks/useAudio'
 
 // Pre-load SFX at module import time for reliable playback
-function _mkAudio(src) { const a = new Audio(src); a.preload = 'auto'; return a }
+function _mkAudio(src) { const a = new Audio(src); a.preload = 'auto'; a.load(); return a }
 const _stamp1  = _mkAudio('/audio/DragonTiger/stamp.mp3')
-const _stamp2  = _mkAudio('/audio/DragonTiger/stamp.mp3')
 const _winSfx  = _mkAudio('/audio/DragonTiger/win.mp3')
 const _loseSfx = _mkAudio('/audio/DragonTiger/lose.mp3')
 const _dingding = _mkAudio('/audio/DragonTiger/dingding.mp3')
@@ -473,6 +472,17 @@ export default function DragonTigerPage({ auth }) {
   useEffect(() => {
     preload(['dt_deal', 'dt_chips', 'dt_flip', 'dt_dingding', 'dt_stamp', 'dt_win', 'dt_lose'])
   }, [preload])
+
+  // Warmup: play all SFX silently on mount so the browser decodes and caches
+  // them before they're first needed — fixes cold-start silent audio
+  useEffect(() => {
+    const all = [_stamp1, _winSfx, _loseSfx, _dingding, _chipSrc,
+                 _dealSfx, _flip1, _flip2, _dragonWinSfx, _tigerWinSfx]
+    all.forEach(a => {
+      a.volume = 0
+      a.play().then(() => { a.pause(); a.currentTime = 0 }).catch(() => {})
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Dragon Tiger BGM — raw Audio element with click fallback
   useEffect(() => {
