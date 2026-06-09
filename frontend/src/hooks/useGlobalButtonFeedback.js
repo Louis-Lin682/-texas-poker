@@ -9,7 +9,6 @@ function getSharedClickAudio() {
   if (!sharedClickAudio) {
     sharedClickAudio = new Audio(UI_CLICK_SRC)
     sharedClickAudio.preload = 'auto'
-    sharedClickAudio.load()
   }
 
   return sharedClickAudio

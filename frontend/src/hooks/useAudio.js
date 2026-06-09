@@ -190,7 +190,6 @@ export function useAudio() {
       const audio  = getAudio(key)
       if (!config || !audio) return
       audio.preload = 'auto'
-      audio.load()
     })
   }, [getAudio])
 
