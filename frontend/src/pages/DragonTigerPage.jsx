@@ -603,7 +603,7 @@ export default function DragonTigerPage({ auth }) {
       }
       prevPhase.current = phase
     }
-  }, [gameState, play])
+  }, [gameState])
 
   // Bet activity feed + chip visuals (all players, driven by server state_update)
   useEffect(() => {
@@ -659,7 +659,7 @@ export default function DragonTigerPage({ auth }) {
       setFlashingPlayers(flashSet)
       setTimeout(() => setFlashingPlayers(new Set()), 500)
     }
-  }, [gameState, myId, play])
+  }, [gameState, myId])
 
   const handleLeave = () => {
     leaveRoom()

@@ -66,7 +66,7 @@ function settleCardBets(bets, side, val, suit) {
 }
 
 export class DragonTigerGame {
-  constructor({ roomId, maxPlayers = 6, minBet = 20, maxBet = 10000 } = {}) {
+  constructor({ roomId, maxPlayers = 9999, minBet = 20, maxBet = 10000 } = {}) {
     this.roomId     = roomId
     this.gameSlug   = 'dragon-tiger'
     this.maxPlayers = maxPlayers

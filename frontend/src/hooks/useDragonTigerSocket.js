@@ -115,7 +115,7 @@ export function useDragonTigerSocket({ minBuyIn = 3000 } = {}) {
 
   const createRoom = useCallback((opts = {}) => send({
     type: 'create_room', gameType: 'dragon-tiger', gameSlug: 'dragon-tiger',
-    maxPlayers: 6, minBet: 20, maxBet: 10000,
+    maxPlayers: 9999, minBet: 20, maxBet: 10000,
     buyIn: minBuyInRef.current, ...opts,
   }), [send])
 
