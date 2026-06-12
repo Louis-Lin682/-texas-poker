@@ -86,7 +86,7 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
                   className={`game-filter-segment-button ${isActive ? 'is-active' : ''}`}
                   aria-pressed={isActive}
                   onPointerDown={() => {
-                    if (filter.id !== activeFilter) play('uiWhoosh')
+                    if (filter.id !== activeFilter) play('uiClick')
                   }}
                   onClick={() => {
                     if (filter.id !== activeFilter) setAnimateBatchFrom(null)

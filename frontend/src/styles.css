@@ -3658,6 +3658,7 @@ button.is-pressing {
   box-shadow: 0 0 14px rgba(0, 200, 255, 0.5);
   border: 1px solid rgba(128, 92, 255, 0.65);  box-shadow: 0 0 14px rgba(100, 55, 255, 0.3);
   transition: opacity 120ms, transform 80ms;
+  padding: 10px 5px;
 }
 
 .auth-modal-button:active {

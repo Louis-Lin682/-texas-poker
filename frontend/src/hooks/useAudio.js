@@ -160,9 +160,13 @@ export function useAudio() {
         if (!hasOverrides && audio.currentTime > 0.05) audio.currentTime = 0
         await audio.play()
       } else {
-        // SFX: play directly via HTML5 — no AudioContext dependency, always reliable
+        // SFX: route through Web Audio — once AudioContext is resumed by any gesture,
+        // all wired elements play freely without per-element iOS Safari activation.
+        _initCtx()
+        _wire(audio, false)
+        if (_audioCtx?.state === 'suspended') await _audioCtx.resume()
         audio.currentTime = 0
-        audio.volume = (config.volume ?? 1) * _sfxVolume
+        audio.volume = config.volume ?? 1   // per-sound scaling; global via _sfxGain
         audio.muted  = false
         await audio.play()
       }
