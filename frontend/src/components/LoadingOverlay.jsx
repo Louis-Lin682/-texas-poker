@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useLoading } from '../context/LoadingContext'
 
-const SRC_W    = 180
-const SRC_H    = 230
-const SCALE    = 0.5
-const DISP_W   = Math.round(SRC_W * SCALE)   // 90
-const DISP_H   = Math.round(SRC_H * SCALE)   // 115
-const SHEET_W  = Math.round(900  * SCALE)     // 450
-const SHEET_H  = Math.round(1150 * SCALE)     // 575
-const TOTAL    = 24
-const COLS     = 5
-const FRAME_MS = 60
+const SRC_W    = 1254
+const SRC_H    = 1254
+const DISP_W   = 200
+const DISP_H   = 200
+const SCALE    = DISP_W / SRC_W
+const SHEET_W  = Math.round(5020 * SCALE)
+const SHEET_H  = Math.round(2508 * SCALE)
+const TOTAL    = 8
+const COLS     = 4
+const FRAME_MS = 150
 
 const FRAMES = Array.from({ length: TOTAL }, (_, i) => ({
   x: (i % COLS) * SRC_W,
@@ -58,7 +58,7 @@ export default function LoadingOverlay() {
         flexShrink: 0,
       }}>
         <img
-          src="/loading/loading.png"
+          src="/logo_fly/angel_fly.png"
           alt=""
           draggable={false}
           style={{

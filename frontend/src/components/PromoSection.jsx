@@ -1,26 +1,21 @@
-import SectionHeader from './SectionHeader'
-
-function PromoSection({ items, onPromoClick }) {
+function PromoSection({ onPromoClick }) {
   return (
     <section className="promos">
-      <SectionHeader title="精彩活動" />
-
       <div className="promo-stack">
-        {items.map((promo) => (
-          <article
-            key={promo.title}
-            className="promo-card"
-            style={{ '--promo-bg': `url(${promo.imageUrl})` }}
-          >
-            <div className="promo-copy">
-              <h3>{promo.title}</h3>
-              <p>{promo.text}</p>
+        <div className="promo-card-wrap">
+          <article className="promo-card" onClick={onPromoClick}>
+            <div className="promo-body">
+              <h3>每日簽到</h3>
+              <p>連續登入即可領取豐富獎勵，<br />助你贏在起點，回饋無極限！</p>
             </div>
-            <button type="button" className="promo-cta" onClick={() => onPromoClick?.(promo)}>
-              {promo.action}
-            </button>
           </article>
-        ))}
+          <div className="promo-side" onClick={onPromoClick}>
+              <button type="button" className="promo-cta"></button>
+            </div>
+        </div>
+      </div>
+      <div className="promo-dots">
+        <span className="promo-dot promo-dot--active" />
       </div>
     </section>
   )

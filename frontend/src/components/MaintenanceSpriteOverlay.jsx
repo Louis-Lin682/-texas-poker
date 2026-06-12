@@ -46,11 +46,7 @@ function SpriteFrame({ atlas, fps = 10, randomSpeed = false, className }) {
 export function MaintenanceSpriteImage() {
   return (
     <div className="maintenance-overlay-image-wrap">
-      <SpriteFrame
-        atlas="/fire/fire.png"
-        randomSpeed
-        className="maint-sprite maint-sprite-fire"
-      />
+      <img src="/maintenance.png" alt="" />
     </div>
   )
 }

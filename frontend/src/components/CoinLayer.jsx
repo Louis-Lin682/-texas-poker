@@ -70,7 +70,7 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
 
       rainTimer.current = setInterval(() => {
         const alive = layer.querySelectorAll('.tj-coin-rain').length
-        if (alive >= 10) return
+        if (alive >= 20) return
 
         const x     = rand(20, W - 60)
         const drift = rand(-35, 35)
@@ -83,11 +83,11 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
         startSpin(coin, 'rain', fps)
 
         coin.animate([
-          { transform: `translate(0,0) scale(${scale}) rotate(0deg)`, opacity: 0.9 },
-          { transform: `translate(${drift}px,960px) scale(${scale * 0.9}) rotate(${rand(180, 540)}deg)`, opacity: 0.1 },
+          { transform: `translate(0,0) scale(${scale}) rotate(0deg)`, opacity: 1 },
+          { transform: `translate(${drift}px,960px) scale(${scale * 0.9}) rotate(${rand(180, 540)}deg)`, opacity: 0.85 },
         ], { duration: 2600, easing: 'linear', fill: 'forwards' })
           .onfinish = () => { stopSpin(coin); coin.remove() }
-      }, 240)
+      }, 150)
     },
 
     stopRain() {
@@ -99,26 +99,30 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
       if (!layer) return
       const W = layer.offsetWidth || 390
       for (let i = 0; i < n; i++) {
+        const delay = rand(0, 700)
         const x     = rand(20, W - 60)
         const drift = rand(-35, 35)
         const scale = rand(0.75, 1.15)
         const fps   = rand(18, 26)
-        const coin  = createCoin(layer, 'rain')
-        coin.style.left = `${x}px`
-        coin.style.top  = '-60px'
-        startSpin(coin, 'rain', fps)
-        coin.animate([
-          { transform: `translate(0,0) scale(${scale}) rotate(0deg)`, opacity: 0.9 },
-          { transform: `translate(${drift}px,960px) scale(${scale * 0.9}) rotate(${rand(180, 540)}deg)`, opacity: 0.1 },
-        ], { duration: 2600, easing: 'linear', fill: 'forwards' })
-          .onfinish = () => { stopSpin(coin); coin.remove() }
+        setTimeout(() => {
+          if (!layerRef.current) return
+          const coin = createCoin(layer, 'rain')
+          coin.style.left = `${x}px`
+          coin.style.top  = '-60px'
+          startSpin(coin, 'rain', fps)
+          coin.animate([
+            { transform: `translate(0,0) scale(${scale}) rotate(0deg)`, opacity: 1 },
+            { transform: `translate(${drift}px,960px) scale(${scale * 0.9}) rotate(${rand(180, 540)}deg)`, opacity: 0.85 },
+          ], { duration: 2600, easing: 'linear', fill: 'forwards' })
+            .onfinish = () => { stopSpin(coin); coin.remove() }
+        }, delay)
       }
     },
 
-    burst(cx, cy) {
+    burst(cx, cy, count = 28) {
       const layer = layerRef.current
       if (!layer) return
-      const COUNT = 28
+      const COUNT = count
 
       for (let i = 0; i < COUNT; i++) {
         const angle = (i / COUNT) * Math.PI * 2 + rand(-0.18, 0.18)
@@ -138,7 +142,7 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
 
         coin.animate([
           { transform: `translate(0,0) scale(${scale}) rotate(0deg)`, opacity: 1 },
-          { transform: `translate(${dx}px,${dy}px) scale(${scale * 0.85}) rotate(${rand(420, 1080)}deg)`, opacity: 0 },
+          { transform: `translate(${dx}px,${dy}px) scale(${scale * 0.85}) rotate(${rand(420, 1080)}deg)`, opacity: 0.2 },
         ], { duration: 1600, easing: 'cubic-bezier(.15,.8,.25,1)', fill: 'forwards' })
           .onfinish = () => { stopSpin(coin); coin.remove() }
       }

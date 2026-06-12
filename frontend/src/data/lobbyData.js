@@ -51,20 +51,7 @@ export const quickActions = [
   },
 ]
 
-export const promoCards = [
-  {
-    title: '每日簽到',
-    text: '連續登入即可領取籌碼與豪華獎勵，天數越高，回饋越豐厚。',
-    action: '立即前往',
-    imageUrl: '/promos/daily-checkin-banner.png',
-  },
-  {
-    title: '限時儲值優惠',
-    text: '指定期間完成儲值可獲得額外回饋，進桌前先把火力補滿。',
-    action: '立即查看',
-    imageUrl: '/promos/recharge-offer-banner.png',
-  },
-]
+export const promoCards = []
 
 export const bottomNavItems = [
   { label: '活動', active: false, type: 'icon', icon: '/quick-actions/event.png' },

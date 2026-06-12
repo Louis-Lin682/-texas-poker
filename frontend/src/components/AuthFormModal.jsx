@@ -65,17 +65,16 @@ function AuthFormModal({ mode, isOpen, onClose, onAuthSuccess }) {
     <div className="auth-form-backdrop" role="presentation" onClick={onClose}>
       <div
         className="auth-form-modal"
+        data-mode={isRegister ? 'register' : 'login'}
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-form-title"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="auth-form-header">
-          <div>
-            <p className="auth-form-kicker">{isRegister ? 'Create Account' : 'Member Login'}</p>
-            <h3 id="auth-form-title">{isRegister ? '註冊會員' : '會員登入'}</h3>
-          </div>
-
+          <h3 className={isRegister ? 'register-top' : 'login-top'}>
+            {isRegister ? '註冊會員' : '會員登入'}
+          </h3>
           <button type="button" className="auth-form-close" onClick={onClose} aria-label="close auth form">
             ×
           </button>
@@ -120,7 +119,9 @@ function AuthFormModal({ mode, isOpen, onClose, onAuthSuccess }) {
           {errorMessage ? <p className="auth-form-error">{errorMessage}</p> : null}
 
           <button type="submit" className="auth-form-submit" disabled={isSubmitting}>
-            {isSubmitting ? '處理中...' : isRegister ? '完成註冊' : '立即登入'}
+            {isSubmitting
+              ? '處理中...'
+              : <img src={isRegister ? '/register.png' : '/login.png'} alt={isRegister ? '完成註冊' : '立即登入'} />}
           </button>
         </form>
       </div>

@@ -131,7 +131,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
     <div
       className={`app-shell ${isFavoritesOpen || isMyDrawerOpen || isEventDrawerOpen ? 'has-favorites-open' : ''}`}
     >
-      {showFloatTop && (
+      {/* {showFloatTop && (
         <button
           type="button"
           className="float-btn float-top"
@@ -140,7 +140,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
         >
           <img src="/top.png" alt="" />
         </button>
-      )}
+      )} */}
       <div className="phone-frame phone-frame-lobby">
         <NoticeTicker text={marqueeText} isMuted={isMuted} onToggleMute={toggleMute} />
         {auth.isAuthenticated ? (

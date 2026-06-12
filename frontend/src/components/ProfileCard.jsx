@@ -50,7 +50,7 @@ function ProfileCard({ profile, isAuthenticated, isRefreshingBalance, onAccountA
   return (
     <section className="profile-bar">
       <div className="avatar-wrap">
-        <div className="avatar">{avatarText}</div>
+        <img src="/notice-angel.png" alt="avatar" className="avatar-img" />
         <span className="vip-tag">{profile.vip}</span>
       </div>
 

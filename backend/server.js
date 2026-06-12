@@ -54,11 +54,11 @@ async function saveSlotSession(userId, session, dbClient) {
 }
 
 const SLOT_POOL = [
-  ...Array(10).fill('10'), ...Array(8).fill('J'), ...Array(8).fill('Q'),
-  ...Array(7).fill('K'), ...Array(7).fill('A'), ...Array(5).fill('clownhat-blue'),
-  ...Array(5).fill('clownhat-golden'), ...Array(4).fill('clownhat-purple'), ...Array(4).fill('clownhat-red'),
-  ...Array(3).fill('bell'), ...Array(3).fill('joker'),
-  ...Array(1).fill('wild'), ...Array(1).fill('scatter'),
+  ...Array(3).fill('10'), ...Array(3).fill('J'), ...Array(3).fill('Q'),
+  ...Array(3).fill('K'), ...Array(3).fill('A'), ...Array(3).fill('clownhat-blue'),
+  ...Array(3).fill('clownhat-golden'), ...Array(3).fill('clownhat-purple'), ...Array(3).fill('clownhat-red'),
+  ...Array(8).fill('bell'), ...Array(15).fill('joker'),
+  ...Array(8).fill('wild'), ...Array(2).fill('scatter'),
 ]
 
 const SLOT_V = {
@@ -679,9 +679,9 @@ const server = http.createServer(async (request, response) => {
         let freeSpinsGranted = 0
         if (isFree) {
           session.freeSpinsLeft = Math.max(0, session.freeSpinsLeft - 1)
-          if (scatters >= 3) {
+          if (scatters >= 3 && session.freeSpinsLeft < 30) {
             const extra = scatters === 3 ? 4 : scatters === 4 ? 6 : 8
-            session.freeSpinsLeft += extra
+            session.freeSpinsLeft = Math.min(session.freeSpinsLeft + extra, 30)
             freeSpinsGranted = extra
           }
           if (session.freeSpinsLeft === 0) session.jokerMult = 1

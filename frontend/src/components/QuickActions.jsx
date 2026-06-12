@@ -22,8 +22,6 @@ function QuickActions({ items, onAction }) {
           <span className="quick-icon">
             <img className="quick-icon-image" src={item.imageUrl} alt={item.label} loading="lazy" />
           </span>
-          <span className="quick-label">{item.label}</span>
-          <span className="quick-meta">{item.meta}</span>
         </button>
       ))}
     </section>

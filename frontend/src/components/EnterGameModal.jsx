@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
+import AuthPromptModal from './AuthPromptModal'
 
 const STEP = 100
 
@@ -22,28 +23,7 @@ function EnterGameModal({ game, auth, minBuyIn = 2000, isOpen, onClose, onGoLogi
   const hasEnoughBalance = balance >= MIN_BUY_IN
 
   if (!auth.isAuthenticated) {
-    return (
-      <div className="auth-modal-backdrop" role="presentation" onClick={onClose}>
-        <div
-          className="auth-modal enter-game-modal"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <p className="auth-modal-kicker">Game Access</p>
-          <h3>請先登入或註冊</h3>
-          <p>登入後才能進入遊戲桌，立即完成帳號設置吧！</p>
-          <div className="auth-modal-actions">
-            <button type="button" className="auth-modal-button auth-modal-button-muted" onClick={onClose}>
-              取消
-            </button>
-            <button type="button" className="auth-modal-button" onClick={onGoLogin}>
-              去登入 / 註冊
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+    return <AuthPromptModal isOpen={isOpen} onClose={onClose} onGoLogin={onGoLogin} context="game" />
   }
 
   if (auth.user?.suspended_at) {
@@ -103,6 +83,7 @@ function EnterGameModal({ game, auth, minBuyIn = 2000, isOpen, onClose, onGoLogi
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
+        <img className="enter-game-wings" src="/phantom-footer-logo.png" alt="" aria-hidden="true" />
         <p className="auth-modal-kicker">Buy-in</p>
         <h3>帶多少籌碼入場？</h3>
 

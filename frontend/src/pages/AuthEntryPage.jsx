@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import AuthFormModal from '../components/AuthFormModal'
+import AngelFly from '../components/AngelFly'
 
 function AuthEntryPage({ onBack, onAuthSuccess }) {
   const [authMode, setAuthMode] = useState('')
@@ -13,11 +14,11 @@ function AuthEntryPage({ onBack, onAuthSuccess }) {
         <div className="auth-entry-mask auth-entry-mask-soft" aria-hidden="true" />
 
         <button type="button" className="auth-entry-back" onClick={onBack}>
-          返回大廳
+          <img src="/retrun.png" alt="" />
         </button>
 
         <div className="auth-entry-content">
-          <div className="auth-entry-badge">會員入口</div>
+          <AngelFly size={350} />
           <h1>歡迎回來</h1>
           <p>進入俱樂部前，先選擇登入或註冊，收藏與帳號資料都會同步保存。</p>
 
@@ -27,14 +28,14 @@ function AuthEntryPage({ onBack, onAuthSuccess }) {
               className="auth-entry-button auth-entry-button-primary"
               onClick={() => setAuthMode('login')}
             >
-              登入
+              <img src="/login.png" alt="" />
             </button>
             <button
               type="button"
               className="auth-entry-button auth-entry-button-secondary"
               onClick={() => setAuthMode('register')}
             >
-              註冊
+              <img src="/register.png" alt="" />
             </button>
           </div>
         </div>

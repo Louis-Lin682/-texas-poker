@@ -50,7 +50,10 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
 
   return (
     <section className="content-panel">
-      <SectionHeader title="全部遊戲" />
+      <div className="content-panel-icon">
+        <img src="./game-icon.png" alt="" />
+        <SectionHeader title="全部遊戲" />
+      </div>
 
       {isLoading && (
         <div className="all-games-skeleton-grid">
@@ -130,7 +133,7 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
 
                 <div className="game-art">
                   <img className="game-image" src={game.imageUrl} alt={game.name} loading="lazy" />
-                  <div className="art-glow" />
+                  {/* <div className="art-glow" /> */}
                   {isMaintenance ? <MaintenanceSpriteOverlay /> : null}
                   {isPreview ? <PreviewOverlay /> : null}
                   <div className="art-title">

@@ -4,7 +4,8 @@
       "Bash(npx tsc *)",
       "Bash(npm run *)",
       "Bash(node -e \"require\\('dayjs'\\)\")",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(git *)"
     ]
   }
 }

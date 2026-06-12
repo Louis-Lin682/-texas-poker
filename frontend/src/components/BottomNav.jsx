@@ -28,7 +28,7 @@ function BottomNav({ items, onCenterClick, onLeftClick, onRightClick }) {
           onClick={onLeftClick}
         >
           <div className="nav-item-icon">
-            <img src="/event2.png" alt="" />
+            <img src="/event.png" alt="" />
             <span>{leftItem.label}</span>
           </div>
         </button>
@@ -42,11 +42,7 @@ function BottomNav({ items, onCenterClick, onLeftClick, onRightClick }) {
           onClick={onCenterClick}
         >
           <span className="nav-center-ring">
-            <img
-              className="nav-center-image"
-              src={centerItem.icon}
-              alt={centerItem.label}
-            />
+            <img src="/phantom-footer-logo.png" alt="" />
           </span>
           <span>{centerItem.label}</span>
         </button>

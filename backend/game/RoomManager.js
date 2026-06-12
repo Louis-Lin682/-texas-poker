@@ -73,7 +73,7 @@ export class RoomManager {
     const info = this.clients.get(ws)
     if (info?.roomId) {
       const game = this.rooms.get(info.roomId)
-      if (game?.gameSlug === 'dragon-tiger') {
+      if (game?.gameSlug === 'dragon-tiger' || (game?.gameSlug === 'big-two' && game?.phase === 'playing')) {
         this._startGracePeriod(info.userId, info.roomId)
       } else {
         this._leaveRoom(ws, info)
@@ -193,7 +193,7 @@ export class RoomManager {
   async _joinRoom(ws, info, roomId, buyIn) {
     if (info.roomId) this._leaveRoom(ws, info)
 
-    // Dragon Tiger grace-period reconnect
+    // Dragon Tiger / Big Two (playing) grace-period reconnect
     const grace = this._graceTimers.get(info.userId)
     if (grace) {
       clearTimeout(grace.timer)

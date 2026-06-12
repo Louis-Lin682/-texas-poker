@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import HeartIcon from './HeartIcon'
 import SectionHeader from './SectionHeader'
 
-const PEEK = 25   // px of side card peeking
+const PEEK = 6    // px of side card peeking
 const GAP  = 10   // px gap between cards
 const ANIM = 270  // ms slide animation
 
@@ -99,83 +99,92 @@ function GameSection({ items, isLoading, favoriteIds, onToggleFavorite, onGameCl
 
   return (
     <section className="content-panel">
-      <SectionHeader title="熱門遊戲" />
+      <div className="content-panel-icon">
+        <img src="./hot-badge.png" alt="" />
+        <SectionHeader title="熱門遊戲" />
+      </div>
 
-      <div
-        ref={wrapperRef}
-        className="gs-wrapper"
-        onTouchStart={onDown}
-        onTouchMove={onMove}
-        onTouchEnd={onUp}
-        onMouseDown={onDown}
-        onMouseMove={onMove}
-        onMouseUp={onUp}
-        onMouseLeave={() => { startXRef.current = null }}
-      >
-        {isLoading && (
-          <div className="gs-skeleton">
-            <div className="gs-skeleton-card gs-skeleton-side" />
-            <div className="gs-skeleton-card gs-skeleton-center" />
-            <div className="gs-skeleton-card gs-skeleton-center" />
-            <div className="gs-skeleton-card gs-skeleton-side" />
-          </div>
-        )}
-        {ready && (
-          <div
-            className="gs-track"
-            style={{
-              transform:  `translateX(${translateX}px)`,
-              transition: hasAnim
-                ? `transform ${ANIM}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
-                : 'none',
-            }}
-            onTransitionEnd={handleTransitionEnd}
-          >
-            {extItems.map((game, i) => {
-              const isCenter  = isCenterCard(i)
-              const isVisible = i >= trackIdx - 1 && i <= trackIdx + 2
-              return (
-                <div
-                  key={i}
-                  className={`gs-card game-card-shell ${isCenter ? 'gs-card--center' : 'gs-card--side'}`}
-                  style={{ flex: `0 0 ${cardW}px`, width: cardW, pointerEvents: isVisible ? 'auto' : 'none' }}
-                  onClick={() => {
-                    if (wasDragRef.current || isCenter) return
-                    if (i === trackIdx - 1)      advance(-1)
-                    else if (i === trackIdx + 2) advance(1)
-                  }}
-                >
-                  {/* <img className="game-badge-image" src="/hot-badge.png" alt="" aria-hidden="true" /> */}
-                  <article
-                    className="game-tile"
-                    onClick={(e) => {
-                      if (wasDragRef.current) { e.stopPropagation(); return }
-                      if (!isCenter) return
-                      e.stopPropagation()
-                      onGameClick?.(game)
+      <div className="gs-carousel">
+        <button type="button" className="gs-arrow gs-arrow--left" onClick={() => advance(-1)} aria-label="上一個">‹</button>
+
+        <div
+          ref={wrapperRef}
+          className="gs-wrapper"
+          onTouchStart={onDown}
+          onTouchMove={onMove}
+          onTouchEnd={onUp}
+          onMouseDown={onDown}
+          onMouseMove={onMove}
+          onMouseUp={onUp}
+          onMouseLeave={() => { startXRef.current = null }}
+        >
+          {isLoading && (
+            <div className="gs-skeleton">
+              <div className="gs-skeleton-card gs-skeleton-side" />
+              <div className="gs-skeleton-card gs-skeleton-center" />
+              <div className="gs-skeleton-card gs-skeleton-center" />
+              <div className="gs-skeleton-card gs-skeleton-side" />
+            </div>
+          )}
+          {ready && (
+            <div
+              className="gs-track"
+              style={{
+                transform:  `translateX(${translateX}px)`,
+                transition: hasAnim
+                  ? `transform ${ANIM}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
+                  : 'none',
+              }}
+              onTransitionEnd={handleTransitionEnd}
+            >
+              {extItems.map((game, i) => {
+                const isCenter  = isCenterCard(i)
+                const isVisible = i >= trackIdx - 1 && i <= trackIdx + 2
+                return (
+                  <div
+                    key={i}
+                    className={`gs-card game-card-shell ${isCenter ? 'gs-card--center' : 'gs-card--side'}`}
+                    style={{ flex: `0 0 ${cardW}px`, width: cardW, pointerEvents: isVisible ? 'auto' : 'none' }}
+                    onClick={() => {
+                      if (wasDragRef.current || isCenter) return
+                      if (i === trackIdx - 1)      advance(-1)
+                      else if (i === trackIdx + 2) advance(1)
                     }}
                   >
-                    <button
-                      type="button"
-                      className={`fav-btn ${favoriteIds.includes(game.id) ? 'is-active' : ''}`}
+                    {/* <img className="game-badge-image" src="/hot-badge.png" alt="" aria-hidden="true" /> */}
+                    <article
+                      className="game-tile"
                       onClick={(e) => {
+                        if (wasDragRef.current) { e.stopPropagation(); return }
+                        if (!isCenter) return
                         e.stopPropagation()
-                        if (isCenter && !wasDragRef.current) onToggleFavorite(game.id)
+                        onGameClick?.(game)
                       }}
                     >
-                      <HeartIcon filled={favoriteIds.includes(game.id)} />
-                    </button>
-                    <div className="game-art">
-                      <img className="game-image" src={game.imageUrl} alt={game.name} loading="lazy" />
-                      <div className="art-glow" />
-                      <div className="art-title"><span>{game.name}</span></div>
-                    </div>
-                  </article>
-                </div>
-              )
-            })}
-          </div>
-        )}
+                      <button
+                        type="button"
+                        className={`fav-btn ${favoriteIds.includes(game.id) ? 'is-active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (isCenter && !wasDragRef.current) onToggleFavorite(game.id)
+                        }}
+                      >
+                        <HeartIcon filled={favoriteIds.includes(game.id)} />
+                      </button>
+                      <div className="game-art">
+                        <img className="game-image" src={game.imageUrl} alt={game.name} loading="lazy" />
+                        <div className="art-glow" />
+                        <div className="art-title"><span>{game.name}</span></div>
+                      </div>
+                    </article>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        <button type="button" className="gs-arrow gs-arrow--right" onClick={() => advance(1)} aria-label="下一個">›</button>
       </div>
 
       <div className="gs-progress">

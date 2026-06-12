@@ -43,8 +43,7 @@ function NoticeTicker({ text, isMuted, onToggleMute }) {
   return (
     <div className="notice-wrap">
       <div className="top-notice">
-        <img className="notice-skull" src="/notice-skull.png" alt="Announcement mascot" />
-
+        <img className="noticeLoudspeaker" src="/Loudspeaker.png" alt="Loudspeaker" />
         <div className="notice-marquee">
           <div className="notice-track">
             <span>{text}</span>

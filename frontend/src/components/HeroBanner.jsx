@@ -1,18 +1,31 @@
+import { useEffect, useRef, useState } from 'react'
+
 function HeroBanner() {
+  const sectionRef = useRef(null)
+  const [animKey, setAnimKey] = useState(0)
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setAnimKey(k => k + 1) },
+      { threshold: 0.3 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <section className="hero-banner">
+    <section className="hero-banner" ref={sectionRef}>
       <img className="hero-image" src="/hero-banner.png" alt="Casino hero banner" />
-      <div className="hero-overlay" />
 
       <div className="hero-copy">
         <h1>
-          新戶首儲加碼
-          <br />
-          最高 100% 回饋
+          <img key={animKey} className="hero-banner-text" src="/hero-banner-text.png" alt="hero-banner-text" />
+          <img key={`span-${animKey}`} className="hero-banner-span" src="/hero-banner-span.png" alt="hero-banner-span" />
         </h1>
-        <p>完成首次儲值即可享有對應回饋，先領入場禮金，再上桌體驗德州主桌與熱門牌局。</p>
         <button type="button" className="cta-button">
-          立即加入
+          <img className="hero-banner-span" src="/hero-banner-btn.png" alt="hero-banner-btn" />
         </button>
       </div>
     </section>
