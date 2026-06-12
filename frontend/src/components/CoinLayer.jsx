@@ -62,17 +62,22 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
   const rainTimer = useRef(null)
 
   useImperativeHandle(ref, () => ({
-    startRain() {
+    startRain(intensity = 'normal') {
       if (rainTimer.current) return
       const layer = layerRef.current
       if (!layer) return
       const W = layer.offsetWidth || 390
+      const { maxCoins, intervalMs } = {
+        normal: { maxCoins: 20, intervalMs: 150 },
+        heavy:  { maxCoins: 30, intervalMs: 100 },
+        storm:  { maxCoins: 42, intervalMs:  72 },
+      }[intensity] ?? { maxCoins: 20, intervalMs: 150 }
 
       rainTimer.current = setInterval(() => {
         const alive = layer.querySelectorAll('.tj-coin-rain').length
-        if (alive >= 20) return
+        if (alive >= maxCoins) return
 
-        const x     = rand(20, W - 60)
+        const x     = rand(20, (layer.offsetWidth || W) - 60)
         const drift = rand(-35, 35)
         const scale = rand(0.75, 1.15)
         const fps   = rand(18, 26)
@@ -87,7 +92,7 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
           { transform: `translate(${drift}px,960px) scale(${scale * 0.9}) rotate(${rand(180, 540)}deg)`, opacity: 0.85 },
         ], { duration: 2600, easing: 'linear', fill: 'forwards' })
           .onfinish = () => { stopSpin(coin); coin.remove() }
-      }, 150)
+      }, intervalMs)
     },
 
     stopRain() {

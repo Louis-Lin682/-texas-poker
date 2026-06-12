@@ -5,6 +5,7 @@ import { useSlotSounds } from '../hooks/useSlotSounds'
 import { useGameStatus } from '../hooks/useGameStatus'
 import { getAudioSettings } from '../hooks/useAudio'
 import { CoinLayer } from '../components/CoinLayer'
+import { LightningLayer } from '../components/LightningLayer'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
 
 // ── Symbol definitions ──────────────────────────────────────────────────────
@@ -269,7 +270,8 @@ export default function ThunderJokerPage({ auth }) {
   const winPhaseTimers = useRef([])    // t1-t4 of the cinematic win sequence
   const autoCountRef  = useRef(null)
   const longPressRef  = useRef(null)
-  const coinLayerRef    = useRef(null)
+  const coinLayerRef      = useRef(null)
+  const lightningLayerRef = useRef(null)
   const floatLayerRef   = useRef(null)
   const fsRafRef        = useRef(null)
   const balAnimRafRef   = useRef(null)
@@ -532,6 +534,8 @@ export default function ThunderJokerPage({ auth }) {
     if (overlayCtRef.current) { clearTimeout(overlayCtRef.current); overlayCtRef.current = null }
     if (overlayRafRef.current) { cancelAnimationFrame(overlayRafRef.current); overlayRafRef.current = null }
     if (burstIntervalRef.current) { clearInterval(burstIntervalRef.current); burstIntervalRef.current = null }
+    lightningLayerRef.current?.stopFlashing()
+    lightningLayerRef.current?.clear()
 
     function tickAuto() {
       if (!autoRef.current) return false
@@ -728,7 +732,7 @@ export default function ThunderJokerPage({ auth }) {
         })
         if (bigWinLv && !freeSpinsGranted && !isFree) {
           // Cinematic phased win sequence
-          const holdDur = bigWinLv === 'super' ? 7000 : bigWinLv === 'epic' ? 5500 : 4000
+          const holdDur = bigWinLv === 'super' ? 3200 : bigWinLv === 'epic' ? 2400 : 1800
 
           // Phase 1: dark screen
           const t1 = setTimeout(() => {
@@ -743,7 +747,10 @@ export default function ThunderJokerPage({ auth }) {
           const t2 = setTimeout(() => {
             if (spinGenRef.current !== myGen) return
             setWinPhase('rain')
-            coinLayerRef.current?.startRain()
+            const rainIntensity = bigWinLv === 'super' ? 'storm' : bigWinLv === 'epic' ? 'heavy' : 'normal'
+            coinLayerRef.current?.startRain(rainIntensity)
+            if (bigWinLv === 'super') lightningLayerRef.current?.startFlashing(2, 750, '#88EEFF')
+            else if (bigWinLv === 'epic') lightningLayerRef.current?.startFlashing(1, 1100, '#88EEFF')
             snd.startLoop('shot')
             const t0 = performance.now()
             const dur = 2000
@@ -765,54 +772,97 @@ export default function ThunderJokerPage({ auth }) {
             setOverlayDisplayWin(winTotal)
             setWinPhase('badge')
             snd.play(bigWinLv + '-win')
+            // Dramatic lightning burst on badge slam
+            const boltCount = { super: 6, epic: 4, mega: 3, big: 1 }[bigWinLv] ?? 1
+            lightningLayerRef.current?.flash(boltCount, '#88EEFF')
           }, 2500)
           winPhaseTimers.current.push(t3)
 
-          // Phase 4: coin burst + screen shake + recurring burst
+          // Phase 4: coin burst + screen shake + recurring burst (tiered)
           const t4 = setTimeout(() => {
             if (spinGenRef.current !== myGen) return
             setWinPhase('burst')
             setScreenShake(true)
-            setTimeout(() => setScreenShake(false), 500)
+            setTimeout(() => setScreenShake(false), 600)
             snd.play('coin-burst')
             coinLayerRef.current?.stopRain()
+            lightningLayerRef.current?.stopFlashing()
+
             const pg = pageRef.current
-            const cx = (pg?.offsetWidth ?? 390) / 2
-            const cy = (pg?.offsetHeight ?? 700) * 0.38
-            const burstCount = bigWinLv === 'super' ? 65 : bigWinLv === 'epic' ? 45 : 28
-            coinLayerRef.current?.burst(cx, cy, burstCount)
-            // Recurring burst every ~900ms for the full hold duration
+            const pw = pg?.offsetWidth  ?? 390
+            const ph = pg?.offsetHeight ?? 700
+            const cx = pw / 2
+            const cy = ph * 0.38
+
+            const BURST_CFG = {
+              super: { count: 80, intervalMs: 400, boltsPer: 3 },
+              epic:  { count: 60, intervalMs: 520, boltsPer: 2 },
+              mega:  { count: 40, intervalMs: 700, boltsPer: 1 },
+              big:   { count: 24, intervalMs: 950, boltsPer: 0 },
+            }[bigWinLv]
+            const BURST_ORIGIN = { x: cx, y: cy }
+
+            // Initial burst from center
+            coinLayerRef.current?.burst(BURST_ORIGIN.x, BURST_ORIGIN.y, BURST_CFG.count)
+            if (BURST_CFG.boltsPer > 0) {
+              lightningLayerRef.current?.flash(BURST_CFG.boltsPer, '#88EEFF')
+            }
+
             if (burstIntervalRef.current) clearInterval(burstIntervalRef.current)
             burstIntervalRef.current = setInterval(() => {
-              if (spinGenRef.current !== myGen) { clearInterval(burstIntervalRef.current); burstIntervalRef.current = null; return }
-              const p = pageRef.current
-              const bx = (p?.offsetWidth ?? 390) * (0.2 + Math.random() * 0.6)
-              const by = (p?.offsetHeight ?? 700) * (0.25 + Math.random() * 0.35)
-              const bc = Math.round(burstCount * (0.4 + Math.random() * 0.5))
-              coinLayerRef.current?.burst(bx, by, bc)
-            }, 900)
+              if (spinGenRef.current !== myGen) {
+                clearInterval(burstIntervalRef.current); burstIntervalRef.current = null; return
+              }
+              const bc = Math.round(BURST_CFG.count * (0.5 + Math.random() * 0.4))
+              coinLayerRef.current?.burst(BURST_ORIGIN.x, BURST_ORIGIN.y, bc)
+              if (BURST_CFG.boltsPer > 0) {
+                lightningLayerRef.current?.flash(
+                  Math.ceil(BURST_CFG.boltsPer * (0.5 + Math.random() * 0.5)),
+                  '#88EEFF',
+                )
+              }
+            }, BURST_CFG.intervalMs)
           }, 2800)
           winPhaseTimers.current.push(t4)
 
-          // Phase 5: hold then clear
+          // Phase 5: hold → exit animation → clear
           overlayCtRef.current = setTimeout(() => {
             if (spinGenRef.current !== myGen) return
             if (burstIntervalRef.current) { clearInterval(burstIntervalRef.current); burstIntervalRef.current = null }
-            coinLayerRef.current?.clear()
-            setWinPhase(null)
-            setWinOverlay(null)
-            overlayCtRef.current = null
-            if (inFsRef.current && fsRef.current > 0) {
-              const at = setTimeout(() => spinRef.current?.(), 500)
-              tmRefs.current.push(at)
-            } else if (inFsRef.current && fsRef.current === 0) {
-              // Last free spin ended with a big win — now show end sequence
-              startFsEndSequence(fsSessionWinRef.current)
-            } else if (autoRef.current && !inFsRef.current) {
-              if (balRef.current >= betRef.current) {
-                if (tickAuto()) { const at = setTimeout(() => spinRef.current?.(), 500); tmRefs.current.push(at) }
-              } else { autoRef.current = false; setIsAuto(false); autoCountRef.current = null; setAutoCount(null) }
+            lightningLayerRef.current?.stopFlashing()
+
+            // Final coin burst + optional lightning on exit
+            const p5  = pageRef.current
+            const p5x = (p5?.offsetWidth  ?? 390) / 2
+            const p5y = (p5?.offsetHeight ?? 700) * 0.38
+            const exitCount = { super: 55, epic: 40, mega: 28, big: 16 }[bigWinLv] ?? 16
+            coinLayerRef.current?.burst(p5x, p5y, exitCount)
+            if (bigWinLv !== 'big') {
+              lightningLayerRef.current?.flash(bigWinLv === 'super' ? 4 : bigWinLv === 'epic' ? 3 : 1, '#88EEFF')
             }
+
+            // Switch to exit phase — CSS handles scale-up + fade-out of badge & amount
+            setWinPhase('exit')
+
+            const exitT = setTimeout(() => {
+              if (spinGenRef.current !== myGen) return
+              lightningLayerRef.current?.clear()
+              coinLayerRef.current?.clear()
+              setWinPhase(null)
+              setWinOverlay(null)
+              overlayCtRef.current = null
+              if (inFsRef.current && fsRef.current > 0) {
+                const at = setTimeout(() => spinRef.current?.(), 500)
+                tmRefs.current.push(at)
+              } else if (inFsRef.current && fsRef.current === 0) {
+                startFsEndSequence(fsSessionWinRef.current)
+              } else if (autoRef.current && !inFsRef.current) {
+                if (balRef.current >= betRef.current) {
+                  if (tickAuto()) { const at = setTimeout(() => spinRef.current?.(), 500); tmRefs.current.push(at) }
+                } else { autoRef.current = false; setIsAuto(false); autoCountRef.current = null; setAutoCount(null) }
+              }
+            }, 550)
+            tmRefs.current.push(exitT)
           }, 2800 + holdDur)
           tmRefs.current.push(overlayCtRef.current)
         }
@@ -1408,6 +1458,8 @@ export default function ThunderJokerPage({ auth }) {
             if (burstIntervalRef.current) { clearInterval(burstIntervalRef.current); burstIntervalRef.current = null }
             winPhaseTimers.current.forEach(clearTimeout); winPhaseTimers.current = []
             sndRef.current.stopLoop('shot')
+            lightningLayerRef.current?.stopFlashing()
+            lightningLayerRef.current?.clear()
             coinLayerRef.current?.clear()
             setWinPhase(null)
             setScreenShake(false)
@@ -1448,6 +1500,9 @@ export default function ThunderJokerPage({ auth }) {
 
       {/* Atlas-based coin animation layer — always mounted, coins rendered imperatively */}
       <CoinLayer ref={coinLayerRef} />
+
+      {/* Lightning canvas layer — above coins, pointer-events:none */}
+      <LightningLayer ref={lightningLayerRef} />
 
       {/* Float text layer for per-spin win popups */}
       <div ref={floatLayerRef} className="tj-float-layer" aria-hidden="true" />
