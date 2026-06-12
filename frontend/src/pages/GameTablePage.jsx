@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import PlayingCard from '../components/PlayingCard'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
 import { usePokerSocket } from '../hooks/usePokerSocket'
+import { useGameStatus } from '../hooks/useGameStatus'
 import { useAudio, getAudioSettings } from '../hooks/useAudio'
 
 const CHIP_IMGS = ['/chip-red.png', '/chip-gold.png', '/chip-purple.png', '/chip-blackgold.png']
@@ -373,14 +374,21 @@ function WaitingView({ gameState, myId, onReady, onUnready, onLeaveRoom }) {
 function GameTablePage({ auth }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const gameStatus = useGameStatus('texas-holdem')
   const defaultGameSlug = location.state?.gameSlug ?? 'texas-holdem'
 
   const minBuyIn = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
 
   const {
-    status, rooms, roomId, myId, gameState, winInfo, lastAction, error, cashoutBalance,
+    status, rooms, roomId, myId, gameState, winInfo, lastAction, error, cashoutBalance, wasKicked,
     refreshRooms, createRoom, joinRoom, leaveRoom, startGame, doAction, setReady, unready,
   } = usePokerSocket({ minBuyIn })
+
+  useEffect(() => {
+    if (!wasKicked) return
+    const t = setTimeout(() => navigate('/'), 3000)
+    return () => clearTimeout(t)
+  }, [wasKicked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (cashoutBalance !== null) auth?.refreshUser?.()
@@ -601,6 +609,25 @@ function GameTablePage({ auth }) {
 
   return (
     <div className="pt-page">
+
+      {(gameStatus?.status === 'maintenance' || gameStatus?.status === 'updating') && (
+        <div className="game-maint-overlay">
+          <div className="game-maint-box">
+            <div className="mt-title">{gameStatus.status === 'maintenance' ? '遊戲維護中' : '遊戲更新中'}</div>
+            {gameStatus.notice && <div className="mt-notice">{gameStatus.notice}</div>}
+            <div className="mt-sub">敬請期待，稍後再試</div>
+          </div>
+        </div>
+      )}
+
+      {wasKicked && (
+        <div className="kicked-overlay">
+          <div className="kicked-overlay-box">
+            <div className="kicked-title">您已被管理員移出房間</div>
+            <div className="kicked-sub">即將返回大廳...</div>
+          </div>
+        </div>
+      )}
 
       {/* ── Leave confirm modal ── */}
       {showLeaveConfirm && (

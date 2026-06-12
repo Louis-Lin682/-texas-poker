@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import PlayingCard from '../components/PlayingCard'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
 import { useBigTwoSocket } from '../hooks/useBigTwoSocket'
+import { useGameStatus } from '../hooks/useGameStatus'
 import { useAudio, getAudioSettings } from '../hooks/useAudio'
 
 function fmt(n) {
@@ -586,12 +587,19 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
 function BigTwoTablePage({ auth }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const gameStatus = useGameStatus('big-two')
   const minBuyIn = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
   const {
     status, rooms, roomId, myId, gameState, gameResult, lastAction,
-    error, cashoutBalance,
+    error, cashoutBalance, wasKicked,
     refreshRooms, createRoom, joinRoom, leaveRoom, setReady, unready, doAction,
   } = useBigTwoSocket({ minBuyIn })
+
+  useEffect(() => {
+    if (!wasKicked) return
+    const t = setTimeout(() => navigate('/'), 3000)
+    return () => clearTimeout(t)
+  }, [wasKicked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (cashoutBalance !== null) auth?.refreshUser?.()
@@ -720,6 +728,25 @@ function BigTwoTablePage({ auth }) {
 
   return (
     <div className="pt-page">
+
+      {(gameStatus?.status === 'maintenance' || gameStatus?.status === 'updating') && (
+        <div className="game-maint-overlay">
+          <div className="game-maint-box">
+            <div className="mt-title">{gameStatus.status === 'maintenance' ? '遊戲維護中' : '遊戲更新中'}</div>
+            {gameStatus.notice && <div className="mt-notice">{gameStatus.notice}</div>}
+            <div className="mt-sub">敬請期待，稍後再試</div>
+          </div>
+        </div>
+      )}
+
+      {wasKicked && (
+        <div className="kicked-overlay">
+          <div className="kicked-overlay-box">
+            <div className="kicked-title">您已被管理員移出房間</div>
+            <div className="kicked-sub">即將返回大廳...</div>
+          </div>
+        </div>
+      )}
 
       {/* Leave confirm */}
       {showLeaveConfirm && (

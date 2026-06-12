@@ -267,7 +267,7 @@ function LedgerPage() {
 
       {/* ── 日期快選 ── */}
       <div className="ledger-filters">
-        <div className="ledger-filter-row">
+        <div className="ledger-filter-row-data">
           {DATE_CHIPS.map(o => (
             <button
               key={o.value}

@@ -217,6 +217,28 @@ export async function initDb() {
       tiger_suit  TEXT NOT NULL,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS game_configs (
+      slug         TEXT PRIMARY KEY,
+      status       TEXT NOT NULL DEFAULT 'open',
+      notice       TEXT NOT NULL DEFAULT '',
+      display_name TEXT,
+      image_url    TEXT,
+      badge        TEXT,
+      updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    ALTER TABLE game_configs ADD COLUMN IF NOT EXISTS display_name TEXT;
+    ALTER TABLE game_configs ADD COLUMN IF NOT EXISTS image_url    TEXT;
+    ALTER TABLE game_configs ADD COLUMN IF NOT EXISTS badge        TEXT;
+    ALTER TABLE game_configs ADD COLUMN IF NOT EXISTS category     TEXT;
+    ALTER TABLE game_configs ADD COLUMN IF NOT EXISTS is_hot       BOOLEAN;
+    INSERT INTO game_configs (slug, status, notice) VALUES
+      ('texas-holdem',  'open', ''),
+      ('big-two',       'open', ''),
+      ('blackjack',     'open', ''),
+      ('dragon-tiger',  'open', ''),
+      ('thunder-joker', 'open', '')
+    ON CONFLICT (slug) DO NOTHING;
   `)
 }
 

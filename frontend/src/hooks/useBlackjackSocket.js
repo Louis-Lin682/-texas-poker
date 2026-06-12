@@ -19,6 +19,7 @@ export function useBlackjackSocket({ minBuyIn = 2000 } = {}) {
   const [gameState, setGameState] = useState(null)
   const [error, setError] = useState(null)
   const [cashoutBalance, setCashoutBalance] = useState(null)
+  const [wasKicked, setWasKicked] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY)
@@ -78,6 +79,11 @@ export function useBlackjackSocket({ minBuyIn = 2000 } = {}) {
             break
           case 'balance_update':
             setCashoutBalance(msg.balance)
+            break
+          case 'kicked':
+            sessionStorage.removeItem(ROOM_KEY)
+            setRoomId(null); setMyId(null); setGameState(null)
+            setWasKicked(true)
             break
           case 'kicked_from_room':
             sessionStorage.removeItem(ROOM_KEY)
@@ -142,7 +148,7 @@ export function useBlackjackSocket({ minBuyIn = 2000 } = {}) {
   }, [send])
 
   return {
-    status, rooms, roomId, myId, gameState, error, cashoutBalance,
+    status, rooms, roomId, myId, gameState, error, cashoutBalance, wasKicked,
     refreshRooms, createRoom, joinRoom, leaveRoom, setReady, unready, doAction,
   }
 }

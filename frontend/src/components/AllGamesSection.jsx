@@ -53,6 +53,9 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
       <div className="content-panel-icon">
         <img src="./game-icon.png" alt="" />
         <SectionHeader title="全部遊戲" />
+        {!isLoading && (
+          <span className="game-filter-count">{filteredItems.length} 款遊戲</span>
+        )}
       </div>
 
       {isLoading && (
@@ -100,7 +103,6 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
             })}
           </div>
 
-          <span className="game-filter-count">{filteredItems.length} 款遊戲</span>
         </div>
 
         {activeFilter === 'favorites' && filteredItems.length === 0 ? (

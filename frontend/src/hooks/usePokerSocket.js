@@ -20,6 +20,7 @@ export function usePokerSocket({ minBuyIn = 2000 } = {}) {
   const [lastAction, setLastAction] = useState(null)
   const [error, setError] = useState(null)
   const [cashoutBalance, setCashoutBalance] = useState(null)
+  const [wasKicked, setWasKicked] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY)
@@ -94,6 +95,11 @@ export function usePokerSocket({ minBuyIn = 2000 } = {}) {
           case 'balance_update':
             setCashoutBalance(msg.balance)
             break
+          case 'kicked':
+            sessionStorage.removeItem(ROOM_KEY)
+            setRoomId(null); setMyId(null); setGameState(null)
+            setWasKicked(true)
+            break
           case 'error':
             setError(msg.message)
             setTimeout(() => setError(null), 3500)
@@ -152,5 +158,5 @@ export function usePokerSocket({ minBuyIn = 2000 } = {}) {
   const setReady  = useCallback(() => send({ type: 'set_ready' }),  [send])
   const unready   = useCallback(() => send({ type: 'unready' }),    [send])
 
-  return { status, rooms, roomId, myId, gameState, winInfo, lastAction, error, cashoutBalance, refreshRooms, createRoom, joinRoom, leaveRoom, startGame, doAction, setReady, unready }
+  return { status, rooms, roomId, myId, gameState, winInfo, lastAction, error, cashoutBalance, wasKicked, refreshRooms, createRoom, joinRoom, leaveRoom, startGame, doAction, setReady, unready }
 }

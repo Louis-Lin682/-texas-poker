@@ -14,6 +14,8 @@ import AdminSupportPage from './pages/AdminSupportPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import QuestsPage from './pages/QuestsPage'
 import ReportsPage from './pages/ReportsPage'
+import GamesPage from './pages/GamesPage'
+import RoomsPage from './pages/RoomsPage'
 
 function RequireAuth({ children }) {
   const { admin, loading } = useAdminAuth()
@@ -32,6 +34,8 @@ function AppRoutes() {
         <Route path="/members/:id" element={<MemberDetailPage />} />
         <Route path="/members/:id/ledger" element={<MemberLedgerPage />} />
         <Route path="/reports"     element={<ReportsPage />} />
+        <Route path="/games"       element={<GamesPage />} />
+        <Route path="/rooms"       element={<RoomsPage />} />
         <Route path="/events"      element={<EventsPage />} />
         <Route path="/news"          element={<AdminNewsPage />} />
         <Route path="/announcements" element={<AdminAnnouncementsPage />} />

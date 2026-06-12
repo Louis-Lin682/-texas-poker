@@ -572,6 +572,19 @@ const server = http.createServer(async (request, response) => {
       return
     }
 
+    if (request.method === 'GET' && pathname === '/game-configs') {
+      const { rows } = await query('SELECT slug, status, notice, display_name, image_url, badge, category, is_hot FROM game_configs ORDER BY slug')
+      sendJson(response, 200, { configs: rows }, effectiveCors); return
+    }
+
+    const gameConfigSlugMatch = pathname.match(/^\/game-configs\/([^/]+)$/)
+    if (gameConfigSlugMatch && request.method === 'GET') {
+      const slug = gameConfigSlugMatch[1]
+      const { rows } = await query('SELECT slug, status, notice, display_name, image_url, badge, category, is_hot FROM game_configs WHERE slug = $1', [slug])
+      if (!rows.length) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
+      sendJson(response, 200, rows[0], effectiveCors); return
+    }
+
     if (request.method === 'GET' && pathname === '/slots/session') {
       const user = await getSessionUser(request)
       if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }); return }
@@ -1498,6 +1511,86 @@ const server = http.createServer(async (request, response) => {
           [status, ticketId]
         )
         sendJson(response, 200, { ticket }, effectiveCors); return
+      }
+
+      // ── 房間管理 ──
+      if (pathname === '/admin/rooms' && request.method === 'GET') {
+        const rooms = [...roomManager.rooms.entries()].map(([id, game]) => ({
+          id,
+          gameType:    game.gameSlug ?? 'texas-holdem',
+          phase:       game.phase,
+          playerCount: game.players.length,
+          maxPlayers:  game.maxPlayers,
+          smallBlind:  game.smallBlind  ?? null,
+          bigBlind:    game.bigBlind    ?? null,
+          betUnit:     game.betUnit     ?? null,
+          maxBet:      game.maxBet      ?? null,
+          players: game.players.map(p => ({
+            id:       p.id,
+            username: p.username,
+            balance:  p.balance,
+            status:   p.status,
+            isBot:    roomManager.botManager?.isBot(p.id) ?? false,
+          })),
+        }))
+        sendJson(response, 200, { rooms }, effectiveCors); return
+      }
+
+      const roomCloseMatch = pathname.match(/^\/admin\/rooms\/([^/]+)$/)
+      if (roomCloseMatch && request.method === 'DELETE') {
+        const roomId = roomCloseMatch[1]
+        const game = roomManager.rooms.get(roomId)
+        if (!game) { sendJson(response, 404, { message: '房間不存在' }, effectiveCors); return }
+        // Remove all players then delete room
+        const playerIds = game.players.map(p => p.id)
+        for (const pid of playerIds) {
+          try { roomManager._leaveRoomById(pid, roomId) } catch {}
+        }
+        roomManager.rooms.delete(roomId)
+        roomManager.botManager?.notifyRoomClosed(roomId)
+        roomManager._broadcastRoomList()
+        sendJson(response, 200, { ok: true }, effectiveCors); return
+      }
+
+      const kickMatch = pathname.match(/^\/admin\/rooms\/([^/]+)\/kick\/([^/]+)$/)
+      if (kickMatch && request.method === 'POST') {
+        const [, roomId, playerId] = kickMatch
+        const game = roomManager.rooms.get(roomId)
+        if (!game) { sendJson(response, 404, { message: '房間不存在' }, effectiveCors); return }
+        try { roomManager._leaveRoomById(playerId, roomId) } catch {}
+        sendJson(response, 200, { ok: true }, effectiveCors); return
+      }
+
+      // ── 遊戲設定 ──
+      if (pathname === '/admin/games' && request.method === 'GET') {
+        const { rows } = await query('SELECT slug, status, notice, display_name, image_url, badge, category, is_hot FROM game_configs ORDER BY slug')
+        sendJson(response, 200, { games: rows }, effectiveCors); return
+      }
+
+      const gameSlugMatch = pathname.match(/^\/admin\/games\/([^/]+)$/)
+      if (gameSlugMatch && request.method === 'PATCH') {
+        const slug = gameSlugMatch[1]
+        const { status, notice, display_name, image_url, badge, category, is_hot } = await getRequestBody(request)
+        const VALID_STATUS   = ['open', 'maintenance', 'updating']
+        const VALID_CATEGORY = ['poker', 'electronic', 'chess', 'other']
+        if (status   && !VALID_STATUS.includes(status))     { sendJson(response, 400, { message: '無效的狀態' }, effectiveCors); return }
+        if (category && !VALID_CATEGORY.includes(category)) { sendJson(response, 400, { message: '無效的分類' }, effectiveCors); return }
+        const sets = []; const vals = []
+        if (status       !== undefined) { vals.push(status);            sets.push(`status = $${vals.length}`) }
+        if (notice       !== undefined) { vals.push(notice);            sets.push(`notice = $${vals.length}`) }
+        if (display_name !== undefined) { vals.push(display_name || null); sets.push(`display_name = $${vals.length}`) }
+        if (image_url    !== undefined) { vals.push(image_url    || null); sets.push(`image_url = $${vals.length}`) }
+        if (badge        !== undefined) { vals.push(badge        || null); sets.push(`badge = $${vals.length}`) }
+        if (category     !== undefined) { vals.push(category     || null); sets.push(`category = $${vals.length}`) }
+        if (is_hot       !== undefined) { vals.push(is_hot === true || is_hot === 'true'); sets.push(`is_hot = $${vals.length}`) }
+        if (!sets.length) { sendJson(response, 400, { message: '無變更' }, effectiveCors); return }
+        vals.push(slug)
+        const { rows } = await query(
+          `UPDATE game_configs SET ${sets.join(', ')}, updated_at = NOW() WHERE slug = $${vals.length} RETURNING slug, status, notice, display_name, image_url, badge, category, is_hot`,
+          vals
+        )
+        if (!rows.length) { sendJson(response, 404, { message: '遊戲不存在' }, effectiveCors); return }
+        sendJson(response, 200, rows[0], effectiveCors); return
       }
 
       sendJson(response, 404, { message: 'Admin route not found.' }, effectiveCors); return

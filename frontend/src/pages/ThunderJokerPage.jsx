@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { apiRequest } from '../services/apiClient'
 import { useSlotSounds } from '../hooks/useSlotSounds'
+import { useGameStatus } from '../hooks/useGameStatus'
 import { getAudioSettings } from '../hooks/useAudio'
 import { CoinLayer } from '../components/CoinLayer'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
@@ -195,6 +196,7 @@ function calcPartialCells(grid) {
 export default function ThunderJokerPage({ auth }) {
   const navigate = useNavigate()
   const { state: routeState } = useLocation()
+  const gameStatus = useGameStatus('thunder-joker')
   const buyIn = routeState?.buyIn ?? null
 
   const [grid,           setGrid]           = useState(genGrid)
@@ -263,6 +265,7 @@ export default function ThunderJokerPage({ auth }) {
   const spinGenRef    = useRef(0)      // incremented each spin to guard stale callbacks
   const overlayRafRef = useRef(null)
   const overlayCtRef  = useRef(null)   // ref to the overlay auto-close timer
+  const burstIntervalRef = useRef(null) // recurring coin burst during big win hold
   const winPhaseTimers = useRef([])    // t1-t4 of the cinematic win sequence
   const autoCountRef  = useRef(null)
   const longPressRef  = useRef(null)
@@ -528,6 +531,7 @@ export default function ThunderJokerPage({ auth }) {
     const myGen = ++spinGenRef.current
     if (overlayCtRef.current) { clearTimeout(overlayCtRef.current); overlayCtRef.current = null }
     if (overlayRafRef.current) { cancelAnimationFrame(overlayRafRef.current); overlayRafRef.current = null }
+    if (burstIntervalRef.current) { clearInterval(burstIntervalRef.current); burstIntervalRef.current = null }
 
     function tickAuto() {
       if (!autoRef.current) return false
@@ -713,10 +717,6 @@ export default function ThunderJokerPage({ auth }) {
         setLastWin(winTotal)
         setWinHits(hits)                // paylines draw immediately
         bigWinLv = winLevel(winTotal, curBet)
-        if (['mega','epic','super'].includes(bigWinLv) && autoRef.current && !isFree) {
-          autoRef.current = false; setIsAuto(false)
-          // preserve remaining count so player can resume manually
-        }
         // During free spins, all per-spin wins play win-small; fsEndSequence handles the total reveal
         if (!bigWinLv || isFree) {
           snd.play('win-small')
@@ -768,7 +768,7 @@ export default function ThunderJokerPage({ auth }) {
           }, 2500)
           winPhaseTimers.current.push(t3)
 
-          // Phase 4: coin burst + screen shake
+          // Phase 4: coin burst + screen shake + recurring burst
           const t4 = setTimeout(() => {
             if (spinGenRef.current !== myGen) return
             setWinPhase('burst')
@@ -779,13 +779,25 @@ export default function ThunderJokerPage({ auth }) {
             const pg = pageRef.current
             const cx = (pg?.offsetWidth ?? 390) / 2
             const cy = (pg?.offsetHeight ?? 700) * 0.38
-            coinLayerRef.current?.burst(cx, cy, bigWinLv === 'super' ? 65 : bigWinLv === 'epic' ? 45 : 28)
+            const burstCount = bigWinLv === 'super' ? 65 : bigWinLv === 'epic' ? 45 : 28
+            coinLayerRef.current?.burst(cx, cy, burstCount)
+            // Recurring burst every ~900ms for the full hold duration
+            if (burstIntervalRef.current) clearInterval(burstIntervalRef.current)
+            burstIntervalRef.current = setInterval(() => {
+              if (spinGenRef.current !== myGen) { clearInterval(burstIntervalRef.current); burstIntervalRef.current = null; return }
+              const p = pageRef.current
+              const bx = (p?.offsetWidth ?? 390) * (0.2 + Math.random() * 0.6)
+              const by = (p?.offsetHeight ?? 700) * (0.25 + Math.random() * 0.35)
+              const bc = Math.round(burstCount * (0.4 + Math.random() * 0.5))
+              coinLayerRef.current?.burst(bx, by, bc)
+            }, 900)
           }, 2800)
           winPhaseTimers.current.push(t4)
 
           // Phase 5: hold then clear
           overlayCtRef.current = setTimeout(() => {
             if (spinGenRef.current !== myGen) return
+            if (burstIntervalRef.current) { clearInterval(burstIntervalRef.current); burstIntervalRef.current = null }
             coinLayerRef.current?.clear()
             setWinPhase(null)
             setWinOverlay(null)
@@ -1056,6 +1068,16 @@ export default function ThunderJokerPage({ auth }) {
   return (
     <div className={`tj-page${screenShake ? ' is-shake' : ''}`} ref={pageRef}>
       <img className="tj-bg" src={bgSrc} alt="" key={scene} />
+
+      {(gameStatus?.status === 'maintenance' || gameStatus?.status === 'updating') && (
+        <div className="game-maint-overlay">
+          <div className="game-maint-box">
+            <div className="mt-title">{gameStatus.status === 'maintenance' ? '遊戲維護中' : '遊戲更新中'}</div>
+            {gameStatus.notice && <div className="mt-notice">{gameStatus.notice}</div>}
+            <div className="mt-sub">敬請期待，稍後再試</div>
+          </div>
+        </div>
+      )}
 
       {showSuspendModal && (
         <div className="auth-modal-backdrop" role="presentation" onClick={() => { setShowSuspendModal(false); navigate('/') }}>
@@ -1383,6 +1405,7 @@ export default function ThunderJokerPage({ auth }) {
             if (winOverlay === 'freespins') return
             if (overlayCtRef.current) { clearTimeout(overlayCtRef.current); overlayCtRef.current = null }
             if (overlayRafRef.current) { cancelAnimationFrame(overlayRafRef.current); overlayRafRef.current = null }
+            if (burstIntervalRef.current) { clearInterval(burstIntervalRef.current); burstIntervalRef.current = null }
             winPhaseTimers.current.forEach(clearTimeout); winPhaseTimers.current = []
             sndRef.current.stopLoop('shot')
             coinLayerRef.current?.clear()

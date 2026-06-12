@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDragonTigerSocket } from '../hooks/useDragonTigerSocket'
+import { useGameStatus } from '../hooks/useGameStatus'
 import { useAudio, getAudioSettings } from '../hooks/useAudio'
 import { API_BASE_URL } from '../services/apiClient'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
@@ -570,12 +571,13 @@ function ResultOverlay({ result, myPayout, myTotalBet }) {
 export default function DragonTigerPage({ auth }) {
   const navigate  = useNavigate()
   const location  = useLocation()
+  const gameStatus = useGameStatus('dragon-tiger')
   const buyIn     = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
   const { play, preload } = useAudio()
 
   const {
     status, rooms, roomsReady, roomId, myId, gameState, error,
-    cashoutBalance, refreshRooms, createRoom, joinRoom, leaveRoom,
+    cashoutBalance, wasKicked, refreshRooms, createRoom, joinRoom, leaveRoom,
     placeBet, cancelLastBet, cancelBets,
   } = useDragonTigerSocket({ minBuyIn: buyIn })
 
@@ -621,6 +623,12 @@ export default function DragonTigerPage({ auth }) {
   const chipZRef          = useRef(1)
   const dingdingFiredRef  = useRef(false)
   const prevPlayerBetsRef = useRef({})
+
+  useEffect(() => {
+    if (!wasKicked) return
+    const t = setTimeout(() => navigate('/'), 3000)
+    return () => clearTimeout(t)
+  }, [wasKicked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     preload(['dt_deal', 'dt_chips', 'dt_flip', 'dt_dingding', 'dt_stamp', 'dt_win', 'dt_lose'])
@@ -933,6 +941,26 @@ export default function DragonTigerPage({ auth }) {
 
   return (
     <div className="dt-page">
+
+      {(gameStatus?.status === 'maintenance' || gameStatus?.status === 'updating') && (
+        <div className="game-maint-overlay">
+          <div className="game-maint-box">
+            <div className="mt-title">{gameStatus.status === 'maintenance' ? '遊戲維護中' : '遊戲更新中'}</div>
+            {gameStatus.notice && <div className="mt-notice">{gameStatus.notice}</div>}
+            <div className="mt-sub">敬請期待，稍後再試</div>
+          </div>
+        </div>
+      )}
+
+      {wasKicked && (
+        <div className="kicked-overlay">
+          <div className="kicked-overlay-box">
+            <div className="kicked-title">您已被管理員移出房間</div>
+            <div className="kicked-sub">即將返回大廳...</div>
+          </div>
+        </div>
+      )}
+
       {/* Leave confirm modal */}
       {showLeaveConfirm && (
         <LeaveConfirmModal

@@ -708,7 +708,6 @@ button.is-pressing {
 .content-panel-icon {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
 }
 .content-panel-icon img {
   width: 10%;
@@ -1014,9 +1013,9 @@ button.is-pressing {
 
 .game-filter-count {
   flex-shrink: 0;
+  margin-left: auto;
   font-size: 12px;
   font-weight: 700;
-  text-align: right;
 }
 
 .show-more-games-button {
@@ -1843,6 +1842,13 @@ button.is-pressing {
   gap: 6px;
   overflow: auto;
   padding-bottom: 10px;
+}
+
+.ledger-filter-row-data {
+  padding-bottom: 10px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .ledger-chip {
@@ -3240,13 +3246,8 @@ button.is-pressing {
     flex-direction: column;
   }
 
-  .game-filter-segment,
-  .game-filter-count {
+  .game-filter-segment {
     width: 100%;
-  }
-
-  .game-filter-count {
-    text-align: right;
   }
 
 
@@ -3603,7 +3604,7 @@ button.is-pressing {
   background: url(/enter-game-modal.png) center center / cover no-repeat;
   border-radius: 20px;
   padding: 48px 42px 18px;
-  width: min(88vw, 450px);
+  width: min(78vw, 450px);
   height: 60%;
   display: grid;
 }
@@ -3637,7 +3638,7 @@ button.is-pressing {
 
 .enter-game-modal .auth-modal-actions {
   position: static;
-  margin: 50px 0;
+  margin: 40px 0;
   height: auto;
   left: unset;
   right: unset;
@@ -3652,7 +3653,7 @@ button.is-pressing {
   font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
-  background: linear-gradient(135deg, rgba(100, 55, 255, 0.55), rgba(0, 160, 255, 0.28));
+  background: linear-gradient(135deg, rgba(100, 55, 255, 0.95), rgba(0, 160, 255, 0.98));
   border: 1px solid rgba(128, 92, 255, 0.65);
   color: #dce8ff;
   box-shadow: 0 0 14px rgba(100, 55, 255, 0.3);
@@ -3665,9 +3666,9 @@ button.is-pressing {
 }
 
 .auth-modal-button-muted {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.75);
   border: 1px solid rgba(200, 180, 255, 0.2);
-  color: rgba(220, 210, 255, 0.65);
+  color: rgb(1 0 6 / 65%);
   box-shadow: none;
 }
 
@@ -6940,6 +6941,68 @@ button.is-pressing {
 @keyframes ptChipSpin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+.game-maint-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.88);
+}
+.game-maint-box {
+  background: #1a1a2e;
+  border: 1.5px solid #555;
+  border-radius: 16px;
+  padding: 40px 52px;
+  text-align: center;
+  color: #fff;
+  max-width: 320px;
+  width: 80%;
+}
+.game-maint-box .mt-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.game-maint-box .mt-notice {
+  font-size: 13px;
+  color: #bbb;
+  margin-bottom: 6px;
+  line-height: 1.6;
+}
+.game-maint-box .mt-sub {
+  font-size: 12px;
+  color: #666;
+}
+
+.kicked-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.78);
+}
+.kicked-overlay-box {
+  background: #1a1a2e;
+  border: 1.5px solid #c49010;
+  border-radius: 14px;
+  padding: 36px 52px;
+  text-align: center;
+  color: #fff;
+}
+.kicked-overlay-box .kicked-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.kicked-overlay-box .kicked-sub {
+  font-size: 13px;
+  color: #aaa;
 }
 
 .pt-page {

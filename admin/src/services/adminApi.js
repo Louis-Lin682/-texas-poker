@@ -67,6 +67,13 @@ export const adminApi = {
   deleteAnnouncement:    (id)         => req(`/announcements/${id}`,        { method: 'DELETE' }),
   toggleAnnouncement:    (id)         => req(`/announcements/${id}/toggle`, { method: 'PATCH'  }),
 
+  getGames:       ()            => req('/games'),
+  updateGame:     (slug, body)  => req(`/games/${slug}`, { method: 'PATCH', body }),
+
+  getRooms:       ()            => req('/rooms'),
+  closeRoom:      (id)          => req(`/rooms/${id}`,                { method: 'DELETE' }),
+  kickPlayer:     (roomId, pid) => req(`/rooms/${roomId}/kick/${pid}`, { method: 'POST' }),
+
   getSupportUnread:   ()            => req('/support/unread'),
   getSupportConfig:   ()            => req('/support/config'),
   updateSupportConfig:(body)        => req('/support/config', { method: 'PATCH', body }),

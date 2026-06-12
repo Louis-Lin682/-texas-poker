@@ -1,7 +1,9 @@
 import {
   AlertOutlined,
+  AppstoreOutlined,
   BarChartOutlined,
   CustomerServiceOutlined,
+  ControlOutlined,
   LogoutOutlined,
   TeamOutlined,
   TrophyOutlined,
@@ -40,6 +42,8 @@ export default function AdminLayout() {
 
   const NAV_ITEMS = useMemo(() => [
     { key: '/members',  icon: <TeamOutlined />,            label: <Link to="/members">會員管理</Link> },
+    { key: '/games',    icon: <ControlOutlined />,          label: <Link to="/games">遊戲管理</Link> },
+    { key: '/rooms',    icon: <AppstoreOutlined />,         label: <Link to="/rooms">房間管理</Link> },
     { key: '/reports',  icon: <BarChartOutlined />,         label: <Link to="/reports">遊戲報表</Link> },
     { key: '/events',   icon: <AlertOutlined />,            label: <Link to="/events">限時活動</Link> },
     { key: '/news',          icon: <NotificationOutlined />, label: <Link to="/news">最新消息</Link> },
@@ -69,13 +73,21 @@ export default function AdminLayout() {
   }
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ height: '100vh', overflow: 'hidden' }}>
       <Sider
         width={200}
-        style={{ background: '#111118', borderRight: '1px solid #1e1e2e' }}
+        style={{
+          background: '#111118',
+          borderRight: '1px solid #1e1e2e',
+          height: '100vh',
+          overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         <div style={{
-          height: 56, display: 'flex', alignItems: 'center',
+          height: 56, flexShrink: 0,
+          display: 'flex', alignItems: 'center',
           justifyContent: 'center', borderBottom: '1px solid #1e1e2e',
         }}>
           <Text strong style={{ color: '#f0d080', fontSize: 15, letterSpacing: 1 }}>
@@ -91,11 +103,11 @@ export default function AdminLayout() {
         />
       </Sider>
 
-      <Layout>
+      <Layout style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <Header style={{
           background: '#16161f', padding: '0 24px',
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-          borderBottom: '1px solid #1e1e2e', height: 56,
+          borderBottom: '1px solid #1e1e2e', height: 56, flexShrink: 0,
         }}>
           <Text style={{ color: '#aaa', marginRight: 16, fontSize: 13 }}>
             {admin?.username}
@@ -107,7 +119,13 @@ export default function AdminLayout() {
           />
         </Header>
 
-        <Content style={{ padding: 24, background: '#0d0d14', minHeight: 'calc(100vh - 56px)' }}>
+        <Content style={{
+          padding: 24,
+          background: '#0d0d14',
+          flex: 1,
+          overflow: 'auto',
+          minHeight: 0,
+        }}>
           <Outlet />
         </Content>
       </Layout>

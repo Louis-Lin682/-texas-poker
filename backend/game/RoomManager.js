@@ -258,6 +258,29 @@ export class RoomManager {
     this._broadcastRoomList()
   }
 
+  // Admin-triggered: leave by userId + roomId (no ws required)
+  _leaveRoomById(userId, roomId) {
+    const ws = [...this.clients.entries()].find(([, info]) => info.userId === userId && info.roomId === roomId)?.[0]
+    if (ws) {
+      this._send(ws, { type: 'kicked' })
+      this._leaveRoom(ws, this.clients.get(ws))
+    } else {
+      // Player has no active connection (bot or disconnected) — remove directly
+      const game = this.rooms.get(roomId)
+      if (!game) return
+      const player = game.players.find(p => p.id === userId)
+      const cashout = player?.balance ?? 0
+      game.removePlayer(userId)
+      if (this.pool && cashout > 0) {
+        dbQuery('UPDATE users SET balance = balance + $1 WHERE id = $2', [cashout, userId]).catch(() => {})
+        dbQuery('INSERT INTO ledger (user_id, type, amount, room_id, game) VALUES ($1, $2, $3, $4, $5)',
+          [userId, 'cash_out', cashout, roomId, game.gameSlug]).catch(() => {})
+      }
+      this.botManager?.notifyPlayerLeft(userId)
+      this._broadcastRoomList()
+    }
+  }
+
   _leaveRoom(ws, info) {
     const roomId = info.roomId
     if (!roomId) return

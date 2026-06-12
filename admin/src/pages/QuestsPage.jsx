@@ -18,6 +18,7 @@ import {
   HolderOutlined,
   PlusOutlined,
 } from '@ant-design/icons'
+import { createContext, useContext, useMemo } from 'react'
 import {
   App,
   Button,
@@ -58,8 +59,21 @@ const CATEGORY_COLOR = { daily: 'blue', weekly: 'purple', achievement: 'gold' }
 const CATEGORY_LABEL = { daily: '每日', weekly: '週常', achievement: '成就' }
 const ACTION_LABEL   = Object.fromEntries(ACTION_OPTIONS.map(o => [o.value, o.label]))
 
+const RowContext = createContext({})
+
+function DragHandle() {
+  const { setActivatorNodeRef, listeners } = useContext(RowContext)
+  return (
+    <HolderOutlined
+      ref={setActivatorNodeRef}
+      style={{ color: '#666', cursor: 'grab', touchAction: 'none' }}
+      {...listeners}
+    />
+  )
+}
+
 function DraggableRow(props) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: props['data-row-key'] })
   const style = {
     ...props.style,
@@ -67,10 +81,13 @@ function DraggableRow(props) {
     transition,
     ...(isDragging ? { background: '#1e1e2e', opacity: 0.85, zIndex: 9999 } : {}),
   }
+  const ctx = useMemo(() => ({ setActivatorNodeRef, listeners }), [setActivatorNodeRef, listeners])
   return (
-    <tr {...props} ref={setNodeRef} style={style}>
-      {props.children}
-    </tr>
+    <RowContext.Provider value={ctx}>
+      <tr {...props} ref={setNodeRef} style={style} {...attributes}>
+        {props.children}
+      </tr>
+    </RowContext.Provider>
   )
 }
 
@@ -187,9 +204,7 @@ export default function QuestsPage() {
     {
       key: 'drag',
       width: 40,
-      render: () => (
-        <HolderOutlined style={{ color: '#666', cursor: 'grab', touchAction: 'none' }} />
-      ),
+      render: () => <DragHandle />,
     },
     {
       title: '順序',
