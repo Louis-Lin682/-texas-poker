@@ -12,7 +12,6 @@ function LogoutConfirmModal({ isOpen, onClose, onConfirm }) {
         aria-labelledby="logout-modal-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <p className="logout-modal-kicker">Account Exit</p>
         <img src="/phantom-footer-logo.png" alt="" />
         <div className="logout-modal-title-row">
           <h3 id="logout-modal-title">確定要登出？</h3>

@@ -464,7 +464,7 @@ button.is-pressing {
   border: none;
   background: transparent;
   box-shadow: none;
-  width: 45%;
+  width: 35%;
   left: -4%;
   top: -10%;
 }
@@ -3680,7 +3680,6 @@ button.is-pressing {
   border-radius: 14px;
   border: none;
   background: url('/enter-game-modal.png') center / 100% 100% no-repeat;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.65);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3981,7 +3980,7 @@ button.is-pressing {
   position: absolute;
   top: -10px;
   left: -30px;  
-  z-index: 2;
+  z-index: 3;
   padding: 10px 14px;
   border: none;
   background:transparent;
