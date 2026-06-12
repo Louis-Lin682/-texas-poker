@@ -5,16 +5,8 @@ const CFG = {
   burst: { fw: 160, fh: 160, dw: 55, dh: 55, cols: 6 },
 }
 
-// Pre-load atlases at module level so they're ready before first burst
+// Atlases loaded lazily — module-level object, populated on first mount
 const IMGS = {}
-;[
-  ['rain',  '/slot-imgs/rain/rain_coins.png'],
-  ['burst', '/slot-imgs/burst/burst_coins.png'],
-].forEach(([k, src]) => {
-  const img = new Image()
-  img.src = src
-  IMGS[k] = img
-})
 
 function r(a, b) { return a + Math.random() * (b - a) }
 
@@ -182,13 +174,20 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
     },
   }), [])
 
-  // Size canvas on mount (read from parent — more reliable in flex layout)
+  // On mount: size canvas + preload atlases (only when user enters TJ page)
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const parent = canvas.parentElement
     canvas.width  = parent?.offsetWidth  || canvas.offsetWidth  || 390
     canvas.height = parent?.offsetHeight || canvas.offsetHeight || 700
+
+    ;[['rain', '/slot-imgs/rain/rain_coins.png'], ['burst', '/slot-imgs/burst/burst_coins.png']].forEach(([k, src]) => {
+      if (IMGS[k]) return
+      const img = new Image()
+      img.src = src
+      IMGS[k] = img
+    })
   }, [])
 
   return <canvas ref={canvasRef} className="tj-coin-layer" aria-hidden="true" />
