@@ -47,6 +47,17 @@ function _initCtx() {
   _sfxGain.connect(_audioCtx.destination)
 }
 
+// Unlock AudioContext on first user interaction (capture phase = highest priority).
+// This runs within the gesture window so resume() is guaranteed to succeed,
+// ensuring audio works the first time a game is entered.
+function _unlock() {
+  if (!_audioCtx) _initCtx()
+  if (_audioCtx?.state === 'suspended') _audioCtx.resume().catch(() => {})
+}
+;['touchstart', 'mousedown', 'click'].forEach(type =>
+  document.addEventListener(type, _unlock, { capture: true, passive: true }),
+)
+
 function _wire(audio, isBgm) {
   if (_wiredSet.has(audio) || !_audioCtx) return
   try {
