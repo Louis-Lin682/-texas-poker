@@ -122,7 +122,7 @@ function BjBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
       cursor: disabled ? 'not-allowed' : 'pointer',
       opacity: disabled ? 0.4 : 1, flexShrink: 0, ...style,
     }}>
-      <img src={src} alt={alt} style={{ display: 'block', height: 44, width: 'auto', maxWidth: '100%' }} />
+      <img src={src} alt={alt} style={{ display: 'block', height: 60, width: 'auto', maxWidth: '100%' }} />
       {amount != null && (
         <span style={{
           position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',

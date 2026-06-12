@@ -49,6 +49,8 @@ export function useSlotSounds(isBgmMuted) {
   useEffect(() => {
     const { sfxVolume } = getAudioSettings()
     Howler.volume(sfxVolume)
+    // Unlock AudioContext early so first play has no latency
+    Howler.ctx?.resume?.().catch?.(() => {})
   }, [])
 
   useEffect(() => {

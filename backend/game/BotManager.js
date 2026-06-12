@@ -4,8 +4,8 @@ import { decideBlackjack } from './BlackjackBotPlayer.js'
 import { cardFaceValue } from './BlackjackGame.js'
 import { query as dbQuery } from '../db.js'
 
-const THINK_MIN = 600
-const THINK_MAX = 1400
+const THINK_MIN = 350
+const THINK_MAX = 800
 
 const BOT_DEFS = [
   { username: '阿明', balance: 10000 },
@@ -144,7 +144,7 @@ export class BotManager {
       for (const p of publicState.players) {
         if (!this.isBot(p.id) || p.ready) continue
         this._cancelTimer(p.id)
-        const delay = 1200 + Math.random() * 2000
+        const delay = 600 + Math.random() * 800
         const t = setTimeout(() => {
           this._timers.delete(p.id)
           try { game.setReady(p.id) } catch {}
@@ -215,7 +215,7 @@ export class BotManager {
       for (const p of publicState.players) {
         if (!this.isBot(p.id) || p.ready) continue
         this._cancelTimer(p.id)
-        const delay = 1200 + Math.random() * 2000
+        const delay = 600 + Math.random() * 800
         const t = setTimeout(() => {
           this._timers.delete(p.id)
           try { game.setReady(p.id) } catch {}

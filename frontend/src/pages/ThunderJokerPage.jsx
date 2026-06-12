@@ -336,6 +336,12 @@ export default function ThunderJokerPage({ auth }) {
     }).catch(() => {})
   }, [auth?.token, buyIn])
 
+  // Preload coin atlas images so first burst doesn't stutter
+  useEffect(() => {
+    const imgs = ['/slot-imgs/rain/rain_coins.png', '/slot-imgs/burst/burst_coins.png']
+    imgs.forEach(src => { const img = new Image(); img.src = src })
+  }, [])
+
   // BGM: start base music on mount, swap on scene changes
   useEffect(() => {
     sndRef.current.startLoop('bgm-base')
