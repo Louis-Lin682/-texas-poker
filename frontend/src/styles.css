@@ -400,7 +400,7 @@ button.is-pressing {
 .hero-banner {
   position: relative;
   border-radius: 28px;
-  display: flex;
+  display: inline-block;
 }
 
 .hero-image,
@@ -464,9 +464,9 @@ button.is-pressing {
   border: none;
   background: transparent;
   box-shadow: none;
-  width: 35%;
+  width: 38%;
   left: -4%;
-  top: -10%;
+  top: -15px;
 }
 
 .cta-button img {
