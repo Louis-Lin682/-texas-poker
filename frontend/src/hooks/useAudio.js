@@ -16,7 +16,7 @@ function readFloat(key, def) {
 }
 
 let _bgmMuted  = localStorage.getItem(K.bgmMuted) === '1'
-let _sfxMuted  = localStorage.getItem(K.sfxMuted) === '1'
+let _sfxMuted  = false   // SFX muting removed from Settings UI; always unmuted
 let _bgmVolume = readFloat(K.bgmVol, 1)
 let _sfxVolume = readFloat(K.sfxVol, 1)
 
