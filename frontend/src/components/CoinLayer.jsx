@@ -71,9 +71,10 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
       const canvas = canvasRef.current
       if (!canvas) { s.rafId = null; return }
 
-      // Sync pixel dims to CSS dims
-      const cw = canvas.offsetWidth  || 390
-      const ch = canvas.offsetHeight || 700
+      // Use parent dims — more reliable than canvas.offsetWidth in flex contexts
+      const parent = canvas.parentElement
+      const cw = (parent?.offsetWidth  || canvas.offsetWidth  || 390)
+      const ch = (parent?.offsetHeight || canvas.offsetHeight || 700)
       if (canvas.width !== cw)  canvas.width  = cw
       if (canvas.height !== ch) canvas.height = ch
 
@@ -143,7 +144,8 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
         if (!canvas) return
         const alive = s.particles.filter(p => p.type === 'rain').length
         if (alive >= s.rainMax) return
-        s.particles.push(makeRain(canvas.offsetWidth || 390))
+        const W = canvas.parentElement?.offsetWidth || canvas.offsetWidth || 390
+        s.particles.push(makeRain(W))
         ensureLoop()
       }, s.rainMs)
       ensureLoop()
@@ -157,7 +159,7 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
     rainBurst(n = 5) {
       const canvas = canvasRef.current
       if (!canvas) return
-      const W = canvas.offsetWidth || 390
+      const W = canvas.parentElement?.offsetWidth || canvas.offsetWidth || 390
       const s = S.current
       for (let i = 0; i < n; i++) {
         setTimeout(() => { s.particles.push(makeRain(W)); ensureLoop() }, r(0, 700))
@@ -180,12 +182,13 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
     },
   }), [])
 
-  // Size canvas on mount
+  // Size canvas on mount (read from parent — more reliable in flex layout)
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    canvas.width  = canvas.offsetWidth  || 390
-    canvas.height = canvas.offsetHeight || 700
+    const parent = canvas.parentElement
+    canvas.width  = parent?.offsetWidth  || canvas.offsetWidth  || 390
+    canvas.height = parent?.offsetHeight || canvas.offsetHeight || 700
   }, [])
 
   return <canvas ref={canvasRef} className="tj-coin-layer" aria-hidden="true" />

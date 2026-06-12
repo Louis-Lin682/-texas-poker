@@ -9501,9 +9501,11 @@ button.is-pressing {
 .tj-coin-layer {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
   pointer-events: none;
-  z-index: 62;
-  overflow: hidden;
+  z-index: 9050;
 }
 .tj-coin-sprite {
   position: absolute;
