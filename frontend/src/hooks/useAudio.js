@@ -148,12 +148,11 @@ export function useAudio() {
     if (!config || !audio) return false
 
     try {
-      // Init Web Audio on first user-triggered play; wire element through GainNode
-      _initCtx()
-      _wire(audio, Boolean(config.bgm))
-      if (_audioCtx?.state === 'suspended') await _audioCtx.resume()
-
       if (config.bgm) {
+        // BGM: route through Web Audio GainNode for global mute/volume control
+        _initCtx()
+        _wire(audio, true)
+        if (_audioCtx?.state === 'suspended') await _audioCtx.resume()
         const hasOverrides = Object.keys(overrides).length > 0
         if (!audio.paused && !hasOverrides) return true
         if (!audio.paused) audio.pause()
@@ -161,14 +160,10 @@ export function useAudio() {
         if (!hasOverrides && audio.currentTime > 0.05) audio.currentTime = 0
         await audio.play()
       } else {
+        // SFX: play directly via HTML5 — no AudioContext dependency, always reliable
         audio.currentTime = 0
-        if (_audioCtx) {
-          audio.muted  = false
-          audio.volume = 1
-        } else {
-          audio.volume = effectiveVolume(config)
-          audio.muted  = _sfxMuted
-        }
+        audio.volume = (config.volume ?? 1) * _sfxVolume
+        audio.muted  = false
         await audio.play()
       }
       return true
