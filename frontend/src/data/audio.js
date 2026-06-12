@@ -33,7 +33,7 @@ export const audioMap = {
   bj_dealerBust:  { src: '/audio/blackjack/game/dealer-exploded.mp3', volume: 0.85 },
   bj_nowYou:      { src: '/audio/blackjack/game/now-you.mp3',         volume: 0.85 },
   bj_insurance:   { src: '/audio/blackjack/game/insurance.mp3',       volume: 0.85 },
-  pt_fold:    { src: '/audio/Texas_Poker/game/givingUp.mp3', volume: 0.85 },
+  pt_fold:    { src: '/audio/Texas_Poker/game/givingUp.mp3', volume: 1.0 },
   pt_check:   { src: '/audio/Texas_Poker/game/pass.mp3',     volume: 0.85 },
   pt_call:    { src: '/audio/Texas_Poker/game/Call.mp3',     volume: 0.85 },
   pt_raise:   { src: '/audio/Texas_Poker/game/add.mp3',      volume: 0.85 },

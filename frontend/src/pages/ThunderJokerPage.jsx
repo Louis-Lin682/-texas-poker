@@ -24,11 +24,12 @@ const SYMS = {
 }
 
 const POOL = [
-  ...Array(10).fill('10'), ...Array(8).fill('J'), ...Array(8).fill('Q'),
-  ...Array(7).fill('K'), ...Array(7).fill('A'), ...Array(5).fill('clownhat-blue'),
-  ...Array(5).fill('clownhat-golden'), ...Array(4).fill('clownhat-purple'), ...Array(4).fill('clownhat-red'),
-  ...Array(3).fill('bell'), ...Array(3).fill('joker'),
-  ...Array(1).fill('wild'), ...Array(1).fill('scatter'),
+  // DEV MODE: boosted joker/wild/scatter for testing win animations
+  ...Array(3).fill('10'), ...Array(3).fill('J'), ...Array(3).fill('Q'),
+  ...Array(3).fill('K'), ...Array(3).fill('A'), ...Array(3).fill('clownhat-blue'),
+  ...Array(3).fill('clownhat-golden'), ...Array(3).fill('clownhat-purple'), ...Array(3).fill('clownhat-red'),
+  ...Array(8).fill('bell'), ...Array(15).fill('joker'),
+  ...Array(8).fill('wild'), ...Array(5).fill('scatter'),
 ]
 
 // 20 paylines: [row per reel], rows 0(top)~4(bottom)
@@ -113,11 +114,12 @@ function fsCountEase(p) {
 }
 
 function winLevel(win, bet) {
+  // DEV MODE: lowered thresholds for testing animations
   const r = win / bet
-  if (r >= 200) return 'super'
-  if (r >= 50)  return 'epic'
-  if (r >= 20)  return 'mega'
-  if (r >= 5)   return 'big'
+  if (r >= 50)  return 'super'
+  if (r >= 15)  return 'epic'
+  if (r >= 5)   return 'mega'
+  if (r >= 1)   return 'big'
   return null
 }
 
@@ -210,7 +212,7 @@ export default function ThunderJokerPage({ auth }) {
   const [inFreeSpins,  setInFreeSpins]  = useState(false)
   const [scene,        setScene]        = useState('base')
   const [isAuto,       setIsAuto]       = useState(false)
-  const [isBgmMuted,   setIsBgmMuted]   = useState(() => getAudioSettings().bgmMuted)
+  const [isBgmMuted,   setIsBgmMuted]   = useState(false)
   const [lightning,    setLightning]    = useState(null)
   const [jokerMult,    setJokerMult]    = useState(1)
   const [jokerFlash,   setJokerFlash]   = useState(null)
@@ -439,16 +441,35 @@ export default function ThunderJokerPage({ auth }) {
           snd.stopLoop('shot')
           setFsFlash(true)
           setScreenShake(true)
-          snd.play('coin-burst')
-          const pg = pageRef.current
-          coinLayerRef.current?.burst(
-            (pg?.offsetWidth  ?? 390) / 2,
-            (pg?.offsetHeight ?? 700) * 0.5,
-          )
           const lv = winLevel(totalWon, betRef.current)
           if (lv) { setFsWinBadge(lv); snd.play(lv + '-win') }
           const tb = setTimeout(() => { setFsFlash(false); setScreenShake(false) }, 500)
           tmRefs.current.push(tb)
+
+          // Multi-wave fireworks — position, count, timing all randomised
+          const pg = pageRef.current
+          const pw = pg?.offsetWidth  ?? 390
+          const ph = pg?.offsetHeight ?? 700
+          const fwCfg = {
+            super: { waves: [6, 9], minC: 55, maxC: 90 },
+            epic:  { waves: [4, 7], minC: 40, maxC: 70 },
+            mega:  { waves: [3, 5], minC: 28, maxC: 52 },
+            big:   { waves: [2, 4], minC: 18, maxC: 38 },
+          }[lv] ?? { waves: [1, 2], minC: 10, maxC: 20 }
+          const numWaves = fwCfg.waves[0] + Math.floor(Math.random() * (fwCfg.waves[1] - fwCfg.waves[0] + 1))
+          let elapsed = 0
+          for (let i = 0; i < numWaves; i++) {
+            const delay = i === 0 ? 0 : elapsed + 120 + Math.floor(Math.random() * 220)
+            elapsed = delay
+            const x = pw * (0.15 + Math.random() * 0.70)
+            const y = ph * (0.25 + Math.random() * 0.45)
+            const c = fwCfg.minC + Math.floor(Math.random() * (fwCfg.maxC - fwCfg.minC + 1))
+            const fw = setTimeout(() => {
+              coinLayerRef.current?.burst(x, y, c)
+              snd.play('coin-burst')
+            }, delay)
+            tmRefs.current.push(fw)
+          }
 
           const th = setTimeout(() => setFsEndPhase('hold'), 800)
           tmRefs.current.push(th)
@@ -670,6 +691,13 @@ export default function ThunderJokerPage({ auth }) {
         setJokerMult(newJokerMult)
         setJokerFlash(jimgKey)
         snd.play('joker-flash')
+        const pg = pageRef.current
+        coinLayerRef.current?.burst(
+          (pg?.offsetWidth  ?? 390) / 2,
+          (pg?.offsetHeight ?? 700) * 0.42,
+          40,
+        )
+        coinLayerRef.current?.rainBurst(18)
         const jt = setTimeout(() => setJokerFlash(null), 2000)
         tmRefs.current.push(jt)
       }
@@ -694,7 +722,7 @@ export default function ThunderJokerPage({ auth }) {
         })
         if (bigWinLv && !freeSpinsGranted && !isFree) {
           // Cinematic phased win sequence
-          const holdDur = 4000
+          const holdDur = bigWinLv === 'super' ? 7000 : bigWinLv === 'epic' ? 5500 : 4000
 
           // Phase 1: dark screen
           const t1 = setTimeout(() => {
@@ -745,7 +773,7 @@ export default function ThunderJokerPage({ auth }) {
             const pg = pageRef.current
             const cx = (pg?.offsetWidth ?? 390) / 2
             const cy = (pg?.offsetHeight ?? 700) * 0.38
-            coinLayerRef.current?.burst(cx, cy)
+            coinLayerRef.current?.burst(cx, cy, bigWinLv === 'super' ? 65 : bigWinLv === 'epic' ? 45 : 28)
           }, 2800)
           winPhaseTimers.current.push(t4)
 
@@ -777,7 +805,7 @@ export default function ThunderJokerPage({ auth }) {
         setFsSessionWin(fsSessionWinRef.current)
         // Per-spin: float text + small coin burst
         if (winTotal > 0) {
-          coinLayerRef.current?.rainBurst(4)
+          coinLayerRef.current?.rainBurst(10)
           const layer = floatLayerRef.current
           if (layer) {
             const el = document.createElement('div')
@@ -1006,12 +1034,17 @@ export default function ThunderJokerPage({ auth }) {
       setWinPhase('burst'); setScreenShake(true); setTimeout(() => setScreenShake(false), 500)
       snd.play('coin-burst'); coinLayerRef.current?.stopRain()
       const pg = pageRef.current
-      coinLayerRef.current?.burst((pg?.offsetWidth ?? 390) / 2, (pg?.offsetHeight ?? 700) * 0.38)
+      coinLayerRef.current?.burst(
+        (pg?.offsetWidth ?? 390) / 2,
+        (pg?.offsetHeight ?? 700) * 0.38,
+        level === 'super' ? 65 : level === 'epic' ? 45 : 28,
+      )
     }, 2800)
+    const devHoldDur = level === 'super' ? 7000 : level === 'epic' ? 5500 : 4000
     setTimeout(() => {
       if (spinGenRef.current !== myGen) return
       coinLayerRef.current?.clear(); setWinPhase(null); setWinOverlay(null)
-    }, 6800)
+    }, 2800 + devHoldDur)
   }
 
   return (
@@ -1039,8 +1072,8 @@ export default function ThunderJokerPage({ auth }) {
       )}
 
       {/* DEV: win sequence test buttons */}
-      {process.env.NODE_ENV !== 'production' && (
-        <div style={{ position: 'absolute', top: 4, left: '50%', transform: 'translateX(-50%)', zIndex: 999, display: 'none', gap: 4 }}>
+      {false && (
+        <div style={{ position: 'absolute', top: 4, left: '50%', transform: 'translateX(-50%)', zIndex: 999, display: 'flex', gap: 4 }}>
           {['big','mega','epic','super'].map(lv => (
             <button key={lv} onClick={() => devTriggerWin(lv)}
               style={{ fontSize: 10, padding: '2px 6px', background: '#222', color: '#ffd700', border: '1px solid #555', borderRadius: 4, cursor: 'pointer' }}>
@@ -1072,6 +1105,13 @@ export default function ThunderJokerPage({ auth }) {
               jokerMultRef.current = next; setJokerMult(next)
               setJokerFlash(jokerImgKey(inc))
               sndRef.current.play('joker-flash')
+              const pg = pageRef.current
+              coinLayerRef.current?.burst(
+                (pg?.offsetWidth  ?? 390) / 2,
+                (pg?.offsetHeight ?? 700) * 0.42,
+                40,
+              )
+              coinLayerRef.current?.rainBurst(18)
               const jt = setTimeout(() => setJokerFlash(null), 2000)
               tmRefs.current.push(jt)
             }}
@@ -1094,22 +1134,25 @@ export default function ThunderJokerPage({ auth }) {
           >
             FS入
           </button>
-          <button
-            onClick={() => {
-              if (inFsRef.current) {
-                // Mid-FS: end immediately with current accumulated total
-                fsRef.current = 0; setFreeSpins(0)
-                startFsEndSequence(fsSessionWinRef.current || 12345)
-              } else {
-                // Outside FS: fake a total win for testing
-                fsSessionWinRef.current = 12345; setFsSessionWin(12345)
-                startFsEndSequence(12345)
-              }
-            }}
-            style={{ fontSize: 10, padding: '2px 6px', background: '#222', color: '#ffaa44', border: '1px solid #555', borderRadius: 4, cursor: 'pointer' }}
-          >
-            FS結
-          </button>
+          {[
+            { label: 'FS-B', color: '#ffaa44', mult: 2 },
+            { label: 'FS-M', color: '#44ffcc', mult: 7 },
+            { label: 'FS-E', color: '#ff88ff', mult: 20 },
+            { label: 'FS-S', color: '#ffdd44', mult: 60 },
+          ].map(({ label, color, mult }) => (
+            <button
+              key={label}
+              onClick={() => {
+                const win = betRef.current * mult
+                fsSessionWinRef.current = win; setFsSessionWin(win)
+                if (inFsRef.current) { fsRef.current = 0; setFreeSpins(0) }
+                startFsEndSequence(win)
+              }}
+              style={{ fontSize: 10, padding: '2px 6px', background: '#222', color, border: '1px solid #555', borderRadius: 4, cursor: 'pointer' }}
+            >
+              {label}
+            </button>
+          ))}
           <button
             onClick={() => {
               tmRefs.current.forEach(clearTimeout); tmRefs.current = []
@@ -1329,7 +1372,7 @@ export default function ThunderJokerPage({ auth }) {
       {/* Win / Free Spins overlay */}
       {winOverlay && (
         <div
-          className={`tj-overlay-win${winPhase ? ` phase-${winPhase}` : ''}`}
+          className={`tj-overlay-win${winPhase ? ` phase-${winPhase}` : ''}${winOverlay && winOverlay !== 'freespins' ? ` lv-${winOverlay}` : ''}`}
           onClick={() => {
             if (winOverlay === 'freespins') return
             if (overlayCtRef.current) { clearTimeout(overlayCtRef.current); overlayCtRef.current = null }
@@ -1364,11 +1407,9 @@ export default function ThunderJokerPage({ auth }) {
                 <img className="tj-overlay-badge" src={`/slot-imgs/${winOverlay}-win.png`} alt={winOverlay} />
               )}
               {(winPhase === 'rain' || winPhase === 'badge' || winPhase === 'burst') && (
-                <div className="tj-overlay-amt">{overlayDisplayWin.toLocaleString()}</div>
-              )}
-              {(winPhase === 'badge' || winPhase === 'burst') && (
-                <div className="tj-overlay-formula">
-                  <span className="tj-overlay-ratio">{Math.floor(lastWin / bet).toLocaleString()}×</span>
+                <div className="tj-overlay-amt-wrap">
+                  <img src={`/slot-imgs/${winOverlay}-win-bonus.png`} className="tj-overlay-amt-bg" alt="" aria-hidden="true" />
+                  <div className="tj-overlay-amt">{overlayDisplayWin.toLocaleString()}</div>
                 </div>
               )}
             </>
@@ -1386,28 +1427,23 @@ export default function ThunderJokerPage({ auth }) {
       {fsEndPhase && (
         <div className={`tj-fs-end-overlay${fsFlash ? ' is-flash' : ''}`}>
           <div className={`tj-fs-end-backdrop${fsEndPhase === 'exit' ? ' is-exit' : ''}`} />
-          <div className={`tj-fs-end-title-wrap${fsEndPhase === 'exit' ? ' is-exit' : ''}`}>
-            FREE SPINS COMPLETED
-          </div>
           {fsEndPhase !== 'appear' && (
             <div className={`tj-fs-end-frame-wrap${fsEndPhase === 'exit' ? ' is-exit' : ''}`}>
-              <img
-                className={`tj-fs-end-frame-img${fsEndPhase === 'hold' ? ' is-glow' : ''}`}
-                src="/slot-imgs/freetotalwin_frame.png"
-                alt=""
-              />
-              <div className="tj-fs-end-frame-content">
-                <div className="tj-fs-end-total-label">TOTAL WIN</div>
-                <div className="tj-fs-end-amt-wrap">
-                  <div className="tj-fs-end-total-amt">{fsCountDisplay.toLocaleString()}</div>
-                  {fsWinBadge && (
-                    <img
-                      className="tj-fs-end-win-badge"
-                      src={`/slot-imgs/${fsWinBadge}-win.png`}
-                      alt={fsWinBadge}
-                    />
-                  )}
-                </div>
+              {fsWinBadge && (
+                <img
+                  className="tj-fs-end-win-badge"
+                  src={`/slot-imgs/${fsWinBadge}-win.png`}
+                  alt={fsWinBadge}
+                />
+              )}
+              <div className="tj-overlay-amt-wrap">
+                <img
+                  src={`/slot-imgs/${fsWinBadge ? `${fsWinBadge}-win-bonus` : 'free-spins-bonus'}.png`}
+                  className="tj-overlay-amt-bg"
+                  alt=""
+                  aria-hidden="true"
+                />
+                <div className="tj-overlay-amt">{fsCountDisplay.toLocaleString()}</div>
               </div>
             </div>
           )}

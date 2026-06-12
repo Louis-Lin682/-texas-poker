@@ -42,7 +42,7 @@ function isBlackjack(cards) {
 }
 
 const BET_TIME    = 15_000
-const WAIT_TIME   = 30_000
+const WAIT_TIME   = 15_000
 const ACTION_TIME = 30_000  // per-player action timeout → auto-stand
 
 function makeHand(cards, bet) {

@@ -110,7 +110,7 @@ export function btBeats(newCls, newLen, pileCls, pileLen) {
 // ── Game ─────────────────────────────────────────────────
 
 const RESULT_DELAY_MS = 5_000
-const COUNTDOWN_MS    = 30_000
+const COUNTDOWN_MS    = 15_000
 
 export class BigTwoGame {
   constructor({ roomId, maxPlayers = 4, betUnit = 10, gameSlug = 'big-two', minPlayers = 3 } = {}) {
@@ -166,7 +166,8 @@ export class BigTwoGame {
     p.ready = true
     this._broadcastState()
     const eligible = this.players.filter(p => p.balance > 0)
-    if (this.players.length >= this.maxPlayers && eligible.every(p => p.ready)) {
+    const allReady = eligible.length >= this.minPlayers && eligible.every(p => p.ready)
+    if ((this.players.length >= this.maxPlayers || allReady)) {
       this._clearCountdown()
       try { this._startGame() } catch {}
       return

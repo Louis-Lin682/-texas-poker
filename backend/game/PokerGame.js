@@ -228,10 +228,11 @@ export class PokerGame {
         throw new Error('未知行動')
     }
 
+    const emitAction = p.status === 'all_in' ? 'all_in' : action
     this._emit('player_action', {
       playerId,
       username: p.username,
-      action,
+      action: emitAction,
       amount: action === 'raise' ? amount : (action === 'call' ? toCall : 0),
     })
 
@@ -473,7 +474,8 @@ export class PokerGame {
     p.ready = true
     this._broadcastState()
     const eligible = this.players.filter(p => p.balance > 0)
-    if (this.players.length >= this.maxPlayers && eligible.every(p => p.ready)) {
+    const allReady = eligible.length >= 2 && eligible.every(p => p.ready)
+    if (this.players.length >= this.maxPlayers || allReady) {
       this._clearCountdown()
       try { this.startGame() } catch {}
       return
@@ -498,7 +500,7 @@ export class PokerGame {
     if (this._countdownTimer) return
     if (!eligible.some(p => p.ready)) return
 
-    const COUNTDOWN_MS = 30_000
+    const COUNTDOWN_MS = 15_000
     this.countdownEnd = Date.now() + COUNTDOWN_MS
     this._broadcastState()
 
