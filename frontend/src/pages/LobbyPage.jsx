@@ -126,7 +126,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
     document.querySelector('.phone-frame')?.scrollTo({ top: 0, behavior: 'smooth' })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-  console.log("VITE_API_BASE_URL =", import.meta.env.VITE_API_BASE_URL)
+
   return (
     <div
       className={`app-shell ${isFavoritesOpen || isMyDrawerOpen || isEventDrawerOpen ? 'has-favorites-open' : ''}`}
