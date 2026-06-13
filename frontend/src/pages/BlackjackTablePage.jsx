@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useBlackjackSocket } from '../hooks/useBlackjackSocket'
 import { useGameStatus } from '../hooks/useGameStatus'
-import { useAudio, getAudioSettings } from '../hooks/useAudio'
+import { useAudio, muteHowl } from '../hooks/useAudio'
 import PlayingCard from '../components/PlayingCard'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
 
@@ -436,8 +436,7 @@ export default function BlackjackTablePage({ auth }) {
   const gameStatus = useGameStatus('blackjack')
   const minBuyIn = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
 
-  const { play, preload } = useAudio()
-  const bgmRef = useRef(null)
+  const { play, stop, preload } = useAudio()
 
   const [isGameMuted, setIsGameMuted] = useState(false)
   const toggleGameMute = () => setIsGameMuted(m => !m)
@@ -446,28 +445,13 @@ export default function BlackjackTablePage({ auth }) {
     preload(['bj_win', 'bj_blackjack', 'bj_tie', 'bj_bust', 'bj_lose', 'bj_fivecard', 'bj_dealerBust', 'bj_nowYou', 'bj_insurance'])
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Game BGM — same track as Texas Hold'em table
   useEffect(() => {
-    const { bgmVolume } = getAudioSettings()
-    const audio = new Audio('/audio/game/gameBgSound.mp3')
-    audio.loop   = true
-    audio.muted  = false
-    audio.volume = 0.28 * bgmVolume
-    bgmRef.current = audio
-    const tryPlay = () => { if (!bgmRef.current?.paused) return; bgmRef.current?.play().catch(() => {}) }
-    document.addEventListener('click', tryPlay, { once: true })
-    tryPlay()
-    return () => {
-      document.removeEventListener('click', tryPlay)
-      audio.pause(); audio.src = ''; bgmRef.current = null
-    }
-  }, [])
+    play('bj_bgm')
+    return () => stop('bj_bgm')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!bgmRef.current) return
-    const { bgmVolume } = getAudioSettings()
-    bgmRef.current.muted  = isGameMuted
-    bgmRef.current.volume = isGameMuted ? 0 : 0.28 * bgmVolume
+    muteHowl('bj_bgm', isGameMuted)
   }, [isGameMuted])
 
   const {

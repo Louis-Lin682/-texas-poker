@@ -4,7 +4,7 @@ import PlayingCard from '../components/PlayingCard'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
 import { usePokerSocket } from '../hooks/usePokerSocket'
 import { useGameStatus } from '../hooks/useGameStatus'
-import { useAudio, getAudioSettings } from '../hooks/useAudio'
+import { useAudio, muteHowl } from '../hooks/useAudio'
 
 const CHIP_IMGS = ['/chip-red.png', '/chip-gold.png', '/chip-purple.png', '/chip-blackgold.png']
 const TURN_TIME  = 30
@@ -394,7 +394,7 @@ function GameTablePage({ auth }) {
     if (cashoutBalance !== null) auth?.refreshUser?.()
   }, [cashoutBalance]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { play, preload } = useAudio()
+  const { play, stop, preload } = useAudio()
 
   useEffect(() => {
     preload(['pt_nowYou', 'pt_fold', 'pt_check', 'pt_call', 'pt_raise', 'pt_allin', 'cardDeal'])
@@ -428,37 +428,14 @@ function GameTablePage({ auth }) {
 
   // ── Game BGM (completely independent from lobby) ───────────
   const [isGameMuted, setIsGameMuted] = useState(false)
-  const bgmRef = useRef(null)
 
   useEffect(() => {
-    const { bgmVolume } = getAudioSettings()
-    const audio = new Audio('/audio/game/gameBgSound.mp3')
-    audio.loop   = true
-    audio.muted  = false
-    audio.volume = 0.28 * bgmVolume
-    bgmRef.current = audio
-
-    const tryPlay = () => {
-      if (!bgmRef.current || !bgmRef.current.paused) return
-      bgmRef.current.play().catch(() => {})
-    }
-
-    tryPlay()
-    document.addEventListener('click', tryPlay)
-
-    return () => {
-      document.removeEventListener('click', tryPlay)
-      audio.pause()
-      audio.src = ''
-      bgmRef.current = null
-    }
-  }, [])
+    play('pt_bgm')
+    return () => stop('pt_bgm')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!bgmRef.current) return
-    const { bgmVolume } = getAudioSettings()
-    bgmRef.current.muted  = isGameMuted
-    bgmRef.current.volume = isGameMuted ? 0 : 0.28 * bgmVolume
+    muteHowl('pt_bgm', isGameMuted)
   }, [isGameMuted])
 
   const toggleGameMute = () => setIsGameMuted(m => !m)

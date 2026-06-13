@@ -4,7 +4,7 @@ import PlayingCard from '../components/PlayingCard'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
 import { useBigTwoSocket } from '../hooks/useBigTwoSocket'
 import { useGameStatus } from '../hooks/useGameStatus'
-import { useAudio, getAudioSettings } from '../hooks/useAudio'
+import { useAudio, muteHowl } from '../hooks/useAudio'
 
 function fmt(n) {
   const abs = Math.abs(n)
@@ -649,43 +649,20 @@ function BigTwoTablePage({ auth }) {
   }, [phase])
 
   // ── BGM ──
-  const { play, preload } = useAudio()
+  const { play, stop, preload } = useAudio()
   const [isGameMuted, setIsGameMuted] = useState(false)
-  const bgmRef = useRef(null)
 
   useEffect(() => {
     preload(['bt_single', 'bt_pair', 'bt_triple', 'bt_straight', 'bt_flush', 'bt_fullhouse', 'bt_quads', 'bt_sf', 'bt_pass'])
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const { bgmVolume } = getAudioSettings()
-    const audio = new Audio('/audio/big-two/bigTwoGameBg.mp3')
-    audio.loop   = true
-    audio.muted  = false
-    audio.volume = 0.28 * bgmVolume
-    bgmRef.current = audio
-
-    const tryPlay = () => {
-      if (!bgmRef.current || !bgmRef.current.paused) return
-      bgmRef.current.play().catch(() => {})
-    }
-
-    tryPlay()
-    document.addEventListener('click', tryPlay)
-
-    return () => {
-      document.removeEventListener('click', tryPlay)
-      audio.pause()
-      audio.src = ''
-      bgmRef.current = null
-    }
-  }, [])
+    play('bigTwoBgm')
+    return () => stop('bigTwoBgm')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!bgmRef.current) return
-    const { bgmVolume } = getAudioSettings()
-    bgmRef.current.muted  = isGameMuted
-    bgmRef.current.volume = isGameMuted ? 0 : 0.28 * bgmVolume
+    muteHowl('bigTwoBgm', isGameMuted)
   }, [isGameMuted])
 
   const toggleGameMute = () => setIsGameMuted(m => !m)
