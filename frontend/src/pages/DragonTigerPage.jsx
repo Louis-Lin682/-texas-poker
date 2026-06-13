@@ -156,15 +156,43 @@ function BeadRoad({ history, onLoadMore, hasMore }) {
     if (!el) return
     const delta = history.length - prevLen.current
     if (delta === 1 || prevLen.current === 0) {
-      // Single live round added, or initial load — scroll to show newest (rightmost)
       el.scrollLeft = el.scrollWidth
     } else if (delta > 1 && el.scrollWidth > prevWidth.current) {
-      // Bulk DB load — older rounds appeared on the left, keep viewport steady
       el.scrollLeft += el.scrollWidth - prevWidth.current
     }
     prevLen.current   = history.length
     prevWidth.current = el.scrollWidth
   }, [history.length])
+
+  // JS touch scroll — bypasses passive-listener and parent overflow:hidden issues on mobile
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    let startX = 0, startY = 0, startLeft = 0, isHoriz = null
+
+    function onTouchStart(e) {
+      startX    = e.touches[0].clientX
+      startY    = e.touches[0].clientY
+      startLeft = el.scrollLeft
+      isHoriz   = null
+    }
+    function onTouchMove(e) {
+      const dx = startX - e.touches[0].clientX
+      const dy = startY - e.touches[0].clientY
+      if (isHoriz === null) isHoriz = Math.abs(dx) > Math.abs(dy)
+      if (!isHoriz) return
+      e.preventDefault()
+      el.scrollLeft = startLeft + dx
+      if (el.scrollLeft < 80 && hasMore) onLoadMore?.()
+    }
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true })
+    el.addEventListener('touchmove',  onTouchMove,  { passive: false })
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove',  onTouchMove)
+    }
+  }, [hasMore, onLoadMore])
 
   function onScroll(e) {
     if (e.currentTarget.scrollLeft < 80 && hasMore) onLoadMore?.()

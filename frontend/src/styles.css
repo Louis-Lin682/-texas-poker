@@ -11125,6 +11125,7 @@ button.is-pressing {
   max-height: 90vh;
   object-fit: contain;
   animation: dt-tiger-burst 2.5s ease-out forwards;
+  z-index: 10;
 }
 
 @keyframes dt-tiger-burst {
