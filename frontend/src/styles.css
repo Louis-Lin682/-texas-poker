@@ -7138,6 +7138,8 @@ button.is-pressing {
   background: rgba(10,10,12,0.9);
   border-bottom: 1px solid rgba(226,206,135,0.12);
   flex-shrink: 0;
+  position: relative;
+  z-index: 9201;
 }
 
 .pt-back {
@@ -7176,7 +7178,8 @@ button.is-pressing {
 
 .pt-room-label-img {
   height: 28px;
-  width: fit-content;
+  width: auto;
+  max-width: 110px;
   object-fit: contain;
   filter: drop-shadow(0 1px 4px rgba(0,0,0,0.6));
 }
@@ -7897,17 +7900,22 @@ button.is-pressing {
 /* ── Mute button in header ── */
 .pt-mute-btn {
   cursor: pointer;
-  width: 15%;
-  height: auto;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
-  padding: 0;
+  padding: 4px;
 }
 
 .pt-mute-btn img {
   display: block;
-  height: auto;
   width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .pt-lobby-refresh img {
   display: block;
