@@ -9670,6 +9670,23 @@ button.is-pressing {
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
+.tj-overlay-tap-hint {
+  position: absolute;
+  bottom: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 230, 120, 0.85);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  animation: tj-tap-hint-blink 1s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes tj-tap-hint-blink {
+  from { opacity: 0.5; }
+  to   { opacity: 1; }
+}
+
 @keyframes tjAmtPop {
   from { opacity: 0; transform: scale(0.6); }
   to   { opacity: 1; transform: scale(1); }
@@ -10654,7 +10671,7 @@ button.is-pressing {
 }
 
 .dt-result-bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(0,0,0,.55);
   backdrop-filter: blur(2px);
@@ -10663,7 +10680,7 @@ button.is-pressing {
 }
 
 .dt-result-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   display: flex;
   align-items: center;

@@ -229,6 +229,7 @@ export default function ThunderJokerPage({ auth }) {
   const [winPhase,          setWinPhase]          = useState(null)
   const [screenShake,       setScreenShake]        = useState(false)
   const [overlayDisplayWin, setOverlayDisplayWin] = useState(0)
+  const [overlayCanDismiss, setOverlayCanDismiss] = useState(false)
   const [showPaytable,      setShowPaytable]      = useState(false)
   const [showInfo,          setShowInfo]          = useState(false)
   const [autoCount,         setAutoCount]         = useState(null)   // null = ∞
@@ -266,6 +267,7 @@ export default function ThunderJokerPage({ auth }) {
   const spinGenRef    = useRef(0)      // incremented each spin to guard stale callbacks
   const overlayRafRef = useRef(null)
   const overlayCtRef  = useRef(null)   // ref to the overlay auto-close timer
+  const overlayLockRef = useRef(null)  // ref to the 2-second dismiss-lock timer
   const burstIntervalRef = useRef(null) // recurring coin burst during big win hold
   const winPhaseTimers = useRef([])    // t1-t4 of the cinematic win sequence
   const autoCountRef  = useRef(null)
@@ -411,6 +413,17 @@ export default function ThunderJokerPage({ auth }) {
   }, [])
 
   useEffect(() => () => clearAll(), [clearAll])
+
+  useEffect(() => {
+    if (winPhase === 'badge') {
+      clearTimeout(overlayLockRef.current)
+      overlayLockRef.current = setTimeout(() => setOverlayCanDismiss(true), 2000)
+    } else {
+      clearTimeout(overlayLockRef.current)
+      setOverlayCanDismiss(false)
+    }
+    return () => clearTimeout(overlayLockRef.current)
+  }, [winPhase])
 
   const startFsEndSequence = useCallback((totalWon) => {
     const snd = sndRef.current
@@ -1447,6 +1460,7 @@ export default function ThunderJokerPage({ auth }) {
           className={`tj-overlay-win${winPhase ? ` phase-${winPhase}` : ''}${winOverlay && winOverlay !== 'freespins' ? ` lv-${winOverlay}` : ''}`}
           onClick={() => {
             if (winOverlay === 'freespins') return
+            if (!overlayCanDismiss) return
             if (overlayCtRef.current) { clearTimeout(overlayCtRef.current); overlayCtRef.current = null }
             if (overlayRafRef.current) { cancelAnimationFrame(overlayRafRef.current); overlayRafRef.current = null }
             if (burstIntervalRef.current) { clearInterval(burstIntervalRef.current); burstIntervalRef.current = null }
@@ -1486,6 +1500,9 @@ export default function ThunderJokerPage({ auth }) {
                   <img src={`/slot-imgs/${winOverlay}-win-bonus.png`} className="tj-overlay-amt-bg" alt="" aria-hidden="true" />
                   <div className="tj-overlay-amt">{overlayDisplayWin.toLocaleString()}</div>
                 </div>
+              )}
+              {overlayCanDismiss && (
+                <div className="tj-overlay-tap-hint">點擊繼續</div>
               )}
             </>
           )}
