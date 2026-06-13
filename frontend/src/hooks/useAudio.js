@@ -165,6 +165,7 @@ export function useAudio() {
         _initCtx()
         _wire(audio, false)
         if (_audioCtx?.state === 'suspended') await _audioCtx.resume()
+        audio.pause()
         audio.currentTime = 0
         audio.volume = config.volume ?? 1   // per-sound scaling; global via _sfxGain
         audio.muted  = false
