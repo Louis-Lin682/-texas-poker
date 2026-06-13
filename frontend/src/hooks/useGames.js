@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getGames } from '../services/gamesApi'
 
-const API_BASE = import.meta.env.VITE_API_URL ?? ''
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
 
 export function useGames() {
   const [games,       setGames]       = useState([])
