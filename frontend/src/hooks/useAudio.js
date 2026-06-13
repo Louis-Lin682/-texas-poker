@@ -44,6 +44,12 @@ function _getHowl(key) {
 export function playSfx(key) { _getHowl(key)?.play() }
 export function stopSfx(key) { _howls[key]?.stop() }
 
+// Mute/unmute a specific Howl without pausing (preserves playback position)
+export function muteHowl(key, muted) {
+  const id = _bgmIds[key]
+  id !== undefined ? _howls[key]?.mute(muted, id) : _howls[key]?.mute(muted)
+}
+
 // ── Public settings API ───────────────────────────────────────────────────────
 const SETTINGS_EVENT = 'audio:settings'
 
@@ -89,8 +95,12 @@ export function useAudio() {
 
     if (c.bgm) {
       const hasOverrides = Object.keys(overrides).length > 0
-      // Return early if same BGM is already playing and nothing forced a restart
-      if (!hasOverrides && _bgmIds[key] !== undefined && howl.playing(_bgmIds[key])) return true
+      if (!hasOverrides && _bgmIds[key] !== undefined) {
+        // Already playing → no-op; paused → resume from current position
+        if (howl.playing(_bgmIds[key])) return true
+        howl.play(_bgmIds[key])
+        return true
+      }
       if (_bgmIds[key] !== undefined) howl.stop(_bgmIds[key])
       if (overrides.volume !== undefined) howl.volume(overrides.volume)
       if (overrides.loop   !== undefined) howl.loop(overrides.loop)

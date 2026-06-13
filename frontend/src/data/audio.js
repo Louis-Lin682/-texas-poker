@@ -7,12 +7,9 @@ export const audioMap = {
     src: '/audio/ui/whoosh.mp3',
     volume: 0.42,
   },
-  lobbyBgm: {
-    src: '/audio/bgm/BgSound.mp3',
-    volume: 0.28,
-    loop: true,
-    bgm: true,
-  },
+  lobbyBgm: { src: '/audio/bgm/BgSound.mp3',         volume: 0.28, loop: true, bgm: true },
+  pt_bgm:   { src: '/audio/game/gameBgSound.mp3',    volume: 0.28, loop: true, bgm: true },
+  bj_bgm:   { src: '/audio/game/gameBgSound.mp3',    volume: 0.28, loop: true, bgm: true },
   cardDeal: {
     src: '/audio/game/fly_card.mp3',
     volume: 0.55,

@@ -53,7 +53,7 @@ export class BotManager {
   fillRoom(game, roomId, count = 3) {
     const handles = []
     let added = 0
-    let joinDelay = 1800
+    let joinDelay = 800
     for (const [id, info] of this.bots) {
       if (added >= count) break
       if (info.roomId !== null) continue
@@ -74,7 +74,7 @@ export class BotManager {
           game.addPlayer({ id: botId, username: botInfo.username, balance: buyIn })
           const rt = setTimeout(() => {
             try { game.setReady(botId) } catch {}
-          }, 800 + Math.random() * 1200)
+          }, 400 + Math.random() * 600)
           this._joinTimers.get(roomId)?.push(rt)
         } catch {
           botInfo.roomId = null
@@ -82,7 +82,7 @@ export class BotManager {
       }, joinDelay)
 
       handles.push(t)
-      joinDelay += 2000 + Math.floor(Math.random() * 1200)
+      joinDelay += 1000 + Math.floor(Math.random() * 800)
       added++
     }
     this._joinTimers.set(roomId, handles)
@@ -173,15 +173,17 @@ export class BotManager {
       const botPlayer = game.players.find(p => p.id === actingId)
       if (!botPlayer || botPlayer.status !== 'active') return
 
+      const currentState = game.publicState()
+      const meNow = currentState.players.find(p => p.id === actingId) ?? me
       const dec = decide({
         holeCards:      botPlayer.holeCards ?? [],
-        communityCards: publicState.communityCards,
-        phase:          publicState.phase,
-        currentBet:     publicState.currentBet,
-        myRoundBet:     me.roundBet,
-        myBalance:      me.balance,
-        pot:            publicState.pot,
-        minRaise:       publicState.minRaise ?? publicState.bigBlind ?? 20,
+        communityCards: currentState.communityCards,
+        phase:          currentState.phase,
+        currentBet:     currentState.currentBet,
+        myRoundBet:     meNow.roundBet,
+        myBalance:      meNow.balance,
+        pot:            currentState.pot,
+        minRaise:       currentState.minRaise ?? currentState.bigBlind ?? 20,
       })
 
       try {

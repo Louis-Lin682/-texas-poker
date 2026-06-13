@@ -1,0 +1,143 @@
+{"frames": {
+
+"dragon_01.png":
+{
+	"frame": {"x":0,"y":0,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_02.png":
+{
+	"frame": {"x":540,"y":0,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_03.png":
+{
+	"frame": {"x":0,"y":960,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_04.png":
+{
+	"frame": {"x":540,"y":960,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_05.png":
+{
+	"frame": {"x":0,"y":1920,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_06.png":
+{
+	"frame": {"x":540,"y":1920,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_07.png":
+{
+	"frame": {"x":0,"y":2880,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_08.png":
+{
+	"frame": {"x":540,"y":2880,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_09.png":
+{
+	"frame": {"x":0,"y":3840,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_10.png":
+{
+	"frame": {"x":540,"y":3840,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_11.png":
+{
+	"frame": {"x":0,"y":4800,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_12.png":
+{
+	"frame": {"x":540,"y":4800,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_13.png":
+{
+	"frame": {"x":0,"y":5760,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_14.png":
+{
+	"frame": {"x":540,"y":5760,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_15.png":
+{
+	"frame": {"x":0,"y":6720,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+},
+"dragon_16.png":
+{
+	"frame": {"x":540,"y":6720,"w":540,"h":960},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":540,"h":960},
+	"sourceSize": {"w":540,"h":960}
+}},
+"animations": {
+	"dragon": ["dragon_01.png","dragon_02.png","dragon_03.png","dragon_04.png","dragon_05.png","dragon_06.png","dragon_07.png","dragon_08.png","dragon_09.png","dragon_10.png","dragon_11.png","dragon_12.png","dragon_13.png","dragon_14.png","dragon_15.png","dragon_16.png"]
+},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.1",
+	"image": "dargon_fly.png",
+	"format": "RGBA8888",
+	"size": {"w":1080,"h":7680},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:8d5bc43ebc139b8073ce3835b55a5ec9:9d9b8619e86f0d59242f15d7bb5621a4:f8821b6a36dea07cc9910bd4eb08fb68$"
+}
+}

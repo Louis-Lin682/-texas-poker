@@ -7,8 +7,8 @@ import { API_BASE_URL } from '../services/apiClient'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
 
 function _mkImg(src) { const i = new Image(); i.src = src; return i }
-const _dragonWinImg = _mkImg('/DragonTiger/win/dragon_win.png')
-const _tigerWalkImg = _mkImg('/DragonTiger/win/tiger_walk.png')
+const _dragonFlyImg  = _mkImg('/DragonTiger/fly_dargon/dargon_fly.png')
+const _tigerWalkImg  = _mkImg('/DragonTiger/tiger_walk/tiger_walk.png')
 
 const CHIPS = [
   { value: 20,   img: '/chip-red.png',       label: '20' },
@@ -277,41 +277,49 @@ function DragonWinAnim({ onDone }) {
   useEffect(() => {
     playSfx('dt_dragonWin')
 
-    const img = _dragonWinImg
-
-    const FRAME_W = 1086, FRAME_H = 1448, COLS = 4, TOTAL = 8
+    const img = _dragonFlyImg
+    const FRAME_W = 540, FRAME_H = 960, COLS = 2, TOTAL = 16
     let frame = 0, animId = null, last = 0
-    const INTERVAL = 100 // 10 fps
+    const INTERVAL = 80
 
     function tick(now) {
       if (!canvasRef.current) return
       if (now - last >= INTERVAL) {
         last = now
         const canvas = canvasRef.current
+        // Sync canvas buffer to its CSS size so it fills the overlay
+        if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+          canvas.width  = canvas.clientWidth
+          canvas.height = canvas.clientHeight
+        }
         const ctx = canvas.getContext('2d')
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         if (img.complete) {
           const col = frame % COLS
           const row = Math.floor(frame / COLS)
-          ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, canvas.width, canvas.height)
+          // Contain: maintain aspect ratio, centred
+          const scale = Math.min(canvas.width / FRAME_W, canvas.height / FRAME_H)
+          const dw = FRAME_W * scale, dh = FRAME_H * scale
+          const dx = (canvas.width - dw) / 2, dy = (canvas.height - dh) / 2
+          ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy, dw, dh)
         }
-        frame = (frame + 1) % TOTAL
+        frame++
+        if (frame >= TOTAL) {
+          cancelAnimationFrame(animId)
+          onDoneRef.current?.()
+          return
+        }
       }
       animId = requestAnimationFrame(tick)
     }
     animId = requestAnimationFrame(tick)
 
-    const t = setTimeout(() => { cancelAnimationFrame(animId); onDoneRef.current?.() }, 4000)
-    return () => {
-      cancelAnimationFrame(animId)
-      clearTimeout(t)
-      stopSfx('dt_dragonWin')
-    }
+    return () => { cancelAnimationFrame(animId) }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="dt-dragon-win-overlay">
-      <canvas ref={canvasRef} className="dt-dragon-canvas" width={280} height={374} />
+      <canvas ref={canvasRef} className="dt-dragon-canvas" />
     </div>
   )
 }
@@ -321,26 +329,33 @@ function TigerWinAnim({ onDone }) {
   const [phase, setPhase] = useState('walk')
   const onDoneRef = useRef(onDone)
 
-  // Phase 1: sprite walk-in (2s)
+  // Phase 1: sprite walk-in
   useEffect(() => {
     playSfx('dt_tigerWin')
 
     const img = _tigerWalkImg
-    const FRAME_W = 1086, FRAME_H = 1448, COLS = 4, TOTAL = 8
+    const FRAME_W = 540, FRAME_H = 960, COLS = 2, TOTAL = 16
     let frame = 0, animId = null, last = 0
-    const INTERVAL = 100
+    const INTERVAL = 500
 
     function tick(now) {
       if (!canvasRef.current) return
       if (now - last >= INTERVAL) {
         last = now
         const canvas = canvasRef.current
+        if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+          canvas.width  = canvas.clientWidth
+          canvas.height = canvas.clientHeight
+        }
         const ctx = canvas.getContext('2d')
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         if (img.complete) {
           const col = frame % COLS
           const row = Math.floor(frame / COLS)
-          ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, canvas.width, canvas.height)
+          const scale = Math.min(canvas.width / FRAME_W, canvas.height / FRAME_H)
+          const dw = FRAME_W * scale, dh = FRAME_H * scale
+          const dx = (canvas.width - dw) / 2, dy = (canvas.height - dh) / 2
+          ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy, dw, dh)
         }
         frame = (frame + 1) % TOTAL
       }
@@ -348,12 +363,8 @@ function TigerWinAnim({ onDone }) {
     }
     animId = requestAnimationFrame(tick)
 
-    const t = setTimeout(() => { cancelAnimationFrame(animId); setPhase('final') }, 2000)
-    return () => {
-      cancelAnimationFrame(animId)
-      clearTimeout(t)
-      stopSfx('dt_tigerWin')
-    }
+    const t = setTimeout(() => { cancelAnimationFrame(animId); setPhase('final') }, 8000)
+    return () => { cancelAnimationFrame(animId); clearTimeout(t) }
   }, [])
 
   // Phase 2: final image burst (2s) then done
@@ -366,7 +377,7 @@ function TigerWinAnim({ onDone }) {
   return (
     <div className="dt-tiger-win-overlay">
       {phase === 'walk'
-        ? <canvas ref={canvasRef} className="dt-tiger-canvas" width={280} height={374} />
+        ? <div className="dt-tiger-zoom-wrapper"><canvas ref={canvasRef} className="dt-tiger-canvas" /></div>
         : <img src="/DragonTiger/win/tiger_hand.png" alt="" className="dt-tiger-final" draggable={false} />
       }
     </div>
@@ -565,7 +576,8 @@ export default function DragonTigerPage({ auth }) {
   const [roundHistory,   setRoundHistory]   = useState([])
   const [hasMoreDb,      setHasMoreDb]      = useState(true)
   const [loadingDb,      setLoadingDb]      = useState(false)
-  const dbCountRef = useRef(0)  // tracks how many DB rounds are loaded (for offset)
+  const dbCountRef    = useRef(0)   // tracks how many DB rounds are loaded (for offset)
+  const loadingDbRef  = useRef(false) // sync guard against concurrent fetches
   const [showDragonWin,  setShowDragonWin]  = useState(false)
   const [showTigerWin,   setShowTigerWin]   = useState(false)
   const [dtBgmMuted,     setDtBgmMuted]     = useState(false)
@@ -609,6 +621,7 @@ export default function DragonTigerPage({ auth }) {
   // Load shared DT history from backend on mount
   useEffect(() => {
     async function init() {
+      loadingDbRef.current = true
       setLoadingDb(true)
       try {
         const res  = await fetch(`${API_BASE_URL}/dt-history?limit=60`)
@@ -622,31 +635,37 @@ export default function DragonTigerPage({ auth }) {
           tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
         })))
       } catch {}
+      loadingDbRef.current = false
       setLoadingDb(false)
     }
     init()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMoreHistory = useCallback(async () => {
-    if (loadingDb || !hasMoreDb) return
+    if (loadingDbRef.current || !hasMoreDb) return
+    loadingDbRef.current = true
     setLoadingDb(true)
     try {
       const res  = await fetch(`${API_BASE_URL}/dt-history?limit=60&offset=${dbCountRef.current}`)
       const data = await res.json()
       dbCountRef.current += data.rounds.length
       setHasMoreDb(data.hasMore)
-      setRoundHistory(h => [
-        ...h,
-        ...data.rounds.map(r => ({
-          _key:       `db-${r.dbId}`,
-          result:     r.result,
-          dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
-          tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
-        })),
-      ])
+      setRoundHistory(h => {
+        const seen = new Set(h.map(r => r._key))
+        const fresh = data.rounds
+          .filter(r => !seen.has(`db-${r.dbId}`))
+          .map(r => ({
+            _key:       `db-${r.dbId}`,
+            result:     r.result,
+            dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
+            tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
+          }))
+        return [...h, ...fresh]
+      })
     } catch {}
+    loadingDbRef.current = false
     setLoadingDb(false)
-  }, [loadingDb, hasMoreDb])
+  }, [hasMoreDb])
 
 
   // Dragon Tiger BGM — raw Audio element with click fallback
@@ -1052,6 +1071,7 @@ export default function DragonTigerPage({ auth }) {
             <div key={a.id} className="dt-activity-item">{a.text}</div>
           ))}
         </div>
+
       </div>
 
       {/* Player list */}
@@ -1104,6 +1124,7 @@ export default function DragonTigerPage({ auth }) {
       {/* Dragon / Tiger win animations */}
       {showDragonWin && <DragonWinAnim onDone={() => setShowDragonWin(false)} />}
       {showTigerWin  && <TigerWinAnim  onDone={() => setShowTigerWin(false)}  />}
+
 
       {/* Rules modal */}
       {showRules && <RulesModal onClose={() => setShowRules(false)} />}

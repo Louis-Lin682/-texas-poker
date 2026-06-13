@@ -288,11 +288,17 @@ export class PokerGame {
       return
     }
 
-    // Post-flop: first active player left of dealer
-    this.actingIndex = this._nextActiveFrom(this.dealerIndex)
+    // Post-flop: first strictly-active (not all-in) player left of dealer
+    this.actingIndex = this._nextOnlyActiveFrom(this.dealerIndex)
 
     this._emit('phase_changed', { phase: this.phase, communityCards: this.communityCards })
     this._broadcastState()
+
+    // If no active players remain (all all-in), run out the board immediately
+    if (this.actingIndex < 0) {
+      this._scheduleAdvance()
+      return
+    }
     this._startTurnTimer()
   }
 
@@ -440,6 +446,17 @@ export class PokerGame {
       if (['active','all_in'].includes(this.players[idx]?.status)) return idx
     }
     return fromIndex
+  }
+
+  // Like _nextActiveFrom but skips all-in players (post-flop use only)
+  _nextOnlyActiveFrom(fromIndex) {
+    const n = this.players.length
+    for (let i = 1; i <= n; i++) {
+      const idx = (fromIndex + i) % n
+      if (this.players[idx]?.status === 'active') return idx
+    }
+    // Fallback: no active player found (all all-in or folded) → -1 to let betting end
+    return -1
   }
 
   _postBlind(player, amount) {

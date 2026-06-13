@@ -8342,6 +8342,9 @@ button.is-pressing {
     .enter-game-modal {
         height: 50%;
     }
+    .hero-copy {
+          top: -6px;
+    }
 }
 @media (max-width: 414px) and (max-height: 812px)  {
     .enter-game-modal {
@@ -8362,6 +8365,12 @@ button.is-pressing {
     .enter-game-modal {
         height: 73%;
     }
+}
+
+@media (max-width: 360px) and (max-height: 740px) {
+  .hero-copy {
+    top: -5px;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -10867,21 +10876,21 @@ button.is-pressing {
 .dt-bead-road-scroll {
   flex: 1;
   overflow-x: auto;
-  overflow-y: hidden;
+  /* overflow-y: hidden; */
   scrollbar-width: none;
 }
 .dt-bead-road-scroll::-webkit-scrollbar { display: none; }
 .dt-bead-road-grid {
   display: grid;
-  grid-template-rows: repeat(6, 34px);
+  grid-template-rows: repeat(6, 25px);
   grid-auto-flow: column;
-  grid-auto-columns: 34px;
+  grid-auto-columns: 25px;
   gap: 3px;
   min-width: max-content;
 }
 .dt-bead {
-  width: 34px;
-  height: 34px;
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -11056,53 +11065,67 @@ button.is-pressing {
   inset: 0;
   z-index: 11;
   pointer-events: none;
+}
+
+.dt-dragon-win-overlay {
   overflow: hidden;
+}
+
+.dt-dragon-win-overlay {
+  background: rgba(0, 0, 0, 0.72);
+  animation: dt-overlay-fadein 0.25s ease-out;
+}
+
+@keyframes dt-overlay-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .dt-dragon-canvas {
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 100vw;
-  height: auto;
-  opacity: 0.55;
-  animation: dt-dragon-fly 4s cubic-bezier(.16,1,.3,1) forwards;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-@keyframes dt-dragon-fly {
-  0%   { transform: translateX(-50%) translateY(100vh); opacity: 0; }
+.dt-tiger-win-overlay {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.dt-tiger-zoom-wrapper {
+  position: absolute;
+  inset: 0;
+  animation: dt-tiger-zoom-in 8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  transform-origin: center center;
+}
+
+@keyframes dt-tiger-zoom-in {
+  0%   { transform: scale(0.05); opacity: 0; }
   12%  { opacity: 1; }
-  60%  { transform: translateX(-50%) translateY(-35vh); opacity: 1; }
-  100% { transform: translateX(-50%) translateY(-90vh); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
 }
 
 .dt-tiger-canvas {
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 70vw;
-  height: auto;
-  animation: dt-tiger-walk-in 2s ease-out forwards;
-}
-
-@keyframes dt-tiger-walk-in {
-  0%   { transform: translateX(-50%) scale(0.05); opacity: 0; }
-  20%  { opacity: 0.55; }
-  100% { transform: translateX(-50%) translateY(-30vh) scale(1); opacity: 0.55; }
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .dt-tiger-final {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 0; bottom: 0; left: 0; right: 0;
   width: 70vw;
-  height: auto;
-  animation: dt-tiger-burst 2s ease-out forwards;
+  max-height: 90vh;
+  object-fit: contain;
+  margin: auto;
+  animation: dt-tiger-burst 2.5s ease-out forwards;
 }
 
 @keyframes dt-tiger-burst {
-  0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.85; }
-  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
+  0%   { transform: scale(1);   opacity: 1; }
+  40%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(2.8); opacity: 0; }
 }
 
 /* ── Rules scroll modal ──────────────────────────────────────── */
@@ -11165,8 +11188,8 @@ button.is-pressing {
   cursor: pointer;
   z-index: 5;
   -webkit-tap-highlight-color: transparent;
-  width: 44px;
-  height: 44px;
+  width: 58px;
+  height: auto;
 }
 .dt-bgm-btn img {
   width: 100%;
