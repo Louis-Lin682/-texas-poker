@@ -69,10 +69,6 @@ function EventDrawer({ isOpen, onClose }) {
       >
         <div className="drawer-handle" aria-hidden="true" />
         <div className="event-drawer-header">
-          <div className="event-header-stage" aria-hidden="true">
-            <div className="event-header-glow-orb" />
-            <div className="event-header-particles" />
-          </div>
           <div className="event-header-content">
             <button type="button" className="event-drawer-close" onClick={onClose} aria-label="關閉">✕</button>
             <span className="event-header-eyebrow">VIP EXCLUSIVE EVENT</span>

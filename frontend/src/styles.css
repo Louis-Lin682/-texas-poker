@@ -1229,7 +1229,7 @@ button.is-pressing {
   font-weight: 900;
   letter-spacing: 4px;
   color: #ffd98a;
-  text-shadow: 0 1px 0 #F3C56A, 0 2px 0 #FFF7E8, 0 3px 0 #8A4B12, 0 0 6px rgba(255, 220, 140, .45), 0 0 12px rgba(255, 196, 80, .28);
+  text-shadow: none;
   line-height: .98;
 }
 
@@ -1240,6 +1240,7 @@ button.is-pressing {
   gap: 10px;
   width: 100%;
   padding: 0 12px;
+  color: #e1d7b2;
 }
 
 .event-header-title-line {
@@ -4755,7 +4756,9 @@ button.is-pressing {
 .sub-page-frame {
   display: flex;
   flex-direction: column;
-  border-radius: 40px;
+  /* border-radius: 40px; */
+  background: radial-gradient(circle at 50% 0%, rgba(123, 53, 255, 0.35), transparent 36%), radial-gradient(circle at 85% 20%, rgba(0, 200, 255, 0.18), transparent 32%), linear-gradient(180deg, #111B4A 0%, #07142D 48%, #050712 100%);
+  box-shadow: 0 0 26px rgba(123, 53, 255, 0.45), 0 0 16px rgba(0, 200, 255, 0.18), inset 0 0 18px rgba(255, 255, 255, 0.08);
 }
 
 .sub-page-header {
@@ -4982,11 +4985,8 @@ button.is-pressing {
 /* tabs */
 .rk-tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
   padding: 4px;
   gap: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .rk-tab {
@@ -4995,16 +4995,17 @@ button.is-pressing {
   border-radius: 9px;
   font-size: 13px;
   font-weight: 700;
-  color: rgba(225, 215, 178, 0.28);
   cursor: pointer;
   transition: all 220ms ease;
-  border: 1px solid transparent;
+  color: rgba(40, 18, 0, 0.9);
+  background: linear-gradient(175deg, #fff5b0 0%, #f5cf60 20%, #e0a800 48%, #c48000 72%, #7a4e00 100%);
+  border: 1px solid rgba(255, 225, 80, 0.65);
 }
 
 .rk-tab.is-active {
-  background: linear-gradient(160deg, rgba(255, 220, 100, 0.2) 0%, rgba(190, 120, 0, 0.14) 100%);
-  color: #f0c96b;
-  border-color: rgba(240, 201, 107, 0.4);
+  color: rgba(10, 20, 38, 0.9);
+  background: linear-gradient(175deg, #d8eefa 0%, #8cbcd8 28%, #4882b0 60%, #1c3e62 100%);
+  border: 1px solid rgba(110, 175, 228, 0.55);
   box-shadow:
     0 0 16px rgba(240, 201, 107, 0.28),
     inset 0 1px 0 rgba(255, 245, 190, 0.22);
@@ -5403,7 +5404,8 @@ button.is-pressing {
 }
 
 .quest-tab-btn.is-active {
-  background: linear-gradient(180deg, rgba(60, 44, 18, 0.96), rgba(26, 18, 6, 0.98));
+  background: linear-gradient(135deg, #7b35ff33, #00c8ff14);
+  border: 1px solid rgba(128, 92, 255, .35);
   border-color: rgba(226, 206, 135, 0.32);
   color: #f0e1b6;
   box-shadow: 0 0 12px rgba(226, 206, 135, 0.1), inset 0 1px 0 rgba(255, 240, 193, 0.07);
@@ -5441,8 +5443,9 @@ button.is-pressing {
   position: relative;
   padding: 14px 14px 14px 18px;
   border-radius: 14px;
-  background: linear-gradient(145deg, rgba(20, 16, 10, 0.97), rgba(32, 24, 12, 0.95));
-  border: 1px solid rgba(226, 206, 135, 0.12);
+  background: linear-gradient(135deg, #7b35ff33, #00c8ff14);
+  border: 1px solid rgba(128, 92, 255, .35);
+  color: #dce8ff;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -5467,11 +5470,6 @@ button.is-pressing {
 
 .quest-item[data-type="weekly"]::before {
   background: linear-gradient(180deg, #8fc4e8, #5b8bb5);
-}
-
-.quest-item.is-done {
-  border-color: rgba(243, 193, 93, 0.3);
-  background: linear-gradient(145deg, rgba(30, 22, 8, 0.98), rgba(44, 32, 10, 0.96));
 }
 
 .quest-item.is-claimed {
