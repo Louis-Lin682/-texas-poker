@@ -123,7 +123,7 @@ function BjBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
       cursor: disabled ? 'not-allowed' : 'pointer',
       opacity: disabled ? 0.4 : 1, flexShrink: 0, ...style,
     }}>
-      <img src={src} alt={alt} style={{ display: 'block', height: 60, width: 'auto', maxWidth: '100%' }} />
+      <img src={src} alt={alt} style={{ display: 'block', height: 52, width: 'auto', maxWidth: '100%' }} />
       {amount != null && (
         <span style={{
           position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
@@ -239,6 +239,7 @@ function BJSeat({ player, isActing, dealVisible = Infinity }) {
 
   return (
     <div className={`pt-seat${isActing ? ' is-acting' : ''}`}>
+      {isActing && <div className="pt-acting-arrow" />}
       <div className="pt-avatar">{player.username[0].toUpperCase()}</div>
       <span className="pt-name">{player.username}</span>
       <span className="pt-chips">{fmt(player.balance)}</span>
@@ -1077,7 +1078,7 @@ export default function BlackjackTablePage({ auth }) {
                     />
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
                   <BjBtn src="/blackjack/stop.png" alt="停牌" onClick={() => doAction('stand')} />
                   <BjBtn src="/blackjack/hold.png" alt="要牌" onClick={() => doAction('hit')} />
                   {canDouble && (

@@ -78,7 +78,7 @@ function getSeats(players, myId) {
 }
 
 // ── Seat ──────────────────────────────────────────────────────────────────────
-function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, seatIndex = 0, dealKey }) {
+function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, seatIndex = 0, dealKey, side }) {
   if (!player) {
     return <div className="pt-seat pt-seat-empty">空位</div>
   }
@@ -94,7 +94,11 @@ function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, se
       isActing ? 'is-acting' : '',
       folded   ? 'is-folded'  : '',
       isMe     ? 'pt-seat-me' : '',
+      side === 'left'  ? 'pt-seat-left'  : '',
+      side === 'right' ? 'pt-seat-right' : '',
     ].filter(Boolean).join(' ')}>
+
+      {isActing && <div className="pt-acting-arrow" />}
 
       <div className="pt-badges">
         {player.isDealer && <span className="pt-badge pt-badge-d">莊家</span>}
@@ -720,8 +724,8 @@ function GameTablePage({ auth }) {
           <div className="pt-middle">
 
             <div className="pt-side-col">
-              <Seat player={p2} isActing={acting(p2?.id)} revealedCards={revealedCards} seatIndex={1} dealKey={dealKey} />
-              <Seat player={p1} isActing={acting(p1?.id)} revealedCards={revealedCards} seatIndex={0} dealKey={dealKey} />
+              <Seat player={p2} isActing={acting(p2?.id)} revealedCards={revealedCards} seatIndex={1} dealKey={dealKey} side="left" />
+              <Seat player={p1} isActing={acting(p1?.id)} revealedCards={revealedCards} seatIndex={0} dealKey={dealKey} side="left" />
             </div>
 
             <div className="pt-table-center">
@@ -748,8 +752,8 @@ function GameTablePage({ auth }) {
             </div>
 
             <div className="pt-side-col">
-              <Seat player={p4} isActing={acting(p4?.id)} revealedCards={revealedCards} seatIndex={3} dealKey={dealKey} />
-              <Seat player={p5} isActing={acting(p5?.id)} revealedCards={revealedCards} seatIndex={4} dealKey={dealKey} />
+              <Seat player={p4} isActing={acting(p4?.id)} revealedCards={revealedCards} seatIndex={3} dealKey={dealKey} side="right" />
+              <Seat player={p5} isActing={acting(p5?.id)} revealedCards={revealedCards} seatIndex={4} dealKey={dealKey} side="right" />
             </div>
 
           </div>

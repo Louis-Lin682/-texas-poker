@@ -269,6 +269,7 @@ function OppSeat({ player, isActing, winners, compact = false }) {
   const count = player.cardCount
   return (
     <div className={`bt-opp${isActing ? ' is-acting' : ''}${player.status === 'finished' ? ' is-finished' : ''}`}>
+      {isActing && <div className="pt-acting-arrow" />}
       <div className="bt-opp-top">
         <div className="bt-opp-avatar">{player.username[0].toUpperCase()}</div>
         {!compact && (
