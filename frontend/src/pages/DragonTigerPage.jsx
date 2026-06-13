@@ -2,25 +2,13 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDragonTigerSocket } from '../hooks/useDragonTigerSocket'
 import { useGameStatus } from '../hooks/useGameStatus'
-import { useAudio, getAudioSettings } from '../hooks/useAudio'
+import { useAudio, getAudioSettings, playSfx, stopSfx } from '../hooks/useAudio'
 import { API_BASE_URL } from '../services/apiClient'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
 
-// Pre-load SFX at module import time for reliable playback
-function _mkAudio(src) { const a = new Audio(src); a.preload = 'auto'; return a }
-function _mkImg(src)   { const i = new Image(); i.src = src; return i }
+function _mkImg(src) { const i = new Image(); i.src = src; return i }
 const _dragonWinImg = _mkImg('/DragonTiger/win/dragon_win.png')
 const _tigerWalkImg = _mkImg('/DragonTiger/win/tiger_walk.png')
-const _stamp1  = _mkAudio('/audio/DragonTiger/stamp.mp3')
-const _winSfx  = _mkAudio('/audio/DragonTiger/win.mp3')
-const _loseSfx = _mkAudio('/audio/DragonTiger/lose.mp3')
-const _dingding = _mkAudio('/audio/DragonTiger/dingding.mp3')
-const _chipSrc = _mkAudio('/audio/game/poker-chips.mp3')
-const _dealSfx      = _mkAudio('/audio/game/fly_card.mp3')
-const _flip1        = _mkAudio('/audio/game/flip_card.mp3')
-const _flip2        = _mkAudio('/audio/game/flip_card.mp3')
-const _dragonWinSfx = _mkAudio('/audio/DragonTiger/dragonWin.mp3')
-const _tigerWinSfx  = _mkAudio('/audio/DragonTiger/tigerWin.mp3')
 
 const CHIPS = [
   { value: 20,   img: '/chip-red.png',       label: '20' },
@@ -287,8 +275,7 @@ function DragonWinAnim({ onDone }) {
   const onDoneRef = useRef(onDone)
 
   useEffect(() => {
-    const { sfxVolume, sfxMuted } = getAudioSettings()
-    if (!sfxMuted) { _dragonWinSfx.volume = 0.85 * sfxVolume; _dragonWinSfx.play().catch(() => {}) }
+    playSfx('dt_dragonWin')
 
     const img = _dragonWinImg
 
@@ -318,8 +305,7 @@ function DragonWinAnim({ onDone }) {
     return () => {
       cancelAnimationFrame(animId)
       clearTimeout(t)
-      _dragonWinSfx.pause()
-      _dragonWinSfx.currentTime = 0
+      stopSfx('dt_dragonWin')
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -337,8 +323,7 @@ function TigerWinAnim({ onDone }) {
 
   // Phase 1: sprite walk-in (2s)
   useEffect(() => {
-    const { sfxVolume, sfxMuted } = getAudioSettings()
-    if (!sfxMuted) { _tigerWinSfx.volume = 0.85 * sfxVolume; _tigerWinSfx.play().catch(() => {}) }
+    playSfx('dt_tigerWin')
 
     const img = _tigerWalkImg
     const FRAME_W = 1086, FRAME_H = 1448, COLS = 4, TOTAL = 8
@@ -367,8 +352,7 @@ function TigerWinAnim({ onDone }) {
     return () => {
       cancelAnimationFrame(animId)
       clearTimeout(t)
-      _tigerWinSfx.pause()
-      _tigerWinSfx.currentTime = 0
+      stopSfx('dt_tigerWin')
     }
   }, [])
 
@@ -506,26 +490,14 @@ function ResultOverlay({ result, myPayout, myTotalBet }) {
   useEffect(() => {
     if (!result) return
     const net = myPayout - myTotalBet
-    const { sfxVolume, sfxMuted } = getAudioSettings()
 
-    function playStamp(el) {
-      if (sfxMuted) return
-      el.volume = 0.85 * sfxVolume
-      el.currentTime = 0
-      el.play().catch(() => {})
-    }
-
-    playStamp(_stamp1)
-    // Tie: play win/lose quickly; dragon/tiger: delay 2s so animation
-    // SFX plays first without overlap
+    playSfx('dt_stamp')
+    // Tie: play win/lose quickly; dragon/tiger: delay 2s so animation plays first
     const delay = result === 'tie' ? 950 : 2000
     const t3 = setTimeout(() => {
       if (myTotalBet > 0) {
-        if (net > 0) {
-          _winSfx.volume = 0.85 * sfxVolume; _winSfx.currentTime = 0; _winSfx.play().catch(() => {})
-        } else if (net < 0) {
-          _loseSfx.volume = 0.85 * sfxVolume; _loseSfx.currentTime = 0; _loseSfx.play().catch(() => {})
-        }
+        if (net > 0)      playSfx('dt_win')
+        else if (net < 0) playSfx('dt_lose')
       }
     }, delay)
 
@@ -631,7 +603,7 @@ export default function DragonTigerPage({ auth }) {
   }, [wasKicked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    preload(['dt_deal', 'dt_chips', 'dt_flip', 'dt_dingding', 'dt_stamp', 'dt_win', 'dt_lose'])
+    preload(['dt_deal', 'dt_chips', 'dt_flip', 'dt_dingding', 'dt_stamp', 'dt_win', 'dt_lose', 'dt_dragonWin', 'dt_tigerWin'])
   }, [preload])
 
   // Load shared DT history from backend on mount
@@ -755,21 +727,16 @@ export default function DragonTigerPage({ auth }) {
     // Dingding on last second before dealing
     if (phase === 'betting' && gameState.countdown === 1 && !dingdingFiredRef.current) {
       dingdingFiredRef.current = true
-      const { sfxVolume, sfxMuted } = getAudioSettings()
-      if (!sfxMuted) { _dingding.volume = 0.90 * sfxVolume; _dingding.currentTime = 0; _dingding.play().catch(() => {}) }
+      play('dt_dingding')
     }
 
     if (phase !== prevPhase.current) {
       if (phase === 'betting' && prevPhase.current !== null) {
-        const { sfxVolume, sfxMuted } = getAudioSettings()
-        if (!sfxMuted) { _dealSfx.volume = 0.75 * sfxVolume; _dealSfx.currentTime = 0; _dealSfx.play().catch(() => {}) }
+        play('dt_deal')
       }
       if (phase === 'dealing') {
-        const { sfxVolume, sfxMuted } = getAudioSettings()
-        if (!sfxMuted) {
-          _flip1.volume = 0.75 * sfxVolume; _flip1.currentTime = 0; _flip1.play().catch(() => {})
-          setTimeout(() => { _flip2.volume = 0.75 * sfxVolume; _flip2.currentTime = 0; _flip2.play().catch(() => {}) }, 600)
-        }
+        play('dt_flip')
+        setTimeout(() => play('dt_flip'), 600)
       }
       if (phase === 'result') {
         if (gameState.result === 'dragon') setTimeout(() => setShowDragonWin(true), 700)
@@ -830,11 +797,7 @@ export default function DragonTigerPage({ auth }) {
               }],
             }))
             if (isMe) {
-              const { sfxVolume, sfxMuted } = getAudioSettings()
-              if (!sfxMuted) {
-                const a = _chipSrc.cloneNode()
-                a.volume = 0.70 * sfxVolume; a.play().catch(() => {})
-              }
+              play('dt_chips')
             } else {
               const id   = chipId + 0.1
               const text = `${p.username} 押${BET_LABELS[z]} ${fmt(diff)}`

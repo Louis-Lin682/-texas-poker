@@ -1,14 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Howl } from 'howler'
+import { useCallback, useEffect, useState } from 'react'
 import { audioMap } from '../data/audio'
 
-// ── Module-level globals (shared across all hook instances) ──────────────────
-
-const K = {
-  bgmMuted:  'audio_bgm_muted',
-  sfxMuted:  'audio_sfx_muted',
-  bgmVol:    'audio_bgm_vol',
-  sfxVol:    'audio_sfx_vol',
-}
+// ── Settings persistence ──────────────────────────────────────────────────────
+const K = { bgmMuted: 'audio_bgm_muted', bgmVol: 'audio_bgm_vol', sfxVol: 'audio_sfx_vol' }
 
 function readFloat(key, def) {
   const v = parseFloat(localStorage.getItem(key))
@@ -16,214 +11,128 @@ function readFloat(key, def) {
 }
 
 let _bgmMuted  = localStorage.getItem(K.bgmMuted) === '1'
-let _sfxMuted  = false   // SFX muting removed from Settings UI; always unmuted
 let _bgmVolume = readFloat(K.bgmVol, 1)
 let _sfxVolume = readFloat(K.sfxVol, 1)
 
+// ── Howl instance cache ───────────────────────────────────────────────────────
+const _howls  = {}   // key → Howl
+const _bgmIds = {}   // key → active BGM sound ID (for pause/resume tracking)
+
+function _vol(key) {
+  const c = audioMap[key]
+  if (!c) return 0
+  return c.bgm
+    ? (_bgmMuted ? 0 : (c.volume ?? 1) * _bgmVolume)
+    : (c.volume ?? 1) * _sfxVolume
+}
+
+function _getHowl(key) {
+  if (_howls[key]) return _howls[key]
+  const c = audioMap[key]
+  if (!c) return null
+  _howls[key] = new Howl({
+    src:     [c.src],
+    volume:  _vol(key),
+    loop:    c.loop ?? false,
+    html5:   Boolean(c.bgm),   // BGM: streaming; SFX: decoded AudioBuffer
+    preload: true,
+  })
+  return _howls[key]
+}
+
+// ── Module-level helpers for sub-components that can't call the hook ──────────
+export function playSfx(key) { _getHowl(key)?.play() }
+export function stopSfx(key) { _howls[key]?.stop() }
+
+// ── Public settings API ───────────────────────────────────────────────────────
 const SETTINGS_EVENT = 'audio:settings'
 
-function _rawSetBgmMuted(v)  { _bgmMuted  = v; localStorage.setItem(K.bgmMuted, v ? '1' : '0') }
-function _rawSetSfxMuted(v)  { _sfxMuted  = v; localStorage.setItem(K.sfxMuted, v ? '1' : '0') }
-function _rawSetBgmVolume(v) { _bgmVolume = v; localStorage.setItem(K.bgmVol, String(v)) }
-function _rawSetSfxVolume(v) { _sfxVolume = v; localStorage.setItem(K.sfxVol, String(v)) }
-
-// ── Web Audio API ─────────────────────────────────────────────────────────────
-
-let _audioCtx = null
-let _bgmGain  = null
-let _sfxGain  = null
-const _wiredSet = new WeakSet()
-
-function _initCtx() {
-  if (_audioCtx) return
-  const Ctx = window.AudioContext || window.webkitAudioContext
-  if (!Ctx) return
-  _audioCtx = new Ctx()
-  _bgmGain = _audioCtx.createGain()
-  _sfxGain = _audioCtx.createGain()
-  _bgmGain.gain.value = _bgmMuted ? 0 : _bgmVolume
-  _sfxGain.gain.value = _sfxMuted ? 0 : _sfxVolume
-  _bgmGain.connect(_audioCtx.destination)
-  _sfxGain.connect(_audioCtx.destination)
-}
-
-// Unlock AudioContext on first user interaction (capture phase = highest priority).
-// This runs within the gesture window so resume() is guaranteed to succeed,
-// ensuring audio works the first time a game is entered.
-function _unlock() {
-  if (!_audioCtx) _initCtx()
-  if (_audioCtx?.state === 'suspended') _audioCtx.resume().catch(() => {})
-}
-;['touchstart', 'mousedown', 'click'].forEach(type =>
-  document.addEventListener(type, _unlock, { capture: true, passive: true }),
-)
-
-function _wire(audio, isBgm) {
-  if (_wiredSet.has(audio) || !_audioCtx) return
-  try {
-    const src = _audioCtx.createMediaElementSource(audio)
-    src.connect(isBgm ? _bgmGain : _sfxGain)
-    _wiredSet.add(audio)
-  } catch {}
-}
-
-// ── Public setters ────────────────────────────────────────────────────────────
-
 export function setGlobalBgmMuted(v) {
-  _rawSetBgmMuted(v)
-  if (_bgmGain) _bgmGain.gain.value = v ? 0 : _bgmVolume
+  _bgmMuted = v
+  localStorage.setItem(K.bgmMuted, v ? '1' : '0')
+  Object.keys(audioMap).filter(k => audioMap[k].bgm).forEach(k => _howls[k]?.volume(_vol(k)))
   window.dispatchEvent(new Event(SETTINGS_EVENT))
 }
-export function setGlobalSfxMuted(v) {
-  _rawSetSfxMuted(v)
-  if (_sfxGain) _sfxGain.gain.value = v ? 0 : _sfxVolume
-  window.dispatchEvent(new Event(SETTINGS_EVENT))
-}
+
+export function setGlobalSfxMuted() {}  // kept for API compat; SFX is always on
+
 export function setGlobalBgmVolume(v) {
-  _rawSetBgmVolume(v)
-  if (_bgmGain) _bgmGain.gain.value = _bgmMuted ? 0 : v
+  _bgmVolume = v
+  localStorage.setItem(K.bgmVol, String(v))
+  Object.keys(audioMap).filter(k => audioMap[k].bgm).forEach(k => _howls[k]?.volume(_vol(k)))
   window.dispatchEvent(new Event(SETTINGS_EVENT))
 }
+
 export function setGlobalSfxVolume(v) {
-  _rawSetSfxVolume(v)
-  if (_sfxGain) _sfxGain.gain.value = _sfxMuted ? 0 : v
+  _sfxVolume = v
+  localStorage.setItem(K.sfxVol, String(v))
+  Object.keys(audioMap).filter(k => !audioMap[k].bgm).forEach(k => _howls[k]?.volume(_vol(k)))
   window.dispatchEvent(new Event(SETTINGS_EVENT))
 }
 
 export function getAudioSettings() {
-  return {
-    bgmMuted:  _bgmMuted,
-    sfxMuted:  _sfxMuted,
-    bgmVolume: _bgmVolume,
-    sfxVolume: _sfxVolume,
-  }
+  return { bgmMuted: _bgmMuted, sfxMuted: false, bgmVolume: _bgmVolume, sfxVolume: _sfxVolume }
 }
 
-// ── Internal helpers ─────────────────────────────────────────────────────────
-
-function effectiveVolume(config) {
-  const isBgm   = Boolean(config.bgm)
-  const muted   = isBgm ? _bgmMuted : _sfxMuted
-  const globalV = isBgm ? _bgmVolume : _sfxVolume
-  return muted ? 0 : (config.volume ?? 1) * globalV
-}
-
-function applyBgmSettings(audio, config, overrides = {}) {
-  audio.src  = overrides.src  ?? config.src
-  audio.loop = overrides.loop ?? config.loop ?? false
-  if (_audioCtx) {
-    // GainNode controls volume; element must not be muted
-    audio.muted  = false
-    audio.volume = 1
-  } else {
-    const isMuted = _bgmMuted
-    audio.volume  = isMuted ? 0 : (overrides.volume ?? config.volume ?? 1) * _bgmVolume
-    audio.muted   = isMuted
-  }
-  audio.currentTime = overrides.currentTime ?? 0
-}
-
-// ── Hook ─────────────────────────────────────────────────────────────────────
-
+// ── Hook ──────────────────────────────────────────────────────────────────────
 export function useAudio() {
-  const audioRegistryRef = useRef(new Map())
-
   const [bgmMuted,  setBgmMutedState]  = useState(_bgmMuted)
-  const [sfxMuted,  setSfxMutedState]  = useState(_sfxMuted)
+  const [sfxMuted,  setSfxMutedState]  = useState(false)
   const [bgmVolume, setBgmVolumeState] = useState(_bgmVolume)
   const [sfxVolume, setSfxVolumeState] = useState(_sfxVolume)
 
-  const getAudio = useCallback((key) => {
-    const config = audioMap[key]
-    if (!config) return null
-    if (!audioRegistryRef.current.has(key)) {
-      audioRegistryRef.current.set(key, new Audio(config.src))
+  const play = useCallback(async (key, overrides = {}) => {
+    const c = audioMap[key]
+    if (!c) return false
+    const howl = _getHowl(key)
+    if (!howl) return false
+
+    if (c.bgm) {
+      const hasOverrides = Object.keys(overrides).length > 0
+      // Return early if same BGM is already playing and nothing forced a restart
+      if (!hasOverrides && _bgmIds[key] !== undefined && howl.playing(_bgmIds[key])) return true
+      if (_bgmIds[key] !== undefined) howl.stop(_bgmIds[key])
+      if (overrides.volume !== undefined) howl.volume(overrides.volume)
+      if (overrides.loop   !== undefined) howl.loop(overrides.loop)
+      _bgmIds[key] = howl.play()
+    } else {
+      // SFX: Howler creates an independent AudioBufferSourceNode per call —
+      // rapid plays overlap cleanly without interrupting each other.
+      howl.play()
     }
-    return audioRegistryRef.current.get(key)
+    return true
   }, [])
 
-  const play = useCallback(async (key, overrides = {}) => {
-    const config = audioMap[key]
-    const audio  = getAudio(key)
-    if (!config || !audio) return false
-
-    try {
-      if (config.bgm) {
-        // BGM: route through Web Audio GainNode for global mute/volume control
-        _initCtx()
-        _wire(audio, true)
-        if (_audioCtx?.state === 'suspended') await _audioCtx.resume()
-        const hasOverrides = Object.keys(overrides).length > 0
-        if (!audio.paused && !hasOverrides) return true
-        if (!audio.paused) audio.pause()
-        applyBgmSettings(audio, config, hasOverrides ? overrides : {})
-        if (!hasOverrides && audio.currentTime > 0.05) audio.currentTime = 0
-        await audio.play()
-      } else {
-        // SFX: route through Web Audio — once AudioContext is resumed by any gesture,
-        // all wired elements play freely without per-element iOS Safari activation.
-        _initCtx()
-        _wire(audio, false)
-        if (_audioCtx?.state === 'suspended') await _audioCtx.resume()
-        audio.pause()
-        audio.currentTime = 0
-        audio.volume = config.volume ?? 1   // per-sound scaling; global via _sfxGain
-        audio.muted  = false
-        await audio.play()
-      }
-      return true
-    } catch {
-      return false
-    }
-  }, [getAudio])
-
   const pause = useCallback((key) => {
-    audioRegistryRef.current.get(key)?.pause()
+    const c = audioMap[key]
+    if (c?.bgm && _bgmIds[key] !== undefined) {
+      _howls[key]?.pause(_bgmIds[key])
+    } else {
+      _howls[key]?.pause()
+    }
   }, [])
 
   const stop = useCallback((key) => {
-    const audio = audioRegistryRef.current.get(key)
-    if (!audio) return
-    audio.pause()
-    audio.currentTime = 0
+    if (_bgmIds[key] !== undefined) {
+      _howls[key]?.stop(_bgmIds[key])
+      delete _bgmIds[key]
+    } else {
+      _howls[key]?.stop()
+    }
   }, [])
 
   const stopAll = useCallback(() => {
-    audioRegistryRef.current.forEach((audio) => {
-      audio.pause()
-      audio.currentTime = 0
-    })
+    Object.values(_howls).forEach(h => h.stop())
+    Object.keys(_bgmIds).forEach(k => delete _bgmIds[k])
   }, [])
 
   const preload = useCallback((keys = Object.keys(audioMap)) => {
-    keys.forEach((key) => {
-      const config = audioMap[key]
-      const audio  = getAudio(key)
-      if (!config || !audio) return
-      audio.preload = 'auto'
-    })
-  }, [getAudio])
+    keys.forEach(_getHowl)   // creates + starts loading each Howl
+  }, [])
 
-  // Live-update gain when BGM settings change
-  useEffect(() => {
-    if (_bgmGain) {
-      _bgmGain.gain.value = bgmMuted ? 0 : bgmVolume
-      return
-    }
-    // Fallback for browsers without Web Audio
-    audioRegistryRef.current.forEach((audio, key) => {
-      const config = audioMap[key]
-      if (!config?.bgm) return
-      audio.muted  = bgmMuted
-      audio.volume = bgmMuted ? 0 : (config.volume ?? 1) * bgmVolume
-    })
-  }, [bgmMuted, bgmVolume])
-
-  // Sync React state when settings are changed externally (e.g. SettingsPage)
   useEffect(() => {
     function sync() {
       setBgmMutedState(_bgmMuted)
-      setSfxMutedState(_sfxMuted)
       setBgmVolumeState(_bgmVolume)
       setSfxVolumeState(_sfxVolume)
     }
@@ -231,40 +140,13 @@ export function useAudio() {
     return () => window.removeEventListener(SETTINGS_EVENT, sync)
   }, [])
 
-  const setBgmMuted = useCallback((v) => {
-    _rawSetBgmMuted(v)
-    if (_bgmGain) _bgmGain.gain.value = v ? 0 : _bgmVolume
-    setBgmMutedState(v)
-  }, [])
-
-  const setSfxMuted = useCallback((v) => {
-    _rawSetSfxMuted(v)
-    if (_sfxGain) _sfxGain.gain.value = v ? 0 : _sfxVolume
-    setSfxMutedState(v)
-  }, [])
-
-  const setBgmVolume = useCallback((v) => {
-    _rawSetBgmVolume(v)
-    if (_bgmGain) _bgmGain.gain.value = _bgmMuted ? 0 : v
-    setBgmVolumeState(v)
-  }, [])
-
-  const setSfxVolume = useCallback((v) => {
-    _rawSetSfxVolume(v)
-    if (_sfxGain) _sfxGain.gain.value = _sfxMuted ? 0 : v
-    setSfxVolumeState(v)
-  }, [])
+  const setBgmMuted  = useCallback((v) => { setGlobalBgmMuted(v);  setBgmMutedState(v)  }, [])
+  const setSfxMuted  = useCallback(() => {}, [])
+  const setBgmVolume = useCallback((v) => { setGlobalBgmVolume(v); setBgmVolumeState(v) }, [])
+  const setSfxVolume = useCallback((v) => { setGlobalSfxVolume(v); setSfxVolumeState(v) }, [])
 
   const isMuted    = bgmMuted
-  const toggleMute = useCallback(() => setBgmMuted(!_bgmMuted), [setBgmMuted])
-
-  useEffect(() => {
-    const registry = audioRegistryRef.current
-    return () => {
-      registry.forEach((audio) => { audio.pause(); audio.src = '' })
-      registry.clear()
-    }
-  }, [])
+  const toggleMute = useCallback(() => setGlobalBgmMuted(!_bgmMuted), [])
 
   return {
     bgmMuted, sfxMuted, bgmVolume, sfxVolume,
