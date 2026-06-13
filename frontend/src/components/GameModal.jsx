@@ -37,6 +37,7 @@ function GameModal({ game, onClose, isFavorite, onToggleFavorite, onPlay }) {
             className="game-modal-image"
             src={game.imageUrl}
             alt={game.name}
+            onLoad={e => e.currentTarget.classList.add('img-loaded')}
           />
           <div className="game-modal-image-overlay" />
 

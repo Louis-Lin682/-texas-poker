@@ -131,6 +131,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
     <div
       className={`app-shell ${isFavoritesOpen || isMyDrawerOpen || isEventDrawerOpen ? 'has-favorites-open' : ''}`}
     >
+
       {/* {showFloatTop && (
         <button
           type="button"

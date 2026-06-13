@@ -172,7 +172,7 @@ function GameSection({ items, isLoading, favoriteIds, onToggleFavorite, onGameCl
                         <HeartIcon filled={favoriteIds.includes(game.id)} />
                       </button>
                       <div className="game-art">
-                        <img className="game-image" src={game.imageUrl} alt={game.name} loading="lazy" />
+                        <img className="game-image" src={game.imageUrl} alt={game.name} loading="lazy" onLoad={e => e.currentTarget.classList.add('img-loaded')} />
                         <div className="art-glow" />
                         <div className="art-title"><span>{game.name}</span></div>
                       </div>

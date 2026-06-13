@@ -2515,6 +2515,9 @@ button.is-pressing {
   position: relative;
   height: 100%;
   overflow: hidden;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: gsSkeleton 1.4s ease infinite;
 }
 
 .game-image,
@@ -2528,6 +2531,12 @@ button.is-pressing {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.game-image.img-loaded {
+  opacity: 1;
 }
 
 .all-game-tile.is-maintenance .game-image {
@@ -4566,6 +4575,12 @@ button.is-pressing {
   object-fit: cover;
   z-index: 0;
   margin: 24px auto;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.game-modal-image.img-loaded {
+  opacity: 1;
 }
 
 .game-modal-image-overlay {
@@ -6859,12 +6874,13 @@ button.is-pressing {
 /* ── Waiting room ───────────────────────────────────────── */
 .pt-wait {
   flex: 1;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 20px 20px 28px;
+  padding: 20px 20px 200px;
 }
 
 .pt-wait-title {
@@ -6890,6 +6906,8 @@ button.is-pressing {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
 }
 
 .pt-wait-player {
@@ -6936,11 +6954,20 @@ button.is-pressing {
 }
 
 .pt-wait-hint {
+  position: absolute;
+  bottom: 118px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 12px;
   color: rgba(225,215,178,0.4);
+  white-space: nowrap;
 }
 
 .pt-wait-start {
+  position: absolute;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 40%;
   padding: 14px;
   border-radius: 12px;
@@ -6952,17 +6979,23 @@ button.is-pressing {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 18px rgba(31, 185, 94, 0.18);
   cursor: pointer;
   transition: opacity 120ms;
+  white-space: nowrap;
 }
 .pt-wait-start:disabled { opacity: 0.3; cursor: not-allowed; }
 .pt-wait-start:not(:disabled):hover { opacity: 0.85; }
 
 .pt-wait-leave {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
   background: none;
   border: none;
   color: rgba(225,215,178,0.35);
   font-size: 13px;
   cursor: pointer;
   padding: 4px;
+  white-space: nowrap;
 }
 .pt-wait-leave:hover { color: rgba(225,215,178,0.6); }
 
@@ -8150,11 +8183,15 @@ button.is-pressing {
 }
 
 .pt-wait-countdown {
+  position: absolute;
+  bottom: 118px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: baseline;
   justify-content: center;
   gap: 8px;
-  padding: 12px 0 4px;
+  white-space: nowrap;
 }
 
 .pt-wait-cd-num {
@@ -11534,4 +11571,29 @@ button.is-pressing {
   height: 100dvh;
   font-size: 15px;
   color: #888;
+}
+
+/* ── Network toast ───────────────────────────────────────────────────── */
+.lobby-net-toast {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: rgba(170, 30, 30, 0.92);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 22px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.45);
+  animation: netToastIn 0.22s ease;
+}
+
+@keyframes netToastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }

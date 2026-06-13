@@ -134,7 +134,7 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
                 </button>
 
                 <div className="game-art">
-                  <img className="game-image" src={game.imageUrl} alt={game.name} loading="lazy" />
+                  <img className="game-image" src={game.imageUrl} alt={game.name} loading="lazy" onLoad={e => e.currentTarget.classList.add('img-loaded')} />
                   {/* <div className="art-glow" /> */}
                   {isMaintenance ? <MaintenanceSpriteOverlay /> : null}
                   {isPreview ? <PreviewOverlay /> : null}
