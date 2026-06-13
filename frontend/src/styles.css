@@ -5803,10 +5803,12 @@ button.is-pressing {
 .cs-new-btn {
   width: 100%;
   padding: 12px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(217,164,65,0.14), rgba(184,130,10,0.1));
-  border: 1px solid rgba(217,164,65,0.3);
-  color: #D9A441;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(123, 53, 255, 0.2), rgba(0, 200, 255, 0.08));
+  border: 1px solid rgba(128, 92, 255, 0.35);
+  color: #dce8ff;
+  text-align: center;
+  box-shadow: 0 0 14px rgba(123, 53, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -5820,7 +5822,7 @@ button.is-pressing {
 .cs-empty {
   text-align: center;
   padding: 40px 16px;
-  color: rgba(225,215,178,0.35);
+  color: #dce8ff;
   font-size: 13px;
 }
 
