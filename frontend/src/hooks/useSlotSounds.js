@@ -47,14 +47,10 @@ export function useSlotSounds(isBgmMuted) {
   }, [])
 
   useEffect(() => {
-    const ctx = Howler.ctx
-    if (!ctx) return
-    ctx.resume?.().catch?.(() => {})
-
-    // iOS: AudioContext starts suspended; restart loops once it unlocks
-    function onStateChange() {
-      if (ctx.state !== 'running') return
-      ctx.removeEventListener('statechange', onStateChange)
+    // iOS: restart any loops that were queued but not playing before first gesture
+    function onGesture() {
+      document.removeEventListener('touchstart', onGesture)
+      document.removeEventListener('click', onGesture)
       for (const [name, id] of Object.entries(loopIds.current)) {
         const h = howls.current[name]
         if (h && id != null && !h.playing(id)) {
@@ -63,8 +59,12 @@ export function useSlotSounds(isBgmMuted) {
         }
       }
     }
-    ctx.addEventListener('statechange', onStateChange)
-    return () => ctx.removeEventListener('statechange', onStateChange)
+    document.addEventListener('touchstart', onGesture, { once: true, passive: true })
+    document.addEventListener('click',      onGesture, { once: true, passive: true })
+    return () => {
+      document.removeEventListener('touchstart', onGesture)
+      document.removeEventListener('click',      onGesture)
+    }
   }, [])
 
   useEffect(() => {
