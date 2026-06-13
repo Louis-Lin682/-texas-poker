@@ -7176,6 +7176,8 @@ button.is-pressing {
 
 .pt-room-label-img {
   height: 28px;
+  width: auto;
+  max-width: 110px;
   width: fit-content;
   object-fit: contain;
   filter: drop-shadow(0 1px 4px rgba(0,0,0,0.6));
@@ -7897,17 +7899,22 @@ button.is-pressing {
 /* ── Mute button in header ── */
 .pt-mute-btn {
   cursor: pointer;
-  width: 15%;
   height: auto;
   background: transparent;
   border: none;
   padding: 0;
+  flex-shrink: 0;
+  width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pt-mute-btn img {
   display: block;
   height: auto;
   width: 100%;
+  object-fit: contain;
 }
 .pt-lobby-refresh img {
   display: block;
