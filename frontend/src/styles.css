@@ -1225,6 +1225,12 @@ button.is-pressing {
   text-transform: uppercase;
   margin: 0 0 8px;
   font-weight: 400;
+  margin: 16px 0 10px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #ffd98a;
+  text-shadow: 0 1px 0 #F3C56A, 0 2px 0 #FFF7E8, 0 3px 0 #8A4B12, 0 0 6px rgba(255, 220, 140, .45), 0 0 12px rgba(255, 196, 80, .28);
+  line-height: .98;
 }
 
 /* ── Title row with flanking taper lines ── */
@@ -1259,15 +1265,6 @@ button.is-pressing {
   letter-spacing: 0.2em;
   line-height: 1.2;
   white-space: nowrap;
-  background: linear-gradient(180deg,
-    #fff8e7 0%,
-    #f7d060 26%,
-    #d4950a 62%,
-    #9a6010 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
   animation: eventGoldPulse 4.5s ease-in-out infinite;
 }
 
@@ -6984,7 +6981,7 @@ button.is-pressing {
 /* Acting indicator — glowing 3-D inverted triangular pyramid */
 .pt-acting-arrow {
   position: absolute;
-  top: -40px;
+  top: -30px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
@@ -8255,7 +8252,7 @@ button.is-pressing {
 .pcard-red   { color: #c8181a; }
 
 /* Sizes */
-.pcard-xs { width: 34px; height: 48px; border-radius: 3px; }
+.pcard-xs { width: 28px; height: 40px; border-radius: 3px; }
 .pcard-sm { width: 34px; height: 48px; font-size: 18px;}
 .pcard-md { width: 50px; height: 80px; font-size: 18px; }
 .pcard-lg { width: 56px; height: 80px; font-size: 22px; }

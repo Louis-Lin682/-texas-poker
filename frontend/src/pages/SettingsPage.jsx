@@ -69,24 +69,42 @@ function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
 
     function onNative() { apply(parseFloat(el.value)) }
 
+    let startX = 0, startY = 0, dragging = false
+
+    function onTouchStart(e) {
+      startX   = e.touches[0].clientX
+      startY   = e.touches[0].clientY
+      dragging = false
+    }
+
     function onTouch(e) {
+      const touch = e.touches?.[0] ?? e.changedTouches?.[0]
+      if (!touch) return
+      // Determine drag direction on first move
+      if (e.touches && !dragging) {
+        const dx = Math.abs(touch.clientX - startX)
+        const dy = Math.abs(touch.clientY - startY)
+        if (dy > dx) return   // vertical scroll — let browser handle it
+        dragging = true
+      }
+      e.preventDefault()
       const rect = el.getBoundingClientRect()
-      const clientX = (e.touches?.[0] ?? e.changedTouches?.[0])?.clientX
-      if (clientX == null) return
-      const v = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+      const v = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width))
       el.value = String(v)
       apply(v)
     }
 
-    el.addEventListener('input', onNative)
-    el.addEventListener('change', onNative)
-    el.addEventListener('touchmove', onTouch, { passive: true })
-    el.addEventListener('touchend', onTouch)
+    el.addEventListener('input',      onNative)
+    el.addEventListener('change',     onNative)
+    el.addEventListener('touchstart', onTouchStart, { passive: true })
+    el.addEventListener('touchmove',  onTouch,      { passive: false })
+    el.addEventListener('touchend',   onTouch)
     return () => {
-      el.removeEventListener('input', onNative)
-      el.removeEventListener('change', onNative)
-      el.removeEventListener('touchmove', onTouch)
-      el.removeEventListener('touchend', onTouch)
+      el.removeEventListener('input',      onNative)
+      el.removeEventListener('change',     onNative)
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove',  onTouch)
+      el.removeEventListener('touchend',   onTouch)
     }
   }) // no deps — re-attach on every render to capture fresh enabled/onToggle/onVolume
 

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 function _makeWsBase() {
-  const raw = import.meta.env.VITE_WS_URL ?? 'ws://localhost:4000/poker'
+  const fallback = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/poker`
+  const raw = import.meta.env.VITE_WS_URL ?? fallback
   const upgraded = raw.startsWith('ws://') && window.location.protocol === 'https:'
     ? raw.replace('ws://', 'wss://')
     : raw
@@ -9,7 +10,7 @@ function _makeWsBase() {
     const u = new URL(upgraded)
     return `${u.protocol}//${u.host}`
   } catch {
-    return 'ws://localhost:4000'
+    return `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
   }
 }
 const WS_BASE = _makeWsBase()

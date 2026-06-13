@@ -47,10 +47,21 @@ export function useSlotSounds(isBgmMuted) {
   }, [])
 
   useEffect(() => {
-    const { sfxVolume } = getAudioSettings()
-    Howler.volume(sfxVolume)
     // Unlock AudioContext early so first play has no latency
     Howler.ctx?.resume?.().catch?.(() => {})
+
+    // iOS: AudioContext starts suspended; restart any loops that failed to play on mount
+    function onUnlock() {
+      for (const [name, id] of Object.entries(loopIds.current)) {
+        const h = howls.current[name]
+        if (h && id != null && !h.playing(id)) {
+          delete loopIds.current[name]
+          loopIds.current[name] = h.play()
+        }
+      }
+    }
+    Howler.on('unlock', onUnlock)
+    return () => Howler.off('unlock', onUnlock)
   }, [])
 
   useEffect(() => {

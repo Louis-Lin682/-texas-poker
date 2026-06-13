@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const _wsBase = import.meta.env.VITE_WS_URL ?? 'ws://localhost:4000/poker'
+const _wsBase = import.meta.env.VITE_WS_URL ?? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/poker`
 const WS_URL  = _wsBase.startsWith('ws://') && window.location.protocol === 'https:'
   ? _wsBase.replace('ws://', 'wss://')
   : _wsBase
