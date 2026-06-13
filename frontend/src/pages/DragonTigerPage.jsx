@@ -9,6 +9,7 @@ import LeaveConfirmModal from '../components/LeaveConfirmModal'
 function _mkImg(src) { const i = new Image(); i.src = src; return i }
 const _dragonFlyImg  = _mkImg('/DragonTiger/fly_dargon/dargon_fly.png')
 const _tigerWalkImg  = _mkImg('/DragonTiger/tiger_walk/tiger_walk.png')
+const _tigerHandImg  = _mkImg('/DragonTiger/win/tiger_hand.png')
 
 const CHIPS = [
   { value: 20,   img: '/chip-red.png',       label: '20' },
@@ -363,14 +364,14 @@ function TigerWinAnim({ onDone }) {
     }
     animId = requestAnimationFrame(tick)
 
-    const t = setTimeout(() => { cancelAnimationFrame(animId); setPhase('final') }, 8000)
+    const t = setTimeout(() => { cancelAnimationFrame(animId); setPhase('final') }, 3000)
     return () => { cancelAnimationFrame(animId); clearTimeout(t) }
   }, [])
 
   // Phase 2: final image burst (2s) then done
   useEffect(() => {
     if (phase !== 'final') return
-    const t = setTimeout(() => onDoneRef.current?.(), 2000)
+    const t = setTimeout(() => onDoneRef.current?.(), 1500)
     return () => clearTimeout(t)
   }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -910,6 +911,21 @@ export default function DragonTigerPage({ auth }) {
   const isBetting = phase === 'betting'
   const isResult  = phase === 'result'
   const faceDown  = phase !== 'result' && phase !== 'dealing'
+
+  // Lock body scroll during result phase (prevents iOS page drift)
+  useEffect(() => {
+    if (isResult) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.touchAction = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.touchAction = ''
+    }
+  }, [isResult])
 
   // ── Render ─────────────────────────────────────────────────
 

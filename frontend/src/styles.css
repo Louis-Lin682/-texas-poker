@@ -10659,6 +10659,7 @@ button.is-pressing {
   background: rgba(0,0,0,.55);
   backdrop-filter: blur(2px);
   z-index: 10;
+  touch-action: none;
 }
 
 .dt-result-overlay {
@@ -10668,6 +10669,7 @@ button.is-pressing {
   align-items: center;
   justify-content: center;
   z-index: 12;
+  touch-action: none;
 }
 
 .dt-result-inner {
@@ -10875,9 +10877,12 @@ button.is-pressing {
 }
 .dt-bead-road-scroll {
   flex: 1;
+  min-width: 0;
   overflow-x: auto;
-  /* overflow-y: hidden; */
+  overflow-y: hidden;
   scrollbar-width: none;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
 }
 .dt-bead-road-scroll::-webkit-scrollbar { display: none; }
 .dt-bead-road-grid {
@@ -11095,7 +11100,7 @@ button.is-pressing {
 .dt-tiger-zoom-wrapper {
   position: absolute;
   inset: 0;
-  animation: dt-tiger-zoom-in 8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation: dt-tiger-zoom-in 3s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
   transform-origin: center center;
 }
 
@@ -11114,18 +11119,18 @@ button.is-pressing {
 
 .dt-tiger-final {
   position: absolute;
-  top: 0; bottom: 0; left: 0; right: 0;
+  top: 50%;
+  left: 50%;
   width: 70vw;
   max-height: 90vh;
   object-fit: contain;
-  margin: auto;
   animation: dt-tiger-burst 2.5s ease-out forwards;
 }
 
 @keyframes dt-tiger-burst {
-  0%   { transform: scale(1);   opacity: 1; }
-  40%  { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(2.8); opacity: 0; }
+  0%   { transform: translate(-50%, -50%) scale(1.5);   opacity: 0.5; }
+  40%  { transform: translate(-50%, -50%) scale(2.3); opacity: 0.3; }
+  100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
 }
 
 /* ── Rules scroll modal ──────────────────────────────────────── */
