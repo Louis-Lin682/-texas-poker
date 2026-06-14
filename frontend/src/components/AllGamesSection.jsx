@@ -152,6 +152,7 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
             type="button"
             className="show-more-games-button"
             onClick={() => {
+              play?.('uiWhoosh')
               setAnimateBatchFrom(visibleItems.length)
               setVisibleCounts((current) => ({
                 ...current,

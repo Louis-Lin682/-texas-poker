@@ -112,7 +112,7 @@ button.is-pressing {
 }
 
 .phone-frame-lobby {
-  padding: 10px 12px 65px;
+  padding: 10px 12px 115px;
 }
 .profile-bar,
 .content-panel,
@@ -395,6 +395,85 @@ button.is-pressing {
   color: #DDE8FF;
   font-size: 15px;
   box-shadow: 0 0 14px rgba(0, 200, 255, 0.5);
+}
+
+/* ── Banner Carousel ─────────────────────────────────────── */
+.banner-carousel {
+  display: grid;
+  border-radius: 28px;
+  overflow: hidden;
+  touch-action: pan-y;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.banner-slide {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.banner-slide--active {
+  opacity: 1;
+  z-index: 1;
+}
+
+.banner-dots {
+  grid-area: 1 / 1;
+  z-index: 2;
+  align-self: end;
+  justify-self: center;
+  display: flex;
+  gap: 6px;
+  padding-bottom: 10px;
+  pointer-events: none;
+}
+
+.banner-dot {
+  width: 6px;
+  height: 3px;
+  border-radius: 10px;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+  pointer-events: auto;
+}
+
+.banner-dot--active {
+  background: #fff;
+  transform: scale(1.4);
+}
+
+/* Hero gradient + content overlays (grid-stacked, fade with slide) */
+.banner-hero-gradient,
+.banner-hero-content {
+  grid-area: 1 / 1;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.banner-hero-gradient {
+  z-index: 1;
+  /* background:
+    linear-gradient(180deg, rgba(8,8,10,0.2), rgba(10,10,13,0.56) 56%, rgba(8,8,10,0.82)),
+    linear-gradient(90deg, rgba(8,8,10,0.84), rgba(8,8,10,0.18) 55%, rgba(8,8,10,0.7)); */
+}
+
+.banner-hero-content {
+  z-index: 2;
+}
+
+.banner-hero-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .hero-banner {
@@ -920,7 +999,7 @@ button.is-pressing {
 
 .gs-dot--active {
   width: 30px;
-  background: #d4af37;
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .all-games-grid {
@@ -5013,14 +5092,13 @@ button.is-pressing {
   cursor: pointer;
   transition: all 220ms ease;
   color: rgba(40, 18, 0, 0.9);
-  background: linear-gradient(175deg, #fff5b0 0%, #f5cf60 20%, #e0a800 48%, #c48000 72%, #7a4e00 100%);
-  border: 1px solid rgba(255, 225, 80, 0.65);
+  border: 1px solid transparent;
 }
 
 .rk-tab.is-active {
-  color: rgba(10, 20, 38, 0.9);
-  background: linear-gradient(175deg, #d8eefa 0%, #8cbcd8 28%, #4882b0 60%, #1c3e62 100%);
-  border: 1px solid rgba(110, 175, 228, 0.55);
+  color: rgba(40, 18, 0, 0.9);
+  background: linear-gradient(175deg, #fff5b0 0%, #f5cf60 20%, #e0a800 48%, #c48000 72%, #7a4e00 100%);
+  border: 1px solid rgba(255, 225, 80, 0.65);
   box-shadow:
     0 0 16px rgba(240, 201, 107, 0.28),
     inset 0 1px 0 rgba(255, 245, 190, 0.22);
@@ -5487,10 +5565,6 @@ button.is-pressing {
   background: linear-gradient(180deg, #8fc4e8, #5b8bb5);
 }
 
-.quest-item.is-claimed {
-  opacity: 0.5;
-}
-
 /* Card top row */
 .quest-item-info {
   display: flex;
@@ -5606,8 +5680,9 @@ button.is-pressing {
   position: relative;
   padding: 14px 14px 14px 18px;
   border-radius: 14px;
-  background: linear-gradient(145deg, rgba(20, 16, 10, 0.97), rgba(32, 24, 12, 0.95));
-  border: 1px solid rgba(226, 206, 135, 0.12);
+  background: linear-gradient(135deg, #7b35ff33, #00c8ff14);
+  border: 1px solid rgba(128, 92, 255, .35);
+  color: #dce8ff;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -7131,8 +7206,6 @@ button.is-pressing {
 
 /* ── Header ─────────────────────────────────────────────── */
 .pt-header {
-  position: relative;
-  z-index: 9201;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -7140,6 +7213,18 @@ button.is-pressing {
   background: rgba(10,10,12,0.9);
   border-bottom: 1px solid rgba(226,206,135,0.12);
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Content area below header — overlay's inset:0 is relative to this */
+.pt-content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .pt-back {
@@ -8138,6 +8223,26 @@ button.is-pressing {
   color: #D8C89A;
   text-shadow: 0 1px 0 #6B3F12, 0 0 8px rgba(255, 218, 120, 0.6);
 }
+
+  .hero-image::after {
+      animation: bannerSweep 1100ms ease both, lightSweep 5.4s ease-in-out 1100ms infinite;
+          transform: translateX(-38%);
+
+    }
+
+@keyframes bannerSweep {
+      from {
+        transform: translateX(-58%);
+        opacity: 0;
+      }
+      45% {
+        opacity: 1;
+      }
+      to {
+        transform: translateX(42%);
+        opacity: 0;
+      }
+    }
 
 /* ── Connecting overlay ─────────────────────────────────── */
 .pt-connecting-overlay {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import HeartIcon from './HeartIcon'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
+import { useAudio } from '../hooks/useAudio'
 
 function FavoritesDrawer({
   isOpen,
@@ -9,6 +10,7 @@ function FavoritesDrawer({
   favoriteIds,
   onToggleFavorite,
 }) {
+  const { play } = useAudio()
   const [shouldRender, setShouldRender] = useState(isOpen)
   const [isClosing, setIsClosing] = useState(false)
 
@@ -84,7 +86,7 @@ function FavoritesDrawer({
             />
             <strong>還沒有收藏的遊戲</strong>
             <p>看到喜歡的遊戲時點一下愛心，這裡就會幫你收好。</p>
-            <button type="button" className="show-more-games-button" onClick={onClose}>
+            <button type="button" className="show-more-games-button" onClick={() => { play('uiWhoosh'); onClose() }}>
               去逛遊戲
             </button>
           </div>

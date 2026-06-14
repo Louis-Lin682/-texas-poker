@@ -673,6 +673,7 @@ function GameTablePage({ auth }) {
         </button>
       </header>
 
+      <div className="pt-content">
       {/* Error banner */}
       {error && <div className="pt-error-bar">{error}</div>}
 
@@ -824,6 +825,7 @@ function GameTablePage({ auth }) {
         </>
       )}
 
+      </div>
     </div>
   )
 }

@@ -10,17 +10,15 @@ import EventDrawer from '../components/EventDrawer'
 import FavoritesDrawer from '../components/FavoritesDrawer'
 import GameModal from '../components/GameModal'
 import GameSection from '../components/GameSection'
-import HeroBanner from '../components/HeroBanner'
+import BannerCarousel from '../components/BannerCarousel'
 import LobbyIntroModal from '../components/LobbyIntroModal'
 import LogoutConfirmModal from '../components/LogoutConfirmModal'
 import MyDrawer from '../components/MyDrawer'
 import NoticeTicker from '../components/NoticeTicker'
 import ProfileCard from '../components/ProfileCard'
-import PromoSection from '../components/PromoSection'
 import QuickActions from '../components/QuickActions'
 import {
   bottomNavItems,
-  promoCards,
   quickActions,
 } from '../data/lobbyData'
 import { useFavorites } from '../hooks/useFavorites'
@@ -158,7 +156,10 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
         ) : (
           <GuestBanner onGoLogin={onGoLogin} />
         )}
-        <HeroBanner />
+        <BannerCarousel onCheckin={() => {
+            if (!auth.isAuthenticated) { openAuthPrompt('default'); return }
+            setIsCheckInOpen(true)
+          }} />
         <QuickActions
           items={quickActions}
           onAction={(action) => {
@@ -183,7 +184,6 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
           play={play}
           onGameClick={setSelectedGame}
         />
-        <PromoSection items={promoCards} onPromoClick={() => navigate('/quest')} />
         <BottomNav
           items={navItems}
           onLeftClick={() => {

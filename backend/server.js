@@ -209,7 +209,7 @@ async function getUserQuestStats(userId) {
     )
     SELECT ls.*,
       COALESCE(ci.streak, 0) AS checkin_streak,
-      (SELECT COUNT(*)::int FROM favorites WHERE user_id=$1) AS favorites_count
+      (SELECT COUNT(*)::int FROM favorites WHERE user_id=$1 AND DATE(created_at)=CURRENT_DATE) AS favorites_count
     FROM ls LEFT JOIN check_ins ci ON ci.user_id=$1
   `, [userId])
   return rows[0]

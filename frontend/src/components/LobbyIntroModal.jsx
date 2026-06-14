@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react'
 import AngelFly from './AngelFly'
 
 const CRITICAL_IMGS = [
-  '/hero-banner.png',
-  '/hero-banner-text.png',
-  '/hero-banner-span.png',
+  '/banner/hero-banner.png',
+  '/banner/checkin-banner.png',
   '/phantom-footer-logo.png',
   '/quick-actions/checkin.png',
   '/quick-actions/event.png',

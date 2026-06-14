@@ -789,6 +789,7 @@ export default function BlackjackTablePage({ auth }) {
         </button>
       </header>
 
+      <div className="pt-content">
       {error && <div className="pt-error-bar">{error}</div>}
 
       {(status === 'idle' || status === 'connecting') && (
@@ -1100,6 +1101,7 @@ export default function BlackjackTablePage({ auth }) {
         </>
       )}
 
+      </div>
     </div>
   )
 }

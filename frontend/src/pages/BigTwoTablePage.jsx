@@ -779,6 +779,7 @@ function BigTwoTablePage({ auth }) {
         </button>
       </header>
 
+      <div className="pt-content">
       {(status === 'idle' || status === 'connecting') && (
         <div className="pt-connecting-overlay">
           <div className="pt-connecting-spinner" />
@@ -824,6 +825,7 @@ function BigTwoTablePage({ auth }) {
         />
       )}
 
+      </div>
     </div>
   )
 }
