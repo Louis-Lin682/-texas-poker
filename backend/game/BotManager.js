@@ -242,9 +242,16 @@ export class BotManager {
     const timer = setTimeout(() => {
       this._actionBots.delete(actingId)
       this._timers.delete(actingId)
-      if (game.players[game.currentPlayerIdx]?.id !== actingId) return
+      if (game.players[game.currentPlayerIdx]?.id !== actingId) {
+        // Turn moved on before timer fired — re-trigger for whoever is now acting
+        this._handleBigTwoTurn(game, game._publicState())
+        return
+      }
       const bp = game.players.find(p => p.id === actingId)
-      if (!bp || bp.status !== 'playing') return
+      if (!bp || bp.status !== 'playing') {
+        this._handleBigTwoTurn(game, game._publicState())
+        return
+      }
 
       const dec = decideBigTwo({
         hand:          bp.hand,

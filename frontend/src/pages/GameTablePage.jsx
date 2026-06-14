@@ -382,6 +382,7 @@ function GameTablePage({ auth }) {
   const defaultGameSlug = location.state?.gameSlug ?? 'texas-holdem'
 
   const minBuyIn = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
+  const lastChipsRef = useRef(minBuyIn)
 
   const {
     status, rooms, roomId, myId, gameState, winInfo, lastAction, error, cashoutBalance, wasKicked,
@@ -426,6 +427,8 @@ function GameTablePage({ auth }) {
   const myHoleCards = gameState?.myHoleCards ?? []
 
   const [me, p1, p2, p3, p4, p5] = getSeats(gameState?.players ?? [], myId)
+
+  if (me?.balance != null) lastChipsRef.current = me.balance
 
   const isMyTurn = !!myId && gameState?.actingPlayerId === myId
   const toCall   = Math.max(0, currentBet - (me?.roundBet ?? 0))
@@ -694,8 +697,8 @@ function GameTablePage({ auth }) {
           status={status}
           rooms={rooms}
           buyIn={minBuyIn}
-          onCreateRoom={(opts) => createRoom({ buyIn: minBuyIn, gameSlug: defaultGameSlug, ...opts })}
-          onJoinRoom={(id) => joinRoom(id, minBuyIn)}
+          onCreateRoom={(opts) => createRoom({ ...opts, buyIn: lastChipsRef.current, gameSlug: defaultGameSlug })}
+          onJoinRoom={(id) => joinRoom(id, lastChipsRef.current)}
           onRefresh={refreshRooms}
         />
       )}

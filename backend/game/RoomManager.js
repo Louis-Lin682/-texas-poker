@@ -552,7 +552,10 @@ export class RoomManager {
     if (game.phase !== 'playing') return
 
     const actingId = game.players[game.currentPlayerIdx]?.id
-    if (!actingId || this.botManager?.isBot(actingId)) return
+    if (!actingId) return
+
+    const isBot = this.botManager?.isBot(actingId) ?? false
+    const timeout = isBot ? 5_000 : 30_000
 
     const t = setTimeout(() => {
       this._afkTimers.delete(roomId)
@@ -562,14 +565,14 @@ export class RoomManager {
       if (!cur || cur.id !== actingId) return
       try {
         if (!g.pile || g.pile.playerId === actingId) {
-          g.processAction(actingId, 'play', [cur.hand[0]])
+          g.processAction(actingId, 'play', cur.hand[0] ? [cur.hand[0]] : [])
         } else {
           g.processAction(actingId, 'pass')
         }
       } catch {
         try { g.processAction(actingId, 'pass') } catch {}
       }
-    }, 30_000)
+    }, timeout)
 
     this._afkTimers.set(roomId, t)
   }

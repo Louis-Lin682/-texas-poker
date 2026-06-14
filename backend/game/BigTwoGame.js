@@ -152,9 +152,11 @@ export class BigTwoGame {
     }
     const p = this._find(id)
     if (!p || p.status === 'finished') return
+    const wasCurrent = this.players[this.currentPlayerIdx]?.id === id
     p.status  = 'finished'
     p.balance = 0
     p.hand    = []
+    if (wasCurrent) this._moveNext()
     this._broadcastState()
     this._checkEnd()
   }

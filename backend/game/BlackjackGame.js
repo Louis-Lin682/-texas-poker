@@ -462,6 +462,11 @@ export class BlackjackGame {
     p.bet = amount
     p.balance -= amount
     this._emit(this.publicState())
+    // All players have bet — no need to wait for the timer
+    if (this.players.every(pl => pl.bet > 0)) {
+      clearTimeout(this._betTimer)
+      this._endBetting()
+    }
   }
 
   _handleAction(actor, action, amount) {

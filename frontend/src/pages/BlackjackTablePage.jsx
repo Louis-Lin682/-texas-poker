@@ -116,14 +116,14 @@ const MAX_BET_PRESETS = [
 ]
 
 // ── Image action button (blackjack UI) ────────────────────
-function BjBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
+function BjBtn({ src, alt, onClick, disabled, amount, amountStyle, style, imgStyle }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled} style={{
       position: 'relative', background: 'none', border: 'none', padding: 0,
       cursor: disabled ? 'not-allowed' : 'pointer',
       opacity: disabled ? 0.4 : 1, flexShrink: 0, ...style,
     }}>
-      <img src={src} alt={alt} style={{ display: 'block', height: 52, width: 'auto', maxWidth: 68, objectFit: 'contain' }} />
+      <img src={src} alt={alt} style={{ display: 'block', height: 52, width: 'auto', maxWidth: 68, objectFit: 'contain', ...imgStyle }} />
       {amount != null && (
         <span style={{
           position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
@@ -436,6 +436,7 @@ export default function BlackjackTablePage({ auth }) {
   const location = useLocation()
   const gameStatus = useGameStatus('blackjack')
   const minBuyIn = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
+  const lastChipsRef = useRef(minBuyIn)
 
   const { play, stop, preload } = useAudio()
 
@@ -443,7 +444,7 @@ export default function BlackjackTablePage({ auth }) {
   const toggleGameMute = () => setIsGameMuted(m => !m)
 
   useEffect(() => {
-    preload(['bj_win', 'bj_blackjack', 'bj_tie', 'bj_bust', 'bj_lose', 'bj_fivecard', 'bj_dealerBust', 'bj_nowYou', 'bj_insurance', 'bj_flip'])
+    preload(['bj_win', 'bj_blackjack', 'bj_tie', 'bj_bust', 'bj_lose', 'bj_fivecard', 'bj_dealerBust', 'bj_nowYou', 'bj_insurance', 'bj_flip', 'bj_stand', 'bj_hit', 'bj_double', 'bj_split'])
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -479,6 +480,8 @@ export default function BlackjackTablePage({ auth }) {
   const prevRoomIdRef = useRef(null)
   const prevCardCountRef = useRef(0)
   const hasCardBaselineRef = useRef(false)
+  const prevDealStepRef = useRef(0)
+  const isMyTurnRef = useRef(false)
 
   const timeLeft       = useCountdown(gameState?.betDeadline)
   const resultTimeLeft = useCountdown(gameState?.resultDeadline)
@@ -518,9 +521,14 @@ export default function BlackjackTablePage({ auth }) {
     }
   }, [gameState?.phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Play deal sound for each card revealed (dealStep > 0 = one card just appeared)
+  // Play flip sound per card during deal; play now-you when deal finishes and it's my turn
   useEffect(() => {
-    if (dealStep > 0) play('bj_flip')
+    if (dealStep > 0) {
+      play('bj_flip')
+    } else if (prevDealStepRef.current > 0 && isMyTurnRef.current) {
+      play('bj_nowYou')
+    }
+    prevDealStepRef.current = dealStep
   }, [dealStep, play])
 
   // Hit / dealer-draw sounds (only when deal animation is done)
@@ -547,17 +555,16 @@ export default function BlackjackTablePage({ auth }) {
 
   useEffect(() => {
     if (cashoutBalance != null && !cashoutShown.current) {
-      cashoutShown.current = true; auth?.refreshUser?.()
+      cashoutShown.current = true
+      auth?.refreshUser?.()
     }
   }, [cashoutBalance]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Blackjack voice ──────────────────────────────────────
   const bjPrevActorRef = useRef(null)
   useEffect(() => {
-    const current = gameState?.currentActorId
-    if (current === myId && bjPrevActorRef.current !== myId) play('bj_nowYou')
-    bjPrevActorRef.current = current ?? null
-  }, [gameState?.currentActorId, myId]) // eslint-disable-line react-hooks/exhaustive-deps
+    bjPrevActorRef.current = gameState?.currentActorId ?? null
+  }, [gameState?.currentActorId])
 
   const bjPrevInsuranceRef = useRef(false)
   useEffect(() => {
@@ -648,6 +655,7 @@ export default function BlackjackTablePage({ auth }) {
   // ── Derived state ─────────────────────────────────────
   const phase = gameState?.phase ?? 'waiting'
   const myPlayer = gameState?.players?.find(p => p.id === myId)
+  if (myPlayer?.balance != null) lastChipsRef.current = myPlayer.balance
   const [p1, p2, p3, p4] = getSeats(gameState?.players ?? [], myId)
   // Ordered for table positions: [p2, p1, me, p3, p4]
   const tablePlayers = [p2, p1, myPlayer ?? null, p3, p4]
@@ -668,6 +676,7 @@ export default function BlackjackTablePage({ auth }) {
     : Infinity
 
   const isMyTurn = gameState?.currentActorId === myId
+  isMyTurnRef.current = isMyTurn
   const myCurrentHandIdx = isMyTurn ? (gameState?.currentHandIdx ?? 0) : (myPlayer?.currentHandIdx ?? 0)
   const myCurrentHand = myPlayer?.hands?.[myCurrentHandIdx]
   const isPlaying = !!roomId && phase !== 'waiting'
@@ -792,8 +801,8 @@ export default function BlackjackTablePage({ auth }) {
       {!roomId && status === 'connected' && (
         <LobbyView
           status={status} rooms={rooms}
-          onCreateRoom={(opts) => createRoom({ buyIn: opts.buyIn ?? minBuyIn, ...opts })}
-          onJoinRoom={(id, buyIn) => joinRoom(id, buyIn ?? minBuyIn)}
+          onCreateRoom={(opts) => createRoom({ ...opts, buyIn: lastChipsRef.current })}
+          onJoinRoom={(id) => joinRoom(id, lastChipsRef.current)}
           onRefresh={refreshRooms}
           userBalance={auth?.user?.balance ?? 0}
           minBuyIn={minBuyIn}
@@ -1060,14 +1069,16 @@ export default function BlackjackTablePage({ auth }) {
                     src="/blackjack/Betting.png" alt="確認下注"
                     disabled={betAmount < (gameState?.minBet ?? 50)}
                     onClick={confirmBet}
+                    imgStyle={{ maxWidth: 'none' }}
                   />
                 </div>
               </div>
             )}
 
-            {/* Action bar — playing phase: stop/hit/double/split + insurance */}
-            {phase === 'playing' && isMyTurn && (
+            {/* Action bar — playing phase: always visible; masked when not my turn */}
+            {phase === 'playing' && (
               <div className="pt-actions">
+                {!isMyTurn && <div className="pt-actions-mask" />}
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
                   {canInsurance && (
                     <BjBtn
@@ -1077,10 +1088,10 @@ export default function BlackjackTablePage({ auth }) {
                       onClick={() => doAction('insurance')}
                     />
                   )}
-                  <BjBtn src="/blackjack/stop.png" alt="停牌" onClick={() => doAction('stand')} />
-                  <BjBtn src="/blackjack/hold.png" alt="要牌" onClick={() => doAction('hit')} />
-                  <BjBtn src="/blackjack/double.png" alt="加倍" disabled={!canDouble} onClick={() => doAction('double')} />
-                  <BjBtn src="/blackjack/Split.png" alt="分牌" disabled={!canSplit} onClick={() => doAction('split')} />
+                  <BjBtn src="/blackjack/stop.png" alt="停牌" onClick={() => { play('bj_stand'); doAction('stand') }} />
+                  <BjBtn src="/blackjack/hold.png" alt="要牌" onClick={() => { play('bj_hit'); doAction('hit') }} />
+                  <BjBtn src="/blackjack/double.png" alt="加倍" disabled={!canDouble} onClick={() => { play('bj_double'); doAction('double') }} />
+                  <BjBtn src="/blackjack/Split.png" alt="分牌" disabled={!canSplit} onClick={() => { play('bj_split'); doAction('split') }} />
                 </div>
               </div>
             )}

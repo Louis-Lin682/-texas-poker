@@ -7131,6 +7131,8 @@ button.is-pressing {
 
 /* ── Header ─────────────────────────────────────────────── */
 .pt-header {
+  position: relative;
+  z-index: 9201;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -7936,6 +7938,14 @@ button.is-pressing {
   pointer-events: none;
 }
 
+.pt-actions-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: all;
+}
+
 .pt-waiting-inline {
   display: block;
   font-size: 11px;
@@ -8106,7 +8116,7 @@ button.is-pressing {
 .lcm-btn:active { filter: brightness(.82); }
 .lcm-btn img {
   width: 100%;
-  height: auto;
+  height: 45px;
   display: block;
 }
 .lcm-btn-label {
@@ -8531,6 +8541,11 @@ button.is-pressing {
 
 
 .bt-opp.is-finished { opacity: 0.45; }
+
+.bt-opp.is-acting .bt-opp-avatar {
+  border-color: #f5d97a;
+  box-shadow: 0 0 8px 2px rgba(245, 217, 122, 0.75);
+}
 
 .bt-opp-top {
   display: flex;

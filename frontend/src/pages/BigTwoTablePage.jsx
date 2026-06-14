@@ -590,6 +590,7 @@ function BigTwoTablePage({ auth }) {
   const location = useLocation()
   const gameStatus = useGameStatus('big-two')
   const minBuyIn = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
+  const lastChipsRef = useRef(minBuyIn)
   const {
     status, rooms, roomId, myId, gameState, gameResult, lastAction,
     error, cashoutBalance, wasKicked,
@@ -622,6 +623,9 @@ function BigTwoTablePage({ auth }) {
   const isWaiting = !!roomId && phase === 'waiting'
   const isPlaying = !!roomId && (phase === 'playing' || phase === 'finished')
   const betUnit   = gameState?.betUnit ?? 10
+
+  const myBtPlayer = gameState?.players?.find(p => p.id === myId)
+  if (myBtPlayer?.balance != null) lastChipsRef.current = myBtPlayer.balance
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const [isEntering,       setIsEntering]       = useState(false)
@@ -793,8 +797,8 @@ function BigTwoTablePage({ auth }) {
           status={status}
           rooms={rooms}
           buyIn={minBuyIn}
-          onCreateRoom={(opts) => createRoom(opts)}
-          onJoinRoom={(id, buyIn) => joinRoom(id, buyIn)}
+          onCreateRoom={(opts) => createRoom({ ...opts, buyIn: lastChipsRef.current })}
+          onJoinRoom={(id) => joinRoom(id, lastChipsRef.current)}
           onRefresh={refreshRooms}
         />
       )}
