@@ -6878,7 +6878,8 @@ button.is-pressing {
   background-size: cover;
   background-repeat: no-repeat;
   background-position: bottom;
-  padding-bottom: 130px;
+  margin-bottom: 130px;
+  padding-top: 20px;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -7438,7 +7439,7 @@ button.is-pressing {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  align-items: center;
+  align-items: baseline;
 }
 
 .pt-room-label {
@@ -8184,8 +8185,8 @@ button.is-pressing {
 
 .pt-mute-btn img {
   display: block;
-  width: 28px;
-  height: 28px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
 }
 .pt-lobby-refresh img {
