@@ -7400,6 +7400,7 @@ button.is-pressing {
   position: relative;
   z-index: 10;
   transform: translateZ(0);
+  will-change: transform;
 }
 
 .pt-content {
@@ -8437,8 +8438,7 @@ button.is-pressing {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  background: rgba(10, 10, 13, 0.92);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 10, 13, 0.96);
 }
 
 .pt-connecting-spinner {
