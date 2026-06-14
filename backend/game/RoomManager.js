@@ -73,7 +73,12 @@ export class RoomManager {
     const info = this.clients.get(ws)
     if (info?.roomId) {
       const game = this.rooms.get(info.roomId)
-      if (game?.gameSlug === 'dragon-tiger' || (game?.gameSlug === 'big-two' && game?.phase === 'playing')) {
+      const needsGrace =
+        game?.gameSlug === 'dragon-tiger' ||
+        (game?.gameSlug === 'big-two'       && game?.phase === 'playing') ||
+        (game?.gameSlug === 'blackjack'     && game?.phase !== 'waiting') ||
+        (game?.gameSlug === 'texas-holdem'  && game?.phase !== 'waiting')
+      if (needsGrace) {
         this._startGracePeriod(info.userId, info.roomId)
       } else {
         this._leaveRoom(ws, info)
@@ -193,13 +198,13 @@ export class RoomManager {
   async _joinRoom(ws, info, roomId, buyIn) {
     if (info.roomId) this._leaveRoom(ws, info)
 
-    // Dragon Tiger / Big Two (playing) grace-period reconnect
+    // Grace-period reconnect (DT / Big Two playing / Blackjack / Texas in-progress)
     const grace = this._graceTimers.get(info.userId)
     if (grace) {
       clearTimeout(grace.timer)
       this._graceTimers.delete(info.userId)
       if (grace.roomId === roomId) {
-        // Same DT room — restore session without DB deduction
+        // Same room — restore session without DB deduction
         const game = this.rooms.get(roomId)
         if (game) {
           info.roomId = roomId
