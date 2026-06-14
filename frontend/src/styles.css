@@ -6878,6 +6878,7 @@ button.is-pressing {
   background-size: cover;
   background-repeat: no-repeat;
   background-position: bottom;
+  padding-bottom: 130px;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -7437,6 +7438,7 @@ button.is-pressing {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  align-items: center;
 }
 
 .pt-room-label {
