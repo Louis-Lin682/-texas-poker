@@ -761,6 +761,19 @@ function BigTwoTablePage({ auth }) {
       {/* Result overlay */}
       <ResultOverlay gameResult={gameResult} />
 
+      {/* Overlays before header — mirrors ThunderJoker pattern so pt-header z-index:10 always paints above on iOS */}
+      {(status === 'idle' || status === 'connecting') && (
+        <div className="pt-connecting-overlay">
+          <div className="pt-connecting-spinner" />
+          <span className="pt-connecting-text">連線中…</span>
+        </div>
+      )}
+      {(status === 'disconnected' || status === 'error') && (
+        <div className="pt-connecting-overlay">
+          <span className="pt-connecting-text" style={{color:'#f06060'}}>連線中斷，請重新整理頁面</span>
+        </div>
+      )}
+
       {/* Header */}
       <header className="pt-header">
         <button type="button" className="pt-back" onClick={handleBack}>
@@ -780,18 +793,6 @@ function BigTwoTablePage({ auth }) {
       </header>
 
       <div className="pt-content">
-      {(status === 'idle' || status === 'connecting') && (
-        <div className="pt-connecting-overlay">
-          <div className="pt-connecting-spinner" />
-          <span className="pt-connecting-text">連線中…</span>
-        </div>
-      )}
-
-      {(status === 'disconnected' || status === 'error') && (
-        <div className="pt-connecting-overlay">
-          <span className="pt-connecting-text" style={{color:'#f06060'}}>連線中斷，請重新整理頁面</span>
-        </div>
-      )}
 
       {!roomId && status === 'connected' && (
         <LobbyView

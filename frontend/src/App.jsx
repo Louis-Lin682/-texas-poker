@@ -145,7 +145,7 @@ function App() {
           <Route path="/ledger"        element={<LedgerPage />} />
           <Route path="/rank"          element={<RankPage />} />
           <Route path="/event"         element={<EventPage />} />
-          <Route path="/quest"         element={<QuestPage />} />
+          <Route path="/quest"         element={<QuestPage auth={auth} />} />
           <Route path="/news"          element={<NewsPage />} />
           <Route path="/settings"      element={<SettingsPage />} />
           <Route path="/support"       element={<SupportPage onUnreadChange={resetSupportUnread} />} />

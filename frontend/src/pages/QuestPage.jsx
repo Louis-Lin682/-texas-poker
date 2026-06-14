@@ -139,7 +139,7 @@ function AchievementGroup({ group, onClaim, claiming }) {
   )
 }
 
-function QuestPage() {
+function QuestPage({ auth }) {
   const [tab, setTab]         = useState('daily')
   const [data, setData]       = useState(null)
   const [loading, setLoading] = useState(true)
@@ -167,6 +167,7 @@ function QuestPage() {
       await claimQuest(id)
       const fresh = await getQuests()
       setData(fresh)
+      auth?.refreshUser?.()
     } catch {}
     finally { setClaiming(null) }
   }

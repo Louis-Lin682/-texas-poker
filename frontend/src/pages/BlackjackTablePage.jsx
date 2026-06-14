@@ -771,6 +771,14 @@ export default function BlackjackTablePage({ auth }) {
         </div>
       )}
 
+      {/* Overlays before header — mirrors ThunderJoker pattern so pt-header z-index:10 always paints above on iOS */}
+      {(status === 'idle' || status === 'connecting') && (
+        <div className="pt-connecting-overlay">
+          <div className="pt-connecting-spinner" />
+          <span className="pt-connecting-text">連線中…</span>
+        </div>
+      )}
+
       <header className="pt-header">
         <button type="button" className="pt-back" onClick={handleBack}>
           <img src="/arrow.png" alt="返回" />
@@ -791,13 +799,6 @@ export default function BlackjackTablePage({ auth }) {
 
       <div className="pt-content">
       {error && <div className="pt-error-bar">{error}</div>}
-
-      {(status === 'idle' || status === 'connecting') && (
-        <div className="pt-connecting-overlay">
-          <div className="pt-connecting-spinner" />
-          <span className="pt-connecting-text">連線中…</span>
-        </div>
-      )}
 
       {!roomId && status === 'connected' && (
         <LobbyView
