@@ -123,7 +123,7 @@ function BjBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
       cursor: disabled ? 'not-allowed' : 'pointer',
       opacity: disabled ? 0.4 : 1, flexShrink: 0, ...style,
     }}>
-      <img src={src} alt={alt} style={{ display: 'block', height: 52, width: 'auto', maxWidth: '100%' }} />
+      <img src={src} alt={alt} style={{ display: 'block', height: 52, width: 'auto', maxWidth: 68, objectFit: 'contain' }} />
       {amount != null && (
         <span style={{
           position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
@@ -443,7 +443,7 @@ export default function BlackjackTablePage({ auth }) {
   const toggleGameMute = () => setIsGameMuted(m => !m)
 
   useEffect(() => {
-    preload(['bj_win', 'bj_blackjack', 'bj_tie', 'bj_bust', 'bj_lose', 'bj_fivecard', 'bj_dealerBust', 'bj_nowYou', 'bj_insurance'])
+    preload(['bj_win', 'bj_blackjack', 'bj_tie', 'bj_bust', 'bj_lose', 'bj_fivecard', 'bj_dealerBust', 'bj_nowYou', 'bj_insurance', 'bj_flip'])
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -520,7 +520,7 @@ export default function BlackjackTablePage({ auth }) {
 
   // Play deal sound for each card revealed (dealStep > 0 = one card just appeared)
   useEffect(() => {
-    if (dealStep > 0) play('cardDeal')
+    if (dealStep > 0) play('bj_flip')
   }, [dealStep, play])
 
   // Hit / dealer-draw sounds (only when deal animation is done)
@@ -1068,25 +1068,19 @@ export default function BlackjackTablePage({ auth }) {
             {/* Action bar — playing phase: stop/hit/double/split + insurance */}
             {phase === 'playing' && isMyTurn && (
               <div className="pt-actions">
-                {canInsurance && (
-                  <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                  {canInsurance && (
                     <BjBtn
                       src="/blackjack/Insurance.png" alt="買保險"
                       amount={Math.floor((myCurrentHand?.bet ?? 0) / 2)}
                       amountStyle={{ right: '15%', top: '25%', transform: 'none' }}
                       onClick={() => doAction('insurance')}
                     />
-                  </div>
-                )}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+                  )}
                   <BjBtn src="/blackjack/stop.png" alt="停牌" onClick={() => doAction('stand')} />
                   <BjBtn src="/blackjack/hold.png" alt="要牌" onClick={() => doAction('hit')} />
-                  {canDouble && (
-                    <BjBtn src="/blackjack/double.png" alt="加倍" onClick={() => doAction('double')} />
-                  )}
-                  {canSplit && (
-                    <BjBtn src="/blackjack/Split.png" alt="分牌" onClick={() => doAction('split')} />
-                  )}
+                  <BjBtn src="/blackjack/double.png" alt="加倍" disabled={!canDouble} onClick={() => doAction('double')} />
+                  <BjBtn src="/blackjack/Split.png" alt="分牌" disabled={!canSplit} onClick={() => doAction('split')} />
                 </div>
               </div>
             )}
