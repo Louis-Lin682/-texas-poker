@@ -23,6 +23,7 @@ const TYPE_LABEL = {
   loss:         '扣分',
   checkin:      '簽到',
   quest_reward: '任務獎勵',
+  deposit:      '儲值',
 }
 
 const GAME_LABEL = {

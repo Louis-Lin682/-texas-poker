@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const SLIDES = [
-  { src: '/banner/hero-banner.png', to: '/event' },
+  { src: '/banner/hero-banner.png', to: '/deposit' },
   { src: '/banner/checkin-banner.png', action: 'checkin' },
 ]
 

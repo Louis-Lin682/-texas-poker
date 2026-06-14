@@ -66,7 +66,7 @@ function ProfileCard({ profile, isAuthenticated, isRefreshingBalance, onAccountA
           </div>
 
           <div className="profile-badges">
-            <button type="button" className="balance-add-button" aria-label="add chips">
+            <button type="button" className="balance-add-button" aria-label="add chips" onClick={() => navigate('/deposit')}>
               +
             </button>
             <button type="button" className="round-icon cs-msg-btn" aria-label="客服訊息" onClick={handleMessageClick}>

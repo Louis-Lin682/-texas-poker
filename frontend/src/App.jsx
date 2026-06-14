@@ -6,6 +6,7 @@ import BlackjackTablePage from './pages/BlackjackTablePage'
 import DragonTigerPage from './pages/DragonTigerPage'
 import EventPage from './pages/EventPage'
 import GameTablePage from './pages/GameTablePage'
+import DepositPage from './pages/DepositPage'
 import LedgerPage from './pages/LedgerPage'
 import LobbyPage from './pages/LobbyPage'
 import NewsPage from './pages/NewsPage'
@@ -26,7 +27,7 @@ import { LoadingProvider, useLoading } from './context/LoadingContext'
 const GAME_ROUTES    = ['/table', '/big-two', '/blackjack', '/thunder-joker', '/dragon-tiger']
 const NON_LOBBY_PATHS = [
   '/auth', '/table', '/big-two', '/blackjack', '/thunder-joker', '/dragon-tiger',
-  '/ledger', '/rank', '/event', '/quest', '/news', '/settings', '/support',
+  '/ledger', '/rank', '/event', '/quest', '/news', '/settings', '/support', '/deposit',
 ]
 
 function ScrollToTop() {
@@ -140,6 +141,7 @@ function App() {
           <Route path="/blackjack"     element={<BlackjackTablePage auth={auth} />} />
           <Route path="/dragon-tiger"  element={<DragonTigerPage auth={auth} />} />
           <Route path="/thunder-joker" element={<ThunderJokerPage auth={auth} />} />
+          <Route path="/deposit"        element={<DepositPage auth={auth} />} />
           <Route path="/ledger"        element={<LedgerPage />} />
           <Route path="/rank"          element={<RankPage />} />
           <Route path="/event"         element={<EventPage />} />

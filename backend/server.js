@@ -209,7 +209,9 @@ async function getUserQuestStats(userId) {
     )
     SELECT ls.*,
       COALESCE(ci.streak, 0) AS checkin_streak,
-      (SELECT COUNT(*)::int FROM favorites WHERE user_id=$1 AND DATE(created_at)=CURRENT_DATE) AS favorites_count
+      (SELECT COUNT(*)::int FROM favorites WHERE user_id=$1 AND DATE(created_at)=CURRENT_DATE) AS favorites_count,
+      (SELECT COUNT(*)::int FROM ledger WHERE user_id=$1 AND type='deposit') AS deposit_count,
+      (SELECT COALESCE(MAX(amount),0)::bigint FROM ledger WHERE user_id=$1 AND type='deposit') AS max_single_deposit
     FROM ls LEFT JOIN check_ins ci ON ci.user_id=$1
   `, [userId])
   return rows[0]
@@ -223,7 +225,9 @@ function calcQuestProgress(stats, actionType, category) {
     case 'chips_wagered':  return category==='daily' ? Number(s.wagered_today) : category==='weekly' ? Number(s.wagered_week) : Number(s.wagered_all)
     case 'chips_won':      return category==='daily' ? Number(s.won_today)     : category==='weekly' ? Number(s.won_week)     : Number(s.won_all)
     case 'checkin_streak': return s.checkin_streak
-    case 'add_favorite':   return s.favorites_count
+    case 'add_favorite':      return s.favorites_count
+    case 'first_deposit':     return s.deposit_count > 0 ? 1 : 0
+    case 'deposit':           return Number(s.max_single_deposit ?? 0)
     default: return 0
   }
 }
@@ -495,6 +499,59 @@ const server = http.createServer(async (request, response) => {
         )
         await client.query('COMMIT')
         sendJson(response, 200, { streak: newStreak, cycle_day: cycleDay, reward, balance: updated[0].balance })
+      } catch (err) {
+        await client.query('ROLLBACK')
+        throw err
+      } finally {
+        client.release()
+      }
+      return
+    }
+
+    if (request.method === 'POST' && pathname === '/deposit') {
+      const user = await getSessionUser(request)
+      if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }, effectiveCors); return }
+      const { amount } = await getRequestBody(request)
+      const n = Math.floor(Number(amount))
+      if (!n || n < 1 || n > 1_000_000) {
+        sendJson(response, 400, { message: '金額無效。' }, effectiveCors); return
+      }
+      const FIRST_DEPOSIT_BONUS_CAP = 5_000
+      const client = await pool.connect()
+      try {
+        await client.query('BEGIN')
+        // Check if this is the user's first deposit
+        const { rows: cntRows } = await client.query(
+          "SELECT COUNT(*)::int AS cnt FROM ledger WHERE user_id=$1 AND type='deposit'",
+          [user.id]
+        )
+        const isFirst = cntRows[0].cnt === 0
+        // Credit deposit
+        const { rows: updated } = await client.query(
+          'UPDATE users SET balance = balance + $1 WHERE id = $2 RETURNING balance',
+          [n, user.id]
+        )
+        await client.query(
+          'INSERT INTO ledger (user_id, type, amount) VALUES ($1, $2, $3)',
+          [user.id, 'deposit', n]
+        )
+        // First deposit bonus (100% up to cap)
+        let bonus = 0
+        let finalBalance = Number(updated[0].balance)
+        if (isFirst) {
+          bonus = Math.min(n, FIRST_DEPOSIT_BONUS_CAP)
+          const { rows: bonusRows } = await client.query(
+            'UPDATE users SET balance = balance + $1 WHERE id = $2 RETURNING balance',
+            [bonus, user.id]
+          )
+          await client.query(
+            'INSERT INTO ledger (user_id, type, amount) VALUES ($1, $2, $3)',
+            [user.id, 'quest_reward', bonus]
+          )
+          finalBalance = Number(bonusRows[0].balance)
+        }
+        await client.query('COMMIT')
+        sendJson(response, 200, { ok: true, amount: n, bonus, balance: finalBalance }, effectiveCors)
       } catch (err) {
         await client.query('ROLLBACK')
         throw err

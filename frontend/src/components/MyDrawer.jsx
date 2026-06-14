@@ -116,7 +116,7 @@ function MyDrawer({ isOpen, onClose, profile, onLogout }) {
             </div>
 
             <div className="my-action-grid">
-              <ActionTile label="儲值紀錄" onClick={() => {}} />
+              <ActionTile label="儲值" onClick={() => goTo('/deposit')} />
               <ActionTile label="任務中心" onClick={() => goTo('/quest')} />
               <ActionTile label="最新消息" onClick={() => goTo('/news')} />
               <ActionTile label="帳務明細" onClick={() => goTo('/ledger')} />
