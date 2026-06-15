@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-const STAR_COUNT    = 130
+const STAR_COUNT    = 220
 const SHOOT_INTERVAL = 6000   // ms between shooting stars
 const FPS_CAP       = 30      // lobby doesn't need 60fps
 
@@ -82,13 +82,21 @@ export default function SpaceBackground() {
         const sx = s.x * W
         const sy = s.y * H
 
-        // 星星本體（移除 radial gradient glow，改用較大半徑模擬）
+        // 光暈用 shadowBlur（GPU加速，比 radialGradient 便宜很多）
+        if (s.r > 1.2 && alpha > 0.4) {
+          ctx.shadowBlur  = s.r * 5
+          ctx.shadowColor = `rgba(200,180,255,${(alpha * 0.5).toFixed(2)})`
+        } else {
+          ctx.shadowBlur = 0
+        }
+
         ctx.beginPath()
-        ctx.arc(sx, sy, s.r * (0.8 + alpha * 0.5), 0, Math.PI * 2)
+        ctx.arc(sx, sy, s.r, 0, Math.PI * 2)
         ctx.fillStyle = s.color === '#ffffff'
           ? `rgba(255,255,255,${alpha.toFixed(2)})`
           : `hsla(${s.hue},80%,90%,${alpha.toFixed(2)})`
         ctx.fill()
+        ctx.shadowBlur = 0
       }
 
       // ── Shooting star ────────────────────────────────────
