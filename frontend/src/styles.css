@@ -3721,7 +3721,7 @@ button.is-pressing {
   aspect-ratio: unset;
   background: url(/enter-game-modal.png) center center / cover no-repeat;
   border-radius: 20px;
-  padding: 48px 42px 18px;
+  padding: 48px 35px 18px;
   width: min(85vw, 450px);
   height: 60%;
   display: grid;
