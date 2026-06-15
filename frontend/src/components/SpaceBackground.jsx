@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react'
 
-const STAR_COUNT    = 220
-const SHOOT_INTERVAL = 4000   // ms between shooting stars
+const STAR_COUNT    = 130
+const SHOOT_INTERVAL = 6000   // ms between shooting stars
+const FPS_CAP       = 30      // lobby doesn't need 60fps
 
 function rand(min, max) { return Math.random() * (max - min) + min }
 
@@ -15,6 +16,8 @@ export default function SpaceBackground() {
 
     let raf
     let lastShoot = 0
+    let lastFrame = 0
+    const FRAME_MS = 1000 / FPS_CAP
 
     // ── Stars ──────────────────────────────────────────────
     const stars = Array.from({ length: STAR_COUNT }, () => {
@@ -62,7 +65,10 @@ export default function SpaceBackground() {
     resize()
 
     function draw() {
+      raf = requestAnimationFrame(draw)
       const ts = Date.now()
+      if (ts - lastFrame < FRAME_MS) return
+      lastFrame = ts
       const W = canvas.width
       const H = canvas.height
       ctx.clearRect(0, 0, W, H)
@@ -76,20 +82,9 @@ export default function SpaceBackground() {
         const sx = s.x * W
         const sy = s.y * H
 
-        // 較大的星星加光暈
-        if (s.r > 1.2 && alpha > 0.5) {
-          const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, s.r * 4)
-          glow.addColorStop(0, `rgba(200,180,255,${(alpha * 0.4).toFixed(2)})`)
-          glow.addColorStop(1, 'rgba(0,0,0,0)')
-          ctx.beginPath()
-          ctx.arc(sx, sy, s.r * 4, 0, Math.PI * 2)
-          ctx.fillStyle = glow
-          ctx.fill()
-        }
-
-        // 星星本體
+        // 星星本體（移除 radial gradient glow，改用較大半徑模擬）
         ctx.beginPath()
-        ctx.arc(sx, sy, s.r, 0, Math.PI * 2)
+        ctx.arc(sx, sy, s.r * (0.8 + alpha * 0.5), 0, Math.PI * 2)
         ctx.fillStyle = s.color === '#ffffff'
           ? `rgba(255,255,255,${alpha.toFixed(2)})`
           : `hsla(${s.hue},80%,90%,${alpha.toFixed(2)})`
@@ -124,7 +119,6 @@ export default function SpaceBackground() {
         }
       }
 
-      raf = requestAnimationFrame(draw)
     }
 
     raf = requestAnimationFrame(draw)
