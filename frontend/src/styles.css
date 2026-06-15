@@ -2210,7 +2210,7 @@ button.is-pressing {
   width: 4px;
   border-radius: 999px;
   background: #d4af37;
-  height: 75px; 
+  height: -webkit-fill-available; 
 }
 
 .ledger-page-row-cash_out::before {
@@ -2222,7 +2222,7 @@ button.is-pressing {
   width: 4px;
   border-radius: 999px;
   background: #66dd88; 
-  height: 75px;
+  height: -webkit-fill-available;
 }
 
 .ledger-page-row-buy_in::before {
@@ -2234,7 +2234,7 @@ button.is-pressing {
   width: 4px;
   border-radius: 999px;
   background: #88bbff;
-  height: 75px;
+  height: -webkit-fill-available;
 }
 
 .ledger-page-row-hand_win::before, .ledger-page-row-win::before {
@@ -2246,7 +2246,7 @@ button.is-pressing {
   width: 4px;
   border-radius: 999px;
   background: #e2ce87;
-  height: 75px;
+  height: -webkit-fill-available;
 }
 
 .ledger-page-row-hand_loss::before,.ledger-page-row-loss::before {
@@ -2258,7 +2258,7 @@ button.is-pressing {
   width: 4px;
   border-radius: 999px;
   background: #ff8877;
-  height: 75px;
+  height: -webkit-fill-available;
 }
 
 .ledger-page-row-quest_reward::before {
@@ -2270,7 +2270,7 @@ button.is-pressing {
   width: 4px;
   border-radius: 999px;
   background: #c084ff;
-  height: 75px;
+  height: -webkit-fill-available;
 }
 
 .ledger-page-row-deposit::before {
@@ -2282,7 +2282,7 @@ button.is-pressing {
   width: 4px;
   border-radius: 999px;
   background: #f4eedf;
-  height: 75px;
+  height: -webkit-fill-available;
 }
 
 
@@ -6879,7 +6879,6 @@ button.is-pressing {
   background-repeat: no-repeat;
   background-position: bottom;
   margin-bottom: 130px;
-  padding-top: 20px;
 }
 
 /* ═══════════════════════════════════════════════════════════
