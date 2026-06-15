@@ -49,8 +49,12 @@ export default function SpaceBackground() {
     }
 
     function resize() {
-      canvas.width  = canvas.offsetWidth
-      canvas.height = canvas.offsetHeight
+      const w = canvas.offsetWidth
+      const h = canvas.offsetHeight
+      if (!w || !h) return
+      if (canvas.width === w && canvas.height === h) return
+      canvas.width  = w
+      canvas.height = h
     }
 
     const ro = new ResizeObserver(resize)
