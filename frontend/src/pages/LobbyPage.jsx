@@ -13,6 +13,7 @@ import GameSection from '../components/GameSection'
 import BannerCarousel from '../components/BannerCarousel'
 import LobbyIntroModal from '../components/LobbyIntroModal'
 import LogoutConfirmModal from '../components/LogoutConfirmModal'
+import SpaceBackground from '../components/SpaceBackground'
 import MyDrawer from '../components/MyDrawer'
 import NoticeTicker from '../components/NoticeTicker'
 import ProfileCard from '../components/ProfileCard'
@@ -129,6 +130,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
     <div
       className={`app-shell ${isFavoritesOpen || isMyDrawerOpen || isEventDrawerOpen ? 'has-favorites-open' : ''}`}
     >
+      <SpaceBackground />
 
       {/* {showFloatTop && (
         <button

@@ -98,11 +98,23 @@ function classifyFiveBT(sorted) {
 
 export function btBeats(newCls, newLen, pileCls, pileLen) {
   if (!pileCls) return true
-  if (newLen !== pileLen) return false
-  if (newLen === 5) {
-    if (newCls.typeRank !== pileCls.typeRank) return newCls.typeRank > pileCls.typeRank
-    return newCls.key > pileCls.key
+
+  // 同花順 bomb: overrides 鐵支 / 葫蘆 / 同花 / 順子 / 對子
+  if (newCls.type === 'sf') {
+    if (['quads','fullhouse','flush','straight','pair'].includes(pileCls.type)) return true
+    if (pileCls.type === 'sf') return newCls.key > pileCls.key
+    return false
   }
+
+  // 鐵支 bomb: overrides 葫蘆 / 順子 / 對子
+  if (newCls.type === 'quads') {
+    if (['fullhouse','straight','pair'].includes(pileCls.type)) return true
+    if (pileCls.type === 'quads') return newCls.key > pileCls.key
+    return false
+  }
+
+  // 一般牌型：必須同型同數張，出更大的
+  if (newLen !== pileLen) return false
   if (newCls.type !== pileCls.type) return false
   return newCls.key > pileCls.key
 }

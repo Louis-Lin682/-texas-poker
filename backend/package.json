@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "start": "node --no-warnings server.js"
+    "start": "node --no-warnings server.js",
+    "bot:run": "node --no-warnings bot-runner.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
