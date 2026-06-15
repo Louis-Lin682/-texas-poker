@@ -3726,6 +3726,7 @@ button.is-pressing {
   width: min(85vw, 450px);
   height: 60%;
   display: grid;
+  text-align: center;
 }
 
 .enter-game-wings {
