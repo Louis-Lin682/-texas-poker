@@ -82,12 +82,12 @@ export default function SpaceBackground() {
         const sx = s.x * W
         const sy = s.y * H
 
-        // 光暈用 shadowBlur（GPU加速，比 radialGradient 便宜很多）
+        // 大星：多畫一個半透明大圓當光暈（純 arc，GPU 友善）
         if (s.r > 1.2 && alpha > 0.4) {
-          ctx.shadowBlur  = s.r * 5
-          ctx.shadowColor = `rgba(200,180,255,${(alpha * 0.5).toFixed(2)})`
-        } else {
-          ctx.shadowBlur = 0
+          ctx.beginPath()
+          ctx.arc(sx, sy, s.r * 3.5, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(180,160,255,${(alpha * 0.12).toFixed(2)})`
+          ctx.fill()
         }
 
         ctx.beginPath()
@@ -96,7 +96,6 @@ export default function SpaceBackground() {
           ? `rgba(255,255,255,${alpha.toFixed(2)})`
           : `hsla(${s.hue},80%,90%,${alpha.toFixed(2)})`
         ctx.fill()
-        ctx.shadowBlur = 0
       }
 
       // ── Shooting star ────────────────────────────────────
