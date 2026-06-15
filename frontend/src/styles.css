@@ -3637,6 +3637,7 @@ button.is-pressing {
   display: grid;
   place-items: center;
   padding: 20px;
+  padding-top: calc(20px + env(safe-area-inset-top));
   background: rgba(3, 3, 6, 0.62);
   backdrop-filter: blur(10px);
 }
@@ -3719,7 +3720,7 @@ button.is-pressing {
 
 .enter-game-modal {
   aspect-ratio: unset;
-  background: url(/enter-game-modal.png) center center / cover no-repeat;
+  background: url(/enter-game-modal.png) center / 100% 100% no-repeat;
   border-radius: 20px;
   padding: 48px 35px 18px;
   width: min(85vw, 450px);
