@@ -96,6 +96,7 @@ function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, se
       isMe     ? 'pt-seat-me' : '',
       side === 'left'  ? 'pt-seat-left'  : '',
       side === 'right' ? 'pt-seat-right' : '',
+      side === 'top'   ? 'pt-seat-top'   : '',
     ].filter(Boolean).join(' ')}>
 
       {isActing && <div className="pt-acting-arrow" />}
@@ -115,11 +116,11 @@ function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, se
           <span className="pt-chips">{fmt(player.balance)}</span>
         </div>
       ) : (
-        <>
+        <div className="pt-opp-info">
           <div className="pt-avatar">{player.username[0].toUpperCase()}</div>
           <span className="pt-name">{player.username}</span>
           <span className="pt-chips">{fmt(player.balance)}</span>
-        </>
+        </div>
       )}
 
       {!isMe && (
@@ -719,7 +720,7 @@ function GameTablePage({ auth }) {
           <div className="pt-top-container">
           {/* Seat 3 — top center */}
           <div className="pt-top-center">
-            <Seat player={p3} isActing={acting(p3?.id)} revealedCards={revealedCards} seatIndex={2} dealKey={dealKey} />
+            <Seat player={p3} isActing={acting(p3?.id)} revealedCards={revealedCards} seatIndex={2} dealKey={dealKey} side="top" />
           </div>
 
           {/* Middle: P2/P1 | Table | P4/P5 */}
