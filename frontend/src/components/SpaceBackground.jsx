@@ -57,7 +57,8 @@ export default function SpaceBackground() {
     ro.observe(canvas)
     resize()
 
-    function draw(ts) {
+    function draw() {
+      const ts = Date.now()
       const W = canvas.width
       const H = canvas.height
       ctx.clearRect(0, 0, W, H)
@@ -140,6 +141,8 @@ export default function SpaceBackground() {
         height: '100%',
         pointerEvents: 'none',
         zIndex: 0,
+        willChange: 'transform',
+        transform: 'translateZ(0)',
       }}
     />
   )
