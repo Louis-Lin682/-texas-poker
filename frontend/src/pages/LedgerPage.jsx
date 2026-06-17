@@ -24,6 +24,7 @@ const TYPE_LABEL = {
   checkin:      '簽到',
   quest_reward: '任務獎勵',
   deposit:      '儲值',
+  bet_void:     '退注',
 }
 
 const GAME_LABEL = {
