@@ -186,25 +186,26 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
           play={play}
           onGameClick={setSelectedGame}
         />
-        <BottomNav
-          items={navItems}
-          onLeftClick={() => {
-              setIsMyDrawerOpen(false)
-              setIsEventDrawerOpen((current) => !current)
-            }}
-          onCenterClick={onCenterLogoClick}
-          onRightClick={() => {
-            if (!auth.isAuthenticated) {
-              openAuthPrompt('member')
-              return
-            }
-
-            setIsFavoritesOpen(false)
-            setIsEventDrawerOpen(false)
-            setIsMyDrawerOpen((current) => !current)
-          }}
-        />
       </div>
+
+      <BottomNav
+        items={navItems}
+        onLeftClick={() => {
+            setIsMyDrawerOpen(false)
+            setIsEventDrawerOpen((current) => !current)
+          }}
+        onCenterClick={onCenterLogoClick}
+        onRightClick={() => {
+          if (!auth.isAuthenticated) {
+            openAuthPrompt('member')
+            return
+          }
+
+          setIsFavoritesOpen(false)
+          setIsEventDrawerOpen(false)
+          setIsMyDrawerOpen((current) => !current)
+        }}
+      />
 
       <FavoritesDrawer
         isOpen={isFavoritesOpen}
