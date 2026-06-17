@@ -1,10 +1,31 @@
 import { randomUUID } from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { query as dbQuery } from '../db.js'
 import { PokerGame } from './PokerGame.js'
 import { BigTwoGame } from './BigTwoGame.js'
 import { BlackjackGame } from './BlackjackGame.js'
 import { DragonTigerGame } from './DragonTigerGame.js'
 import { decideBigTwo } from './BigTwoBotPlayer.js'
+
+// DIAGNOSTIC: chip-conservation audit trail, used to track down the zero-sum
+// delta seen in bot-runner.js. Enable with CHIP_AUDIT=1. Safe to remove once
+// root-caused. Logs the true DB total (runner + bots) at every event that
+// should move chips into/out of that total, so a leak shows up as an
+// unexplained jump between two consecutive lines.
+const __dirname  = path.dirname(fileURLToPath(import.meta.url))
+const AUDIT_LOG  = path.join(__dirname, '..', 'chip-audit.log')
+const CHIP_AUDIT = process.env.CHIP_AUDIT === '1'
+if (CHIP_AUDIT) fs.writeFileSync(AUDIT_LOG, `${new Date().toISOString()} ── audit start ──\n`)
+
+// Blackjack and Dragon Tiger are fixed-odds, house-banked games: payouts aren't
+// funded by other players' stakes, so without an explicit house account every
+// round creates or destroys chips relative to the player-balance universe.
+// This reserved account absorbs the opposite of whatever players collectively
+// win/lose each round, keeping the global total constant. Not flagged is_bot so
+// it stays outside bot-runner.js's zero-sum scope (sum of is_bot OR bot_runner).
+export const HOUSE_USERNAME = '_house_bank'
 
 export class RoomManager {
   constructor(pool = null) {
@@ -19,6 +40,27 @@ export class RoomManager {
     // injected after construction
     this.botManager = null
     this.pool = pool
+    // id of the house bank account (see ensureHouseAccount), null until seeded
+    this.houseId = null
+  }
+
+  // Seed (or look up) the reserved house-bank account used to absorb Blackjack /
+  // Dragon Tiger payout imbalance. Call once at startup, mirroring botManager.seedBots().
+  async ensureHouseAccount() {
+    if (!this.pool) return
+    const { rows } = await dbQuery(
+      `INSERT INTO users (username, password_hash, balance, is_bot)
+       VALUES ($1, 'HOUSE_RESERVED', 0, false)
+       ON CONFLICT (username) DO NOTHING
+       RETURNING id`,
+      [HOUSE_USERNAME],
+    )
+    if (rows[0]) {
+      this.houseId = rows[0].id
+      return
+    }
+    const { rows: existing } = await dbQuery('SELECT id FROM users WHERE username = $1', [HOUSE_USERNAME])
+    this.houseId = existing[0]?.id ?? null
   }
 
   // ── Room lifecycle ────────────────────────────────────────
@@ -43,6 +85,21 @@ export class RoomManager {
     if (isDragonTiger) game.start()
     this._broadcastRoomList()
     return roomId
+  }
+
+  // DIAGNOSTIC: see comment near AUDIT_LOG above. Fire-and-forget; queries the
+  // real DB total (the same quantity bot-runner.js's zero-sum check uses) and
+  // appends it with a context tag so we can pinpoint exactly which event
+  // moves the total unexpectedly.
+  _auditChips(ctx, roomId) {
+    if (!this.pool || !CHIP_AUDIT) return
+    dbQuery(`SELECT COALESCE(SUM(balance), 0)::bigint AS total FROM users WHERE username = 'bj_runner' OR username = '_house_bank' OR is_bot = true`)
+      .then(({ rows }) => {
+        fs.appendFileSync(AUDIT_LOG, `${new Date().toISOString()} room=${roomId} ${ctx} total=${rows[0].total}\n`)
+      })
+      .catch(err => {
+        fs.appendFileSync(AUDIT_LOG, `${new Date().toISOString()} room=${roomId} ${ctx} AUDIT-ERROR ${err.message}\n`)
+      })
   }
 
   getRoom(roomId) {
@@ -253,6 +310,7 @@ export class RoomManager {
 
     game.addPlayer({ id: info.userId, username: info.username, balance: buyIn })
     info.roomId = roomId
+    this._auditChips(`join:human buyIn=${buyIn}`, roomId)
 
     this._send(ws, {
       type: 'room_joined',
@@ -294,11 +352,41 @@ export class RoomManager {
 
     if (!game) return
 
-    // Capture chips BEFORE removing (waiting-phase remove deletes from array)
+    // Blackjack: if this player's hand is still unresolved, defer entirely to
+    // the players_removed cleanup that fires once the shared dealer hand
+    // resolves — see _blackjackPendingHand for why crediting balance now
+    // would double-credit them.
+    if (this._blackjackPendingHand(game, info.userId)) {
+      game.removePlayer(info.userId)
+      this._broadcastRoomList()
+      return
+    }
+
+    // Capture chips BEFORE removing (waiting-phase remove deletes from array).
+    // If a hand is in progress the player's blind/bets are in game.pot, not their
+    // balance — add them back so chips are conserved when the room closes mid-hand.
     const player = game.players.find(p => p.id === info.userId)
-    const cashout = player?.balance ?? 0
+    const midHandRefund = game.pot > 0 ? (player?.totalBet ?? 0) : 0
+    // Voluntary leave mid-Dragon-Tiger-round: forfeit the pending bet to the
+    // house rather than refunding it (quitting on an unresolved bet is on the
+    // player) or silently destroying it.
+    const dtForfeit = this._dtPendingBet(game, player)
+    const cashout = (player?.balance ?? 0) + midHandRefund
 
     game.removePlayer(info.userId)
+    this._creditHouse(dtForfeit, roomId, 'voluntary-leave-forfeit')
+    if (this.pool && dtForfeit > 0) {
+      dbQuery(
+        'INSERT INTO ledger (user_id, type, amount, bet, room_id, game, detail) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [info.userId, 'hand_loss', -dtForfeit, dtForfeit, roomId, game.gameSlug, JSON.stringify({ reason: 'left_mid_bet' })],
+      ).catch(err => console.error('[ledger dt-forfeit]', err))
+    }
+    if (this.pool && midHandRefund > 0) {
+      dbQuery(
+        'INSERT INTO ledger (user_id, type, amount, bet, room_id, game, detail) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [info.userId, 'bet_void', midHandRefund, midHandRefund, roomId, game.gameSlug, JSON.stringify({ reason: 'left_mid_hand' })],
+      ).catch(err => console.error('[ledger mid-hand-refund]', err))
+    }
 
     // Return remaining chips to DB and always record cash_out ledger entry
     if (this.pool) {
@@ -322,24 +410,13 @@ export class RoomManager {
       }
     }
 
-    // Check how many human connections (or grace-period players) remain in this room
-    const humansLeft = [...this.clients.values()].filter(c => c.roomId === roomId).length
-    const graceLeft  = [...this._graceTimers.values()].filter(g => g.roomId === roomId).length
-
-    if (humansLeft === 0 && graceLeft === 0) {
-      // Cancel AFK timer before closing
-      const afk = this._afkTimers.get(roomId)
-      if (afk) { clearTimeout(afk); this._afkTimers.delete(roomId) }
-      // Last human left — stop bots and close room
-      game.destroy()
-      for (const p of [...game.players]) {
-        if (this.botManager?.isBot(p.id)) {
-          try { game.removePlayer(p.id) } catch {}
-        }
-      }
-      this.rooms.delete(roomId)
-      this.botManager?.notifyRoomClosed(roomId)
-    }
+    // Close the room if no humans (connected or in grace) remain. destroy()
+    // clears this game's timers; we never call game.removePlayer() again
+    // after that — removePlayer()'s mid-hand fold path can reschedule a
+    // brand-new streetTimer/nextHandTimer on this now-orphaned game, which
+    // can later fire _advancePhase()/_goToShowdown() with zero eligible
+    // players and crash.
+    this._closeRoomIfEmpty(roomId, game, `room-close cashout=${cashout}`)
     this._broadcastRoomList()
   }
 
@@ -349,7 +426,7 @@ export class RoomManager {
 
     const timer = setTimeout(() => {
       this._graceTimers.delete(userId)
-      this._expireGrace(userId, roomId)
+      try { this._expireGrace(userId, roomId) } catch (err) { console.error('[_expireGrace]', err) }
     }, 30_000)
 
     this._graceTimers.set(userId, { timer, roomId })
@@ -359,8 +436,18 @@ export class RoomManager {
     const game = this.rooms.get(roomId)
     if (!game) return
 
+    // Blackjack: defer entirely to players_removed, same as _leaveRoom.
+    if (this._blackjackPendingHand(game, userId)) {
+      game.removePlayer(userId)
+      return
+    }
+
     const player  = game.players.find(p => p.id === userId)
-    const cashout = player?.balance ?? 0
+    const midHandRefund = game.pot > 0 ? (player?.totalBet ?? 0) : 0
+    // Disconnect/grace-expiry mid-Dragon-Tiger-round: refund the pending bet
+    // to the player — this wasn't their choice, unlike a voluntary leave.
+    const dtRefund = this._dtPendingBet(game, player)
+    const cashout = (player?.balance ?? 0) + midHandRefund + dtRefund
 
     game.removePlayer(userId)
 
@@ -372,27 +459,92 @@ export class RoomManager {
           [cashout, userId],
         ).catch(err => console.error('[grace expire cash-out]', err))
       }
+      if (midHandRefund > 0) {
+        dbQuery(
+          'INSERT INTO ledger (user_id, type, amount, bet, room_id, game, detail) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+          [userId, 'bet_void', midHandRefund, midHandRefund, roomId, gameSlug, JSON.stringify({ reason: 'disconnect_mid_hand' })],
+        ).catch(err => console.error('[ledger mid-hand-refund]', err))
+      }
+      if (dtRefund > 0) {
+        dbQuery(
+          'INSERT INTO ledger (user_id, type, amount, bet, room_id, game, detail) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+          [userId, 'bet_void', dtRefund, dtRefund, roomId, gameSlug, JSON.stringify({ reason: 'disconnect_mid_bet' })],
+        ).catch(err => console.error('[ledger dt-refund]', err))
+      }
       dbQuery(
         'INSERT INTO ledger (user_id, type, amount, room_id, game) VALUES ($1, $2, $3, $4, $5)',
         [userId, 'cash_out', cashout, roomId, gameSlug],
       ).catch(err => console.error('[ledger grace expire]', err))
     }
 
-    // Close room if no humans remain (connected or in grace)
-    const humansLeft = [...this.clients.values()].filter(c => c.roomId === roomId).length
-    const graceLeft  = [...this._graceTimers.values()].filter(g => g.roomId === roomId).length
-    if (humansLeft === 0 && graceLeft === 0) {
-      const afk = this._afkTimers.get(roomId)
-      if (afk) { clearTimeout(afk); this._afkTimers.delete(roomId) }
-      game.destroy()
-      this.rooms.delete(roomId)
-      this.botManager?.notifyRoomClosed(roomId)
+    // See _leaveRoom for why we don't call game.removePlayer() again below.
+    if (this._closeRoomIfEmpty(roomId, game, `grace-expire-close cashout=${cashout}`)) {
       this._broadcastRoomList()
     }
   }
 
   _roomOf(info) {
     return info.roomId ? this.rooms.get(info.roomId) ?? null : null
+  }
+
+  // Dragon Tiger deducts a bet from balance immediately on placement, but it
+  // only resolves at _settle() — if a player is removed mid-round (betting/
+  // dealing phase) before that, the staked amount is neither in `balance` nor
+  // in any pot. Callers use this to either forfeit it to the house (voluntary
+  // leave) or refund it to the player (disconnect/grace-expiry).
+  _dtPendingBet(game, player) {
+    if (!player || game.gameSlug !== 'dragon-tiger') return 0
+    if (game.phase !== 'betting' && game.phase !== 'dealing') return 0
+    return Object.values(player.bets ?? {}).reduce((a, v) => a + v, 0)
+  }
+
+  _creditHouse(amount, roomId, ctx) {
+    if (!this.pool || !this.houseId || !amount) return
+    dbQuery('UPDATE users SET balance = balance + $1 WHERE id = $2', [amount, this.houseId])
+      .catch(err => console.error('[house credit]', err))
+    this._auditChips(`house-credit ${ctx} amount=${amount}`, roomId)
+  }
+
+  // BlackjackGame.removePlayer() only ever splices a player out of game.players
+  // when phase === 'waiting'; for any other phase it just flags p._left = true
+  // and leaves them in place, because their bet (if any) is already riding on
+  // the round's one shared dealer hand and can't be cleanly forfeited or
+  // refunded mid-round. That flagged player isn't actually purged until the
+  // round naturally finishes and _resetWaiting() processes its `kicked` list,
+  // which fires its own players_removed credit. So whenever phase !== 'waiting',
+  // crediting player.balance here too would double-credit them once that
+  // later cleanup runs — the caller must defer to it instead.
+  _blackjackPendingHand(game, userId) {
+    if (!game) return false
+    if (game.gameSlug !== 'blackjack' || game.phase === 'waiting') return false
+    return game.players.some(p => p.id === userId)
+  }
+
+  // Shared "close this room if no humans (connected or in grace) remain"
+  // check. Used after any event that might leave a room human-less: explicit
+  // leave, grace-period expiry, or a deferred players_removed cleanup (e.g.
+  // the Blackjack case above, where closing has to wait until the pending
+  // hand actually resolves — destroying the room earlier would kill the
+  // timers _resolve()/_resetWaiting() need to run).
+  _closeRoomIfEmpty(roomId, game, ctx) {
+    const humansLeft = [...this.clients.values()].filter(c => c.roomId === roomId).length
+    const graceLeft  = [...this._graceTimers.values()].filter(g => g.roomId === roomId).length
+    if (humansLeft > 0 || graceLeft > 0) return false
+
+    const afk = this._afkTimers.get(roomId)
+    if (afk) { clearTimeout(afk); this._afkTimers.delete(roomId) }
+    // Return mid-hand pot chips to remaining players (bots) before syncing so
+    // chips inside game.pot aren't silently destroyed when the room closes.
+    if (game.pot > 0) {
+      for (const p of game.players) p.balance += (p.totalBet ?? 0)
+      game.pot = 0
+    }
+    this.botManager?.syncBalances(game)
+    this._auditChips(ctx, roomId)
+    game.destroy()
+    this.rooms.delete(roomId)
+    this.botManager?.notifyRoomClosed(roomId)
+    return true
   }
 
   // ── Game event → WebSocket broadcast ─────────────────────
@@ -424,8 +576,11 @@ export class RoomManager {
     }
 
     if (type === 'showdown' || type === 'hand_result') {
+      // Guard: room already deleted (close sequence in progress) — skip spurious sync
+      if (!this.rooms.has(roomId)) return
       // Sync bot balances to DB after each hand
       this.botManager?.syncBalances(game)
+      this._auditChips('hand-end', roomId)
 
       // Write per-hand win/loss ledger entries for human players
       if (this.pool) {
@@ -477,16 +632,25 @@ export class RoomManager {
       // Blackjack / Dragon Tiger round end: sync balances and write ledger entries
       this.botManager?.syncBalances(game)
       if (this.pool) {
+        let playerNetTotal = 0
         for (const r of data.results) {
-          if (this.botManager?.isBot(r.id)) continue
           if (!r.totalBet) continue
           const net = r.totalReturn - r.totalBet
+          playerNetTotal += net
+          if (this.botManager?.isBot(r.id)) continue
           const entryType = net >= 0 ? 'hand_win' : 'hand_loss'
           dbQuery(
             'INSERT INTO ledger (user_id, type, amount, bet, room_id, game, detail) VALUES ($1, $2, $3, $4, $5, $6, $7)',
             [r.id, entryType, net, r.totalBet, roomId, game.gameSlug, r.detail ? JSON.stringify(r.detail) : null],
           ).catch(err => console.error('[ledger round]', err))
         }
+        // House absorbs the exact opposite of every player's (bot + human) net
+        // this round — see HOUSE_USERNAME comment above for why this is needed.
+        if (this.houseId && playerNetTotal !== 0) {
+          dbQuery('UPDATE users SET balance = balance - $1 WHERE id = $2', [playerNetTotal, this.houseId])
+            .catch(err => console.error('[house adjust]', err))
+        }
+        this._auditChips(`round-result net=${playerNetTotal}`, roomId)
         // Record DT round to shared history table
         if (game.gameSlug === 'dragon-tiger') {
           const st = data.state
@@ -502,12 +666,17 @@ export class RoomManager {
     }
 
     if (type === 'players_removed') {
-      // Return remaining chips to DB for players kicked due to insufficient balance
+      // Return remaining chips to DB for players kicked due to insufficient balance,
+      // or whose cash-out was deferred because they left/disconnected mid-hand
+      // (see _blackjackPendingHand) — reason: 'left' identifies the latter.
       for (const p of data.players) {
         if (this.botManager?.isBot(p.id)) continue
+        // A 'left' player already navigated away from this room (info.roomId
+        // is no longer roomId) — match them by userId alone, wherever they
+        // are now, so they still get their resolved balance pushed live.
         const entry = [...this.clients.entries()]
-          .find(([, info]) => info.userId === p.id && info.roomId === roomId)
-        if (entry) {
+          .find(([, info]) => info.userId === p.id && (p.reason === 'left' || info.roomId === roomId))
+        if (entry && p.reason !== 'left') {
           const [ws, info] = entry
           info.roomId = null
           this._send(ws, { type: 'kicked_from_room', message: '籌碼不足，已離開房間' })
@@ -527,6 +696,9 @@ export class RoomManager {
           ).catch(err => console.error('[ledger kick]', err))
         }
       }
+      // Re-check: closing may have been deferred (e.g. a human left/disconnected
+      // mid-Blackjack-hand — see _blackjackPendingHand) until this cleanup ran.
+      this._closeRoomIfEmpty(roomId, game, 'players-removed-close')
       this._broadcastRoomList()
       return
     }

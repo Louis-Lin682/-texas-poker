@@ -72,6 +72,7 @@ export class BotManager {
 
         try {
           game.addPlayer({ id: botId, username: botInfo.username, balance: buyIn })
+          botInfo.inGameBalance = buyIn  // baseline for delta sync
           const rt = setTimeout(() => {
             try { game.setReady(botId) } catch {}
           }, 400 + Math.random() * 600)
@@ -419,14 +420,22 @@ export class BotManager {
     }
   }
 
-  // Sync in-game balances back to DB after each hand
+  // Sync in-game balance changes back to DB after each hand (delta, not absolute SET)
   syncBalances(game) {
     for (const p of game.players) {
       const info = this.bots.get(p.id)
       if (!info) continue
-      info.balance = p.balance
-      dbQuery('UPDATE users SET balance = $1 WHERE id = $2', [p.balance, p.id])
-        .catch(() => {})
+      // Skip bots that have since moved to a different room — their inGameBalance
+      // belongs to that room now, and syncing here would corrupt both baselines.
+      if (info.roomId !== game.roomId) continue
+      const prev  = info.inGameBalance ?? p.balance
+      const delta = p.balance - prev
+      if (delta !== 0) {
+        dbQuery('UPDATE users SET balance = balance + $1 WHERE id = $2', [delta, p.id])
+          .catch(() => {})
+      }
+      info.inGameBalance = p.balance
+      info.balance       = p.balance
     }
   }
 

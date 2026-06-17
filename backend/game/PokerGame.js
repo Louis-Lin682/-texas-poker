@@ -45,6 +45,7 @@ export class PokerGame {
     this._countdownTimer = null
     this.countdownEnd = null
     this._streetTimer = null
+    this._nextHandTimer = null
 
     // Set by RoomManager: ({ type, ...data }) => void
     this.onEvent = null
@@ -104,7 +105,8 @@ export class PokerGame {
 
   _startHand() {
     this._clearCountdown()
-    if (this._streetTimer) { clearTimeout(this._streetTimer); this._streetTimer = null }
+    if (this._streetTimer)   { clearTimeout(this._streetTimer);  this._streetTimer  = null }
+    if (this._nextHandTimer) { clearTimeout(this._nextHandTimer); this._nextHandTimer = null }
     // Remove players who left mid-hand (balance was zeroed on disconnect)
     this.players = this.players.filter(p => p.balance > 0)
     this.deck = shuffle(createDeck())
@@ -260,7 +262,7 @@ export class PokerGame {
     this._broadcastState()
     this._streetTimer = setTimeout(() => {
       this._streetTimer = null
-      this._advancePhase()
+      try { this._advancePhase() } catch (err) { console.error('[_advancePhase]', err) }
     }, STREET_PAUSE_MS)
   }
 
@@ -307,6 +309,24 @@ export class PokerGame {
     this.phase = 'showdown'
 
     const notFolded = this.players.filter(p => ['active', 'all_in'].includes(p.status))
+    if (notFolded.length === 0) {
+      // Everyone who was still in the hand got removed (e.g. disconnected)
+      // before this showdown timer fired — no one left to award the pot to.
+      this.pot = 0
+      this._broadcastState()
+      this._nextHandTimer = setTimeout(() => {
+        this._nextHandTimer = null
+        try {
+          if (this.players.filter(p => p.balance > 0).length >= 2) {
+            this._startHand()
+          } else {
+            this.phase = 'waiting'
+            this._broadcastState()
+          }
+        } catch (err) { console.error('[_startHand after empty showdown]', err) }
+      }, SHOWDOWN_DELAY_MS)
+      return
+    }
     const { evaluated } = determineWinners(notFolded, this.communityCards)
     const evalMap = new Map(evaluated.map(p => [p.id, p]))
 
@@ -349,13 +369,16 @@ export class PokerGame {
     this.pot = 0
     this._broadcastState()
 
-    setTimeout(() => {
-      if (this.players.filter(p => p.balance > 0).length >= 2) {
-        this._startHand()
-      } else {
-        this.phase = 'waiting'
-        this._broadcastState()
-      }
+    this._nextHandTimer = setTimeout(() => {
+      this._nextHandTimer = null
+      try {
+        if (this.players.filter(p => p.balance > 0).length >= 2) {
+          this._startHand()
+        } else {
+          this.phase = 'waiting'
+          this._broadcastState()
+        }
+      } catch (err) { console.error('[_startHand after showdown]', err) }
     }, SHOWDOWN_DELAY_MS)
   }
 
@@ -412,9 +435,12 @@ export class PokerGame {
       this.pot = 0
       this.actingIndex = -1  // freeze bots until next hand starts
       this._broadcastState()
-      setTimeout(() => {
-        if (this.players.filter(p => p.balance > 0).length >= 2) this._startHand()
-        else { this.phase = 'waiting'; this._broadcastState() }
+      this._nextHandTimer = setTimeout(() => {
+        this._nextHandTimer = null
+        try {
+          if (this.players.filter(p => p.balance > 0).length >= 2) this._startHand()
+          else { this.phase = 'waiting'; this._broadcastState() }
+        } catch (err) { console.error('[_startHand after uncontested]', err) }
       }, FOLD_WIN_DELAY_MS)
       return true
     }
@@ -563,7 +589,8 @@ export class PokerGame {
   destroy() {
     this._clearTurnTimer()
     this._clearCountdown()
-    if (this._streetTimer) { clearTimeout(this._streetTimer); this._streetTimer = null }
+    if (this._streetTimer)   { clearTimeout(this._streetTimer);  this._streetTimer  = null }
+    if (this._nextHandTimer) { clearTimeout(this._nextHandTimer); this._nextHandTimer = null }
   }
 
   _emit(type, data = {}) {

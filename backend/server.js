@@ -7,11 +7,20 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { WebSocketServer } from 'ws'
 import pool, { initDb, query } from './db.js'
-import { RoomManager } from './game/RoomManager.js'
+import { RoomManager, HOUSE_USERNAME } from './game/RoomManager.js'
 import { BotManager } from './game/BotManager.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+// A single room's edge-case bug must never take the whole server (and every
+// other room's players) down with it — log and keep serving instead of exiting.
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err)
+})
+process.on('unhandledRejection', (err) => {
+  console.error('[unhandledRejection]', err)
+})
 
 const port = Number(process.env.PORT || 4000)
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173'
@@ -1084,8 +1093,8 @@ const server = http.createServer(async (request, response) => {
         const offset = (page - 1) * limit
         const search = url.searchParams.get('search') || ''
         const status = url.searchParams.get('status') || ''
-        const vals   = []
-        let where    = 'WHERE is_bot = false'
+        const vals   = [HOUSE_USERNAME]
+        let where    = 'WHERE is_bot = false AND username != $1'
         if (search) { vals.push(`%${search}%`); where += ` AND username ILIKE $${vals.length}` }
         if (status === 'suspended') where += ' AND suspended_at IS NOT NULL'
         if (status === 'active')    where += ' AND suspended_at IS NULL'
@@ -1808,8 +1817,12 @@ wss.on('connection', async (ws, request, user) => {
     }
   })
 
-  ws.on('close', () => roomManager.unregisterClient(ws))
-  ws.on('error', () => roomManager.unregisterClient(ws))
+  ws.on('close', () => {
+    try { roomManager.unregisterClient(ws) } catch (err) { console.error('[ws close]', err) }
+  })
+  ws.on('error', () => {
+    try { roomManager.unregisterClient(ws) } catch (err) { console.error('[ws error]', err) }
+  })
 
   // Send current room list on connect
   ws.send(JSON.stringify({ type: 'room_list', rooms: roomManager.listRooms() }))
@@ -1881,6 +1894,7 @@ async function initDbWithRetry(attemptsLeft = 10) {
 
 initDbWithRetry()
   .then(() => botManager.seedBots())
+  .then(() => roomManager.ensureHouseAccount())
   .then(async () => {
     const { rows: existing } = await query('SELECT 1 FROM admins WHERE username = $1', ['admin'])
     if (existing.length === 0) {
@@ -1945,22 +1959,31 @@ initDbWithRetry()
     setInterval(autoCloseTickets, 60 * 60 * 1000)
 
     // Seed pre-existing rooms so the lobby looks active on startup
-    const r1 = roomManager.createRoom({ smallBlind: 10, bigBlind: 20, maxPlayers: 6 })
-    const g1 = roomManager.getRoom(r1)
-    if (g1) botManager.fillRoom(g1, r1, 2)
+    // DIAGNOSTIC: set SEED_AMBIENT_ROOMS=0 to skip this — used to isolate
+    // bot-runner.js's zero-sum check from chip noise injected by these
+    // always-on bot tables. Dragon Tiger in particular is house-banked: bots
+    // win/lose against the house account (_house_bank), not each other, so
+    // the bot-only SUM(balance) bot-runner.js checks will drift even though
+    // the full economy (bots + house) is still conserved. Not a bug — just
+    // outside that check's scope.
+    if (process.env.SEED_AMBIENT_ROOMS !== '0') {
+      const r1 = roomManager.createRoom({ smallBlind: 10, bigBlind: 20, maxPlayers: 6 })
+      const g1 = roomManager.getRoom(r1)
+      if (g1) botManager.fillRoom(g1, r1, 2)
 
-    const r2 = roomManager.createRoom({ smallBlind: 25, bigBlind: 50, maxPlayers: 6 })
-    const g2 = roomManager.getRoom(r2)
-    if (g2) botManager.fillRoom(g2, r2, 2)
+      const r2 = roomManager.createRoom({ smallBlind: 25, bigBlind: 50, maxPlayers: 6 })
+      const g2 = roomManager.getRoom(r2)
+      if (g2) botManager.fillRoom(g2, r2, 2)
 
-    const bt3BotCount = 2 + Math.floor(Math.random() * 2)  // 2 or 3 bots → 3 or 4 players total
-    const r3 = roomManager.createRoom({ gameType: 'big-two', gameSlug: 'big-two', betUnit: 10, maxPlayers: 4 })
-    const g3 = roomManager.getRoom(r3)
-    if (g3) botManager.fillRoom(g3, r3, bt3BotCount)
+      const bt3BotCount = 2 + Math.floor(Math.random() * 2)  // 2 or 3 bots → 3 or 4 players total
+      const r3 = roomManager.createRoom({ gameType: 'big-two', gameSlug: 'big-two', betUnit: 10, maxPlayers: 4 })
+      const g3 = roomManager.getRoom(r3)
+      if (g3) botManager.fillRoom(g3, r3, bt3BotCount)
 
-    const r4 = roomManager.createRoom({ gameType: 'dragon-tiger', gameSlug: 'dragon-tiger', maxPlayers: 6, minBet: 20, maxBet: 10000 })
-    const g4 = roomManager.getRoom(r4)
-    if (g4) botManager.fillRoom(g4, r4, 3)
+      const r4 = roomManager.createRoom({ gameType: 'dragon-tiger', gameSlug: 'dragon-tiger', maxPlayers: 6, minBet: 20, maxBet: 10000 })
+      const g4 = roomManager.getRoom(r4)
+      if (g4) botManager.fillRoom(g4, r4, 3)
+    }
   })
   .catch((error) => {
     console.error('Failed to initialize:', error)

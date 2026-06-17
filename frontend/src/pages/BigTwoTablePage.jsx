@@ -662,7 +662,7 @@ function BigTwoTablePage({ auth }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    play('bigTwoBgm')
+    play('bigTwoBgm', { volume: 0.28, loop: true })
     return () => stop('bigTwoBgm')
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

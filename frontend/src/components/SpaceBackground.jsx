@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 
-const STAR_COUNT    = 220
+const CLOUD_COUNT    = 9
 const SHOOT_INTERVAL = 6000   // ms between shooting stars
-const FPS_CAP       = 30      // lobby doesn't need 60fps
+const FPS_CAP        = 30     // lobby doesn't need 60fps
 
 function rand(min, max) { return Math.random() * (max - min) + min }
 
@@ -19,22 +19,16 @@ export default function SpaceBackground() {
     let lastFrame = 0
     const FRAME_MS = 1000 / FPS_CAP
 
-    // ── Stars ──────────────────────────────────────────────
-    const stars = Array.from({ length: STAR_COUNT }, () => {
-      const isColored = Math.random() < 0.2
-      return {
-        x:     rand(0, 1),
-        y:     rand(0, 1),
-        r:     rand(0.5, 2.2),
-        base:  rand(0.5, 1.0),         // 較高的基礎亮度
-        speed: rand(0.0008, 0.004),    // 更快的閃爍速度
-        phase: rand(0, Math.PI * 2),
-        color: isColored ? 'colored' : '#ffffff',
-        hue:   rand(190, 270),          // 藍紫色調
-      }
-    })
+    const clouds = Array.from({ length: CLOUD_COUNT }, () => ({
+      x:     rand(-0.18, 1.08),
+      y:     rand(0.03, 0.72),
+      scale: rand(0.7, 1.55),
+      speed: rand(0.000012, 0.000035),
+      alpha: rand(0.36, 0.62),
+      phase: rand(0, Math.PI * 2),
+    }))
 
-    // ── Shooting star state ────────────────────────────────
+    // Shooting star state
     let shoot = null
 
     function spawnShoot(W, H) {
@@ -60,6 +54,38 @@ export default function SpaceBackground() {
       canvas.height = h
     }
 
+    function drawCloud(cloud, W, H, ts) {
+      const bob = Math.sin(ts * 0.00045 + cloud.phase) * 5
+      const x = cloud.x * W
+      const y = cloud.y * H + bob
+      const s = Math.max(W, H) * 0.054 * cloud.scale
+
+      ctx.save()
+      ctx.translate(x, y)
+      ctx.scale(s, s)
+
+      const glow = ctx.createRadialGradient(0, 0, 0.15, 0, 0, 2.25)
+      glow.addColorStop(0, `rgba(255,255,255,${(cloud.alpha * 0.52).toFixed(2)})`)
+      glow.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.fillStyle = glow
+      ctx.beginPath()
+      ctx.ellipse(0.05, 0.08, 2.45, 1.05, 0, 0, Math.PI * 2)
+      ctx.fill()
+
+      ctx.fillStyle = `rgba(255,255,255,${cloud.alpha.toFixed(2)})`
+      ctx.shadowColor = 'rgba(45, 125, 180, 0.16)'
+      ctx.shadowBlur = 16
+      ctx.beginPath()
+      ctx.ellipse(-1.05, 0.18, 0.95, 0.45, -0.08, 0, Math.PI * 2)
+      ctx.ellipse(-0.4, -0.08, 0.82, 0.58, 0.08, 0, Math.PI * 2)
+      ctx.ellipse(0.35, -0.18, 1.05, 0.68, -0.03, 0, Math.PI * 2)
+      ctx.ellipse(1.12, 0.12, 0.9, 0.48, 0.05, 0, Math.PI * 2)
+      ctx.ellipse(0.12, 0.34, 1.58, 0.42, 0, 0, Math.PI * 2)
+      ctx.fill()
+
+      ctx.restore()
+    }
+
     const ro = new ResizeObserver(resize)
     ro.observe(canvas)
     resize()
@@ -73,32 +99,18 @@ export default function SpaceBackground() {
       const H = canvas.height
       ctx.clearRect(0, 0, W, H)
 
-      // ── Draw stars ───────────────────────────────────────
-      for (const s of stars) {
-        // 閃爍：從幾乎不可見到全亮，對比更強
-        const osc   = 0.5 + 0.5 * Math.sin(ts * s.speed + s.phase)
-        const alpha = s.base * osc   // base 0.2~1.0，乘以 0~1 的 osc
-
-        const sx = s.x * W
-        const sy = s.y * H
-
-        // 大星：多畫一個半透明大圓當光暈（純 arc，GPU 友善）
-        if (s.r > 1.2 && alpha > 0.4) {
-          ctx.beginPath()
-          ctx.arc(sx, sy, s.r * 3.5, 0, Math.PI * 2)
-          ctx.fillStyle = `rgba(180,160,255,${(alpha * 0.12).toFixed(2)})`
-          ctx.fill()
+      for (const cloud of clouds) {
+        drawCloud(cloud, W, H, ts)
+        cloud.x += cloud.speed * FRAME_MS
+        if (cloud.x > 1.2) {
+          cloud.x = -0.25
+          cloud.y = rand(0.03, 0.72)
+          cloud.scale = rand(0.7, 1.55)
+          cloud.alpha = rand(0.36, 0.62)
         }
-
-        ctx.beginPath()
-        ctx.arc(sx, sy, s.r, 0, Math.PI * 2)
-        ctx.fillStyle = s.color === '#ffffff'
-          ? `rgba(255,255,255,${alpha.toFixed(2)})`
-          : `hsla(${s.hue},80%,90%,${alpha.toFixed(2)})`
-        ctx.fill()
       }
 
-      // ── Shooting star ────────────────────────────────────
+      // Shooting star
       if (!shoot && ts - lastShoot > SHOOT_INTERVAL) {
         lastShoot = ts
         spawnShoot(W, H)
@@ -125,7 +137,6 @@ export default function SpaceBackground() {
           lastShoot = ts
         }
       }
-
     }
 
     raf = requestAnimationFrame(draw)

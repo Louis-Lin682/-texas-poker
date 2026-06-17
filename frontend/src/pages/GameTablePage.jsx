@@ -438,7 +438,7 @@ function GameTablePage({ auth }) {
   const [isGameMuted, setIsGameMuted] = useState(false)
 
   useEffect(() => {
-    play('pt_bgm')
+    play('pt_bgm', { volume: 0.28, loop: true })
     return () => stop('pt_bgm')
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

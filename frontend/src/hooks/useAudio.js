@@ -30,14 +30,29 @@ function _getHowl(key) {
   if (_howls[key]) return _howls[key]
   const c = audioMap[key]
   if (!c) return null
-  _howls[key] = new Howl({
+  const h = new Howl({
     src:     [c.src],
     volume:  _vol(key),
     loop:    c.loop ?? false,
     html5:   Boolean(c.bgm),   // BGM: streaming; SFX: decoded AudioBuffer
     preload: true,
   })
-  return _howls[key]
+  if (c.bgm) {
+    // iOS/Safari blocks autoplay for html5 audio not triggered by user gesture.
+    // When playerror fires, register a one-time gesture listener to retry.
+    h.on('playerror', (id) => {
+      const unlock = () => {
+        document.removeEventListener('click', unlock)
+        document.removeEventListener('touchstart', unlock)
+        // Only retry if this ID is still the active playback (not stopped/replaced)
+        if (_bgmIds[key] === id) h.play(id)
+      }
+      document.addEventListener('click', unlock)
+      document.addEventListener('touchstart', unlock)
+    })
+  }
+  _howls[key] = h
+  return h
 }
 
 // ── Module-level helpers for sub-components that can't call the hook ──────────
@@ -94,14 +109,16 @@ export function useAudio() {
     if (!howl) return false
 
     if (c.bgm) {
-      const hasOverrides = Object.keys(overrides).length > 0
-      if (!hasOverrides && _bgmIds[key] !== undefined) {
+      if (_bgmIds[key] !== undefined) {
+        if (overrides.volume !== undefined) howl.volume(overrides.volume)
+        if (overrides.loop   !== undefined) howl.loop(overrides.loop)
         // Already playing → no-op; paused → resume from current position
         if (howl.playing(_bgmIds[key])) return true
         howl.play(_bgmIds[key])
         return true
       }
-      if (_bgmIds[key] !== undefined) howl.stop(_bgmIds[key])
+      howl.stop()
+      delete _bgmIds[key]
       if (overrides.volume !== undefined) howl.volume(overrides.volume)
       if (overrides.loop   !== undefined) howl.loop(overrides.loop)
       _bgmIds[key] = howl.play()

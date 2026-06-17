@@ -448,7 +448,7 @@ export default function BlackjackTablePage({ auth }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    play('bj_bgm')
+    play('bj_bgm', { volume: 0.28, loop: true })
     return () => stop('bj_bgm')
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

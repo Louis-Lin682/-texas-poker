@@ -40,7 +40,7 @@ export default function LoadingOverlay() {
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgb(13,16,21)',
+        background: 'linear-gradient(180deg, #4aa4dc 0%, #bfe8ff 30%, #7fc8f2 68%, #4aa4dc 100%)',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         gap: 16,
@@ -76,14 +76,16 @@ export default function LoadingOverlay() {
       {/* Progress bar */}
       <div style={{
         width: 120, height: 4,
-        background: 'rgba(255,255,255,0.08)',
+        background: 'rgba(255,255,255,0.48)',
+        border: '1px solid rgba(76, 159, 212, 0.28)',
         borderRadius: 4,
         overflow: 'hidden',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.58), 0 6px 12px rgba(54,132,185,0.16)',
       }}>
         <div style={{
           height: '100%',
           width: `${progress}%`,
-          background: 'linear-gradient(90deg, #b8820a, #D9A441)',
+          background: 'linear-gradient(90deg, #49bcf3, #188ccd)',
           borderRadius: 4,
           transition: 'width 300ms ease',
         }} />

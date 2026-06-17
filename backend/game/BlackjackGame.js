@@ -278,6 +278,16 @@ export class BlackjackGame {
     const actor = this._roundPlayers[this._actorIdx]
     actor.currentHandIdx = actor.hands.findIndex(h => h.status === 'active')
 
+    // Player left mid-round (e.g. left during betting phase before _roundPlayers existed):
+    // skip their turn immediately so the round isn't stalled by ACTION_TIME.
+    if (actor._left) {
+      for (const hand of actor.hands) {
+        if (hand.status === 'active') hand.status = 'stood'
+      }
+      this._advanceActor()
+      return
+    }
+
     // AFK auto-stand: if player doesn't act within ACTION_TIME, stand for them
     this.actionDeadline = Date.now() + ACTION_TIME
     this._actionTimer = setTimeout(() => {
@@ -426,7 +436,10 @@ export class BlackjackGame {
       this.onEvent?.({
         type: 'players_removed',
         roomId: this.roomId,
-        players: kicked.map(p => ({ id: p.id, balance: p.balance, username: p.username })),
+        players: kicked.map(p => ({
+          id: p.id, balance: p.balance, username: p.username,
+          reason: p._left ? 'left' : 'broke',
+        })),
       })
     }
 

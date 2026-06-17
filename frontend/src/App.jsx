@@ -64,9 +64,11 @@ function App() {
   const location = useLocation()
   const [hasEnteredLobby, setHasEnteredLobby] = useState(false)
 
-  const { play, pause, bgmMuted, isMuted, toggleMute, preload, setBgmMuted } = useAudio()
+  const { play, pause, stop, preload } = useAudio()
   const { unreadCount: supportUnread, resetUnread: resetSupportUnread } = useSupportWs({ token: auth.token })
   const skipBgmEffect = useRef(false)
+  const [isLobbyBgmMuted, setIsLobbyBgmMuted] = useState(false)
+  const playLobbyBgm = () => play('lobbyBgm', { volume: 0.28, loop: true })
 
   const isLobby = !NON_LOBBY_PATHS.some(p => location.pathname === p || location.pathname.startsWith(p + '/'))
 
@@ -78,12 +80,12 @@ function App() {
     if (!hasEnteredLobby) return
     // Skip when triggered by the Enter button click — that handler already called play()
     if (skipBgmEffect.current) { skipBgmEffect.current = false; return }
-    if (GAME_ROUTES.includes(location.pathname) || bgmMuted) {
-      pause('lobbyBgm')
+    if (GAME_ROUTES.includes(location.pathname) || isLobbyBgmMuted) {
+      stop('lobbyBgm')
     } else {
-      play('lobbyBgm')
+      playLobbyBgm()
     }
-  }, [location.pathname, hasEnteredLobby, bgmMuted, pause, play])
+  }, [location.pathname, hasEnteredLobby, isLobbyBgmMuted, stop])
 
   useEffect(() => {
     if (hasEnteredLobby) return
@@ -119,14 +121,21 @@ function App() {
           hasEnteredLobby={hasEnteredLobby}
           onEnterLobby={() => {
             skipBgmEffect.current = true  // prevent BGM effect from firing pause()
-            setBgmMuted(false)            // always start with sound on entry
+            setIsLobbyBgmMuted(false)     // lobby mute is only for the current visit
             setHasEnteredLobby(true)
-            play('lobbyBgm')
+            playLobbyBgm()
           }}
           play={play}
           pause={pause}
-          isMuted={isMuted}
-          toggleMute={toggleMute}
+          isMuted={isLobbyBgmMuted}
+          toggleMute={() => {
+            setIsLobbyBgmMuted(muted => {
+              const next = !muted
+              if (next) pause('lobbyBgm')
+              else playLobbyBgm()
+              return next
+            })
+          }}
           supportUnread={supportUnread}
           onSupportRead={resetSupportUnread}
         />
