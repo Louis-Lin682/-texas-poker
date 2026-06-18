@@ -1069,7 +1069,7 @@ button.is-pressing {
   position: relative;
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 4px;
   border-radius: 999px;
   gap: 6px;
@@ -5498,6 +5498,7 @@ button.is-pressing {
   font-weight: 800;
   color: #123f63;
   margin: 0;
+  text-shadow: none;
 }
 
 .event-desc {
@@ -5505,6 +5506,7 @@ button.is-pressing {
   color: rgba(18, 63, 99, 0.66);
   line-height: 1.65;
   margin: 0;
+  text-shadow: none;
 }
 
 .event-join-btn {
@@ -6102,9 +6104,9 @@ button.is-pressing {
   width: 100%;
   padding: 12px;
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(123, 53, 255, 0.2), rgba(0, 200, 255, 0.08));
-  border: 1px solid rgba(128, 92, 255, 0.35);
-  color: #dce8ff;
+  background: linear-gradient(180deg, #49bcf3 0%, #188ccd 100%);
+  border-color: rgba(255, 255, 255, 0.42);
+  color: #FFFFFF;
   text-align: center;
   box-shadow: 0 0 14px rgba(123, 53, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   font-size: 14px;
@@ -7440,6 +7442,7 @@ button.is-pressing {
   z-index: 10;
   transform: translateZ(0);
   will-change: transform;
+  justify-content: space-between;
 }
 
 .pt-content {
@@ -11928,3 +11931,23 @@ button.is-pressing {
   from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+
+
+.pt-back-btn {
+  width: 50%;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pt-back-btn img {
+  width: 20%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .7));
+  transition: transform 120ms ease;
+}
+
+

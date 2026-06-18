@@ -8,7 +8,6 @@ const FILTERS = [
   { id: 'favorites', label: '收藏' },
   { id: 'electronic', label: '電子' },
   { id: 'poker', label: '撲克' },
-  { id: 'chess', label: '棋牌' },
 ]
 
 const INITIAL_VISIBLE_COUNT = 12

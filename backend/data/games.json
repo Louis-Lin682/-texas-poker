@@ -56,16 +56,6 @@
     "imageUrl": "/games/poker/Dragon-Tiger.png"
   },
   {
-    "id": 301,
-    "slug": "weiqi",
-    "name": "智者對弈・圍棋之戰",
-    "category": "chess",
-    "featured": false,
-    "status": "preview",
-    "badge": "SOON",
-    "imageUrl": "/games/chess/weiqi.png"
-  },
-  {
     "id": 103,
     "slug": "omaha",
     "name": "奧馬哈",
