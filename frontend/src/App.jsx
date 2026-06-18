@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import AuthEntryPage from './pages/AuthEntryPage'
+import LotteryPage from './pages/LotteryPage'
 import BigTwoTablePage from './pages/BigTwoTablePage'
 import BlackjackTablePage from './pages/BlackjackTablePage'
 import DragonTigerPage from './pages/DragonTigerPage'
@@ -28,6 +29,7 @@ const GAME_ROUTES    = ['/table', '/big-two', '/blackjack', '/thunder-joker', '/
 const NON_LOBBY_PATHS = [
   '/auth', '/table', '/big-two', '/blackjack', '/thunder-joker', '/dragon-tiger',
   '/ledger', '/rank', '/event', '/quest', '/news', '/settings', '/support', '/deposit',
+  '/lottery',
 ]
 
 function ScrollToTop() {
@@ -158,6 +160,9 @@ function App() {
           <Route path="/news"          element={<NewsPage />} />
           <Route path="/settings"      element={<SettingsPage />} />
           <Route path="/support"       element={<SupportPage onUnreadChange={resetSupportUnread} />} />
+          <Route path="/lottery/539"   element={<LotteryPage auth={auth} routeSlug="lotto539" />} />
+          <Route path="/lottery/649"   element={<LotteryPage auth={auth} routeSlug="lotto649" />} />
+          <Route path="/lottery/638"   element={<LotteryPage auth={auth} routeSlug="lotto638" />} />
         </Routes>
       )}
 

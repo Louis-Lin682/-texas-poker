@@ -9,6 +9,9 @@ import { WebSocketServer } from 'ws'
 import pool, { initDb, query } from './db.js'
 import { RoomManager, HOUSE_USERNAME } from './game/RoomManager.js'
 import { BotManager } from './game/BotManager.js'
+import { GAMES, GAME_LIST } from './lottery/definitions.js'
+import { initLotteryScheduler, ensureTodayDraws } from './lottery/scheduler.js'
+import { settleDraw } from './lottery/settler.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -1759,6 +1762,157 @@ const server = http.createServer(async (request, response) => {
       }
     }
 
+    // ── Lottery ────────────────────────────────────────────────────────────────
+
+    if (pathname.startsWith('/lottery')) {
+
+      // GET /lottery/games — list game configs
+      if (request.method === 'GET' && pathname === '/lottery/games') {
+        sendJson(response, 200, { games: GAME_LIST.map(g => ({
+          slug: g.slug, name: g.name,
+          pickCount: g.pickCount, poolSize: g.poolSize,
+          hasBonus: g.hasBonus, hasExtra: g.hasExtra,
+          extraPoolSize: g.extraPoolSize ?? null,
+          betAmount: g.betAmount, drawDays: g.drawDays,
+          tiers: g.tiers.map(t => ({ tier: t.tier, name: t.name, matchMain: t.matchMain,
+            matchBonus: t.matchBonus, matchExtra: t.matchExtra, poolShare: t.poolShare }))
+        }))})
+        return
+      }
+
+      // GET /lottery/draws?slug=lotto539 — latest draws per game
+      if (request.method === 'GET' && pathname === '/lottery/draws') {
+        const slug = url.searchParams.get('slug')
+        const { rows } = slug
+          ? await query(`SELECT * FROM lottery_draws WHERE game_slug=$1 ORDER BY draw_date DESC LIMIT 10`, [slug])
+          : await query(`SELECT DISTINCT ON (game_slug) * FROM lottery_draws ORDER BY game_slug, draw_date DESC`)
+        sendJson(response, 200, { draws: rows })
+        return
+      }
+
+      // GET /lottery/current?slug=lotto539 — current open draw for betting
+      if (request.method === 'GET' && pathname === '/lottery/current') {
+        const slug = url.searchParams.get('slug')
+        if (!slug || !GAMES[slug]) { sendJson(response, 400, { message: 'Invalid slug' }); return }
+        const { rows: [draw] } = await query(
+          `SELECT * FROM lottery_draws WHERE game_slug=$1 AND status='open' ORDER BY draw_date DESC LIMIT 1`,
+          [slug]
+        )
+        sendJson(response, 200, { draw: draw ?? null })
+        return
+      }
+
+      // GET /lottery/bets — user's lottery bet history
+      if (request.method === 'GET' && pathname === '/lottery/bets') {
+        const user = await getSessionUser(request)
+        if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }); return }
+        const { rows } = await query(`
+          SELECT lb.*, ld.draw_date, ld.numbers AS draw_numbers,
+                 ld.bonus_number AS draw_bonus, ld.extra_number AS draw_extra,
+                 ld.status AS draw_status
+          FROM lottery_bets lb
+          JOIN lottery_draws ld ON ld.id = lb.draw_id
+          WHERE lb.user_id = $1
+          ORDER BY lb.placed_at DESC
+          LIMIT 50
+        `, [user.id])
+        sendJson(response, 200, { bets: rows })
+        return
+      }
+
+      // POST /lottery/bet — place a bet
+      if (request.method === 'POST' && pathname === '/lottery/bet') {
+        const user = await getSessionUser(request)
+        if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }); return }
+        const body = await getRequestBody(request)
+        const { slug, numbers, extraNumber } = body
+
+        const game = GAMES[slug]
+        if (!game) { sendJson(response, 400, { message: '無效彩種' }); return }
+
+        const nums = Array.isArray(numbers) ? numbers.map(Number) : []
+        if (nums.length !== game.pickCount) {
+          sendJson(response, 400, { message: `請選 ${game.pickCount} 個號碼` }); return
+        }
+        if (nums.some(n => n < 1 || n > game.poolSize)) {
+          sendJson(response, 400, { message: `號碼超出範圍 1-${game.poolSize}` }); return
+        }
+        if (new Set(nums).size !== nums.length) {
+          sendJson(response, 400, { message: '號碼不能重複' }); return
+        }
+        if (game.hasExtra) {
+          const en = Number(extraNumber)
+          if (!en || en < 1 || en > game.extraPoolSize) {
+            sendJson(response, 400, { message: `第二區號碼需在 1-${game.extraPoolSize}` }); return
+          }
+        }
+
+        const { rows: [draw] } = await query(
+          `SELECT * FROM lottery_draws WHERE game_slug=$1 AND status='open' ORDER BY draw_date DESC LIMIT 1`,
+          [slug]
+        )
+        if (!draw) { sendJson(response, 400, { message: '目前沒有開放投注的期數' }); return }
+
+        if (user.balance < game.betAmount) {
+          sendJson(response, 400, { message: '餘額不足' }); return
+        }
+
+        const client = await pool.connect()
+        try {
+          await client.query('BEGIN')
+          await client.query(`UPDATE users SET balance = balance - $1 WHERE id = $2`, [game.betAmount, user.id])
+          await client.query(`UPDATE lottery_draws SET prize_pool = prize_pool + $1 WHERE id = $2`, [game.betAmount * game.poolRate, draw.id])
+          await client.query(`
+            INSERT INTO lottery_bets (user_id, draw_id, game_slug, numbers, extra_number, amount)
+            VALUES ($1,$2,$3,$4,$5,$6)
+          `, [user.id, draw.id, slug, nums, game.hasExtra ? Number(extraNumber) : null, game.betAmount])
+          await client.query(`
+            INSERT INTO ledger (user_id, type, amount, game, detail)
+            VALUES ($1,'lottery_bet',$2,$3,$4)
+          `, [user.id, -game.betAmount, slug, JSON.stringify({ drawId: draw.id, drawDate: draw.draw_date })])
+          await client.query('COMMIT')
+        } catch (err) {
+          await client.query('ROLLBACK'); throw err
+        } finally {
+          client.release()
+        }
+
+        const { rows: [updated] } = await query(`SELECT balance FROM users WHERE id=$1`, [user.id])
+        sendJson(response, 201, { ok: true, balance: updated.balance })
+        return
+      }
+
+      // GET /lottery/results?slug=lotto539&limit=10 — recent draw results
+      if (request.method === 'GET' && pathname === '/lottery/results') {
+        const slug  = url.searchParams.get('slug')
+        const limit = Math.min(Number(url.searchParams.get('limit') ?? 10), 30)
+        if (!slug || !GAMES[slug]) { sendJson(response, 400, { message: 'Invalid slug' }); return }
+        const { rows } = await query(`
+          SELECT ld.*, ltp.tier, ltp.winner_count, ltp.prize_each
+          FROM lottery_draws ld
+          LEFT JOIN lottery_tier_pools ltp ON ltp.draw_id = ld.id
+          WHERE ld.game_slug=$1 AND ld.status IN ('drawn','settled')
+          ORDER BY ld.draw_date DESC, ltp.tier ASC
+          LIMIT $2
+        `, [slug, limit * 10])
+        // Group by draw
+        const drawMap = new Map()
+        for (const r of rows) {
+          if (!drawMap.has(r.id)) {
+            drawMap.set(r.id, { id: r.id, period: r.period, drawDate: r.draw_date,
+              numbers: r.numbers, bonusNumber: r.bonus_number, extraNumber: r.extra_number,
+              status: r.status, tiers: [] })
+          }
+          if (r.tier != null) {
+            drawMap.get(r.id).tiers.push({ tier: r.tier, winnerCount: r.winner_count, prizeEach: r.prize_each })
+          }
+        }
+        sendJson(response, 200, { results: [...drawMap.values()].slice(0, limit) })
+        return
+      }
+
+    }
+
     sendJson(response, 404, { message: 'Not found.' })
   } catch (error) {
     sendJson(response, 500, {
@@ -1957,6 +2111,9 @@ initDbWithRetry()
     }
     autoCloseTickets()
     setInterval(autoCloseTickets, 60 * 60 * 1000)
+
+    // Lottery scheduler
+    initLotteryScheduler()
 
     // Seed pre-existing rooms so the lobby looks active on startup
     // DIAGNOSTIC: set SEED_AMBIENT_ROOMS=0 to skip this — used to isolate

@@ -454,5 +454,38 @@
     "status": "preview",
     "badge": "SOON",
     "imageUrl": "/games/electronic/98.png"
+  },
+  {
+    "id": 401,
+    "slug": "lotto539",
+    "name": "今彩539",
+    "category": "lottery",
+    "featured": true,
+    "status": "playable",
+    "badge": "NEW",
+    "route": "/lottery/539",
+    "imageUrl": "/games/lottery/lotto539.png"
+  },
+  {
+    "id": 402,
+    "slug": "lotto649",
+    "name": "大樂透",
+    "category": "lottery",
+    "featured": true,
+    "status": "playable",
+    "badge": "HOT",
+    "route": "/lottery/649",
+    "imageUrl": "/games/lottery/lotto649.png"
+  },
+  {
+    "id": 403,
+    "slug": "lotto638",
+    "name": "威力彩",
+    "category": "lottery",
+    "featured": true,
+    "status": "playable",
+    "badge": "NEW",
+    "route": "/lottery/638",
+    "imageUrl": "/games/lottery/lotto638.png"
   }
 ]

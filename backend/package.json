@@ -8,8 +8,11 @@
     "bot:run": "node --no-warnings bot-runner.js"
   },
   "dependencies": {
+    "axios": "^1.18.0",
     "bcryptjs": "^3.0.3",
+    "cheerio": "^1.2.0",
     "dotenv": "^17.4.2",
+    "node-cron": "^4.4.1",
     "pg": "^8.21.0",
     "ws": "^8.20.1"
   }
