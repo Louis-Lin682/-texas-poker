@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   font-family: "Noto Serif TC", serif;
   color: #f4eedf;
   color-scheme: dark;
@@ -75,7 +75,7 @@ button.is-pressing {
   font-family: "Noto Serif TC", serif;
 }
 
-/* 星雲光暈 A — 頂部紫色，緩慢脈動 */
+/* ??? A ???蝝怨嚗楨?Ｚ???*/
 .app-shell::after {
   content: '';
   position: fixed;
@@ -419,7 +419,7 @@ button.is-pressing {
   box-shadow: 0 6px 12px rgba(54, 132, 185, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.58);
 }
 
-/* ── Banner Carousel ─────────────────────────────────────── */
+/* ?? Banner Carousel ??????????????????????????????????????? */
 .banner-carousel {
   display: grid;
   border-radius: 28px;
@@ -879,7 +879,7 @@ button.is-pressing {
   min-height: inherit;
 }
 
-/* ─── Hot-game carousel (GameSection) ───────────────────── */
+/* ??? Hot-game carousel (GameSection) ????????????????????? */
 
 .gs-carousel {
   position: relative;
@@ -1069,7 +1069,7 @@ button.is-pressing {
   position: relative;
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 4px;
   border-radius: 999px;
   gap: 6px;
@@ -1254,7 +1254,7 @@ button.is-pressing {
   padding: 0;
 }
 
-/* ── Ambient stage layer ── */
+/* ?? Ambient stage layer ?? */
 .event-header-stage {
   position: absolute;
   inset: 0;
@@ -1288,7 +1288,7 @@ button.is-pressing {
   opacity: 0.38;
 }
 
-/* ── Title content ── */
+/* ?? Title content ?? */
 .event-header-content {
   position: relative;
   width: 100%;
@@ -1342,7 +1342,7 @@ button.is-pressing {
   line-height: .98;
 }
 
-/* ── Title row with flanking taper lines ── */
+/* ?? Title row with flanking taper lines ?? */
 .event-header-title-row {
   display: flex;
   align-items: center;
@@ -1369,7 +1369,7 @@ button.is-pressing {
 
 .event-header-title {
   margin: 0;
-  font-family: Georgia, 'Noto Serif TC', '宋体', serif;
+  font-family: Georgia, 'Noto Serif TC', '摰?', serif;
   font-size: 27px;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -1380,7 +1380,7 @@ button.is-pressing {
   animation: none;
 }
 
-/* ── Keyframes ── */
+/* ?? Keyframes ?? */
 @keyframes eventContentEnter {
   from { opacity: 0; transform: translateY(-10px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -1740,7 +1740,7 @@ button.is-pressing {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
-/* ── Ledger ─────────────────────────────────────────────── */
+/* ?? Ledger ??????????????????????????????????????????????? */
 
 .ledger-list {
   display: flex;
@@ -1938,7 +1938,7 @@ button.is-pressing {
   animation: balanceShimmer 1.2s ease-in-out infinite;
 }
 
-/* ── LedgerPage ─────────────────────────────────────────── */
+/* ?? LedgerPage ??????????????????????????????????????????? */
 
 .ledger-filters {
   display: flex;
@@ -2067,7 +2067,7 @@ button.is-pressing {
   justify-content: center;
 }
 
-/* 360px 等窄螢幕：壓縮日期欄位避免左右溢出 */
+/* 360px 蝑??Ｗ?嚗?蝮格??雿?椰?單滯??*/
 @media (max-width: 380px) {
   .ledger-daterange-row {
     gap: 4px;
@@ -2121,7 +2121,7 @@ button.is-pressing {
   box-shadow: 0 10px 18px rgba(45, 128, 184, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.68);
 }
 
-/* 左側圖示 */
+/* 撌血?內 */
 .ledger-summary-icon {
   width: 52px;
   height: 52px;
@@ -2129,7 +2129,7 @@ button.is-pressing {
   object-fit: contain;
 }
 
-/* 右側內容區 */
+/* ?喳?批捆? */
 .ledger-summary-right {
   flex: 1;
   min-width: 0;
@@ -2138,7 +2138,7 @@ button.is-pressing {
   gap: 6px;
 }
 
-/* 累計損益區塊 */
+/* 蝝航????憛?*/
 .ledger-summary-net-block {
   display: flex;
   flex-direction: column;
@@ -2170,7 +2170,7 @@ button.is-pressing {
   font-size: 11px;
 }
 
-/* 帶入 / 帶出 區塊 */
+/* 撣嗅 / 撣嗅 ?憛?*/
 .ledger-summary-buycash {
   display: flex;
   align-items: center;
@@ -2185,7 +2185,7 @@ button.is-pressing {
   gap: 4px;
 }
 
-/* 中間漸淡漸細分隔線 */
+/* 銝剝?瞍豢楚瞍貊敦??蝺?*/
 .ledger-summary-divider {
   display: block;
   flex-shrink: 0;
@@ -2342,7 +2342,7 @@ button.is-pressing {
   font-size: 14px;
 }
 
-/* ── end Ledger ──────────────────────────────────────────── */
+/* ?? end Ledger ???????????????????????????????????????????? */
 
 .my-action-grid {
   display: grid;
@@ -3095,7 +3095,7 @@ button.is-pressing {
   flex-shrink: 0;
 }
 
-/* ── 浮動按鈕 ── */
+/* ?? 瘚桀??? ?? */
 .float-btn {
   position: fixed;
   z-index: 5;
@@ -3111,7 +3111,7 @@ button.is-pressing {
   pointer-events: none;
 }
 
-/* 客服 — 左側，預設露出 2/3 */
+/* 摰Ｘ? ??撌血嚗?閮剝??2/3 */
 .float-service {
   left: max(0px, calc(50vw - 225px));
   top: 50%;
@@ -3128,7 +3128,7 @@ button.is-pressing {
   transform: translateY(-50%) translateX(0);
 }
 
-/* 回頂 — 右側，完整顯示 */
+/* ?? ???喳嚗??湧＊蝷?*/
 .float-top {
   right: max(20px, calc(50vw - 225px));
   bottom: 130px;
@@ -3807,7 +3807,7 @@ button.is-pressing {
   color: #DDE8FF;
 }
 
-/* ─── Logout Confirm Modal ───────────────────────────────── */
+/* ??? Logout Confirm Modal ????????????????????????????????? */
 
 .logout-modal {
   width: min(88vw, 310px);
@@ -4366,7 +4366,7 @@ button.is-pressing {
   cursor: wait;
 }
 
-/* ─── UI Animations ─────────────────────────────────────── */
+/* ??? UI Animations ??????????????????????????????????????? */
 
 @keyframes heroBgZoom {
   from { transform: scale(1); }
@@ -4446,7 +4446,7 @@ button.is-pressing {
   animation: heroTitleIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* CTA button — spinning border trace */
+/* CTA button ??spinning border trace */
 .cta-button {
   overflow: visible;
 }
@@ -4535,7 +4535,7 @@ button.is-pressing {
   animation: logoutModalIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* ─── Game tile interactions ─────────────────────────────── */
+/* ??? Game tile interactions ??????????????????????????????? */
 
 .game-tile {
   cursor: pointer;
@@ -4620,7 +4620,7 @@ button.is-pressing {
   margin-top: 2px;
 }
 
-/* ─── Game Modal ─────────────────────────────────────────── */
+/* ??? Game Modal ??????????????????????????????????????????? */
 
 .game-modal-backdrop {
   position: fixed;
@@ -4720,7 +4720,7 @@ button.is-pressing {
   margin: 24px auto;
 }
 
-/* Status overlays: constrained to the transparent window area (top ~3%–52%) */
+/* Status overlays: constrained to the transparent window area (top ~3%??2%) */
 
 .game-modal-maint-layer {
   position: absolute;
@@ -4893,7 +4893,7 @@ button.is-pressing {
   transform: scale(0.97);
 }
 
-/* ─── Sub-page shared shell ──────────────────────────────── */
+/* ??? Sub-page shared shell ???????????????????????????????? */
 
 .sub-page-frame {
   display: flex;
@@ -4968,7 +4968,7 @@ button.is-pressing {
   gap: 12px;
 }
 
-/* ─── Check-in Page ──────────────────────────────────────── */
+/* ??? Check-in Page ???????????????????????????????????????? */
 
 .checkin-streak-banner {
   display: flex;
@@ -5102,9 +5102,9 @@ button.is-pressing {
   margin-top: 4px;
 }
 
-/* ─── Rank Page ──────────────────────────────────────────── */
+/* ??? Rank Page ???????????????????????????????????????????? */
 
-/* Body override: 整頁固定，只有列表滾動 */
+/* Body override: ?湧??箏?嚗??銵冽遝??*/
 .rk-body {
   overflow: hidden !important;
   padding: 0 !important;
@@ -5241,7 +5241,7 @@ button.is-pressing {
   margin-bottom: 4px;
 }
 
-/* stands / pedestals — metal style */
+/* stands / pedestals ??metal style */
 .rk-stand {
   width: 100%;
   display: flex;
@@ -5372,7 +5372,7 @@ button.is-pressing {
   color: rgba(240, 201, 107, 0.65);
 }
 
-/* my rank — gold border + glow */
+/* my rank ??gold border + glow */
 .rk-self {
   display: flex;
   align-items: center;
@@ -5419,7 +5419,7 @@ button.is-pressing {
   padding: 6px 0 0;
 }
 
-/* ─── Event Page ─────────────────────────────────────────── */
+/* ??? Event Page ??????????????????????????????????????????? */
 
 .event-list {
   display: flex;
@@ -5527,7 +5527,7 @@ button.is-pressing {
   background: #188ccd;
 }
 
-/* ─── Quest Page ─────────────────────────────────────────── */
+/* ??? Quest Page ??????????????????????????????????????????? */
 
 /* Tabs */
 .quest-tabs {
@@ -5583,7 +5583,7 @@ button.is-pressing {
   gap: 14px;
 }
 
-/* ── Deposit Page ───────────────────────────────────── */
+/* ?? Deposit Page ????????????????????????????????????? */
 .deposit-page {
   display: flex;
   flex-direction: column;
@@ -5756,7 +5756,7 @@ button.is-pressing {
   color: #123f63;
 }
 
-/* ── Quest Card ────────────────────────────────────── */
+/* ?? Quest Card ?????????????????????????????????????? */
 .quest-item {
   position: relative;
   padding: 14px 14px 14px 18px;
@@ -5775,7 +5775,7 @@ button.is-pressing {
   transform: scale(0.99);
 }
 
-/* Left accent bar — gold for daily, blue for weekly */
+/* Left accent bar ??gold for daily, blue for weekly */
 .quest-item::before {
   content: '';
   position: absolute;
@@ -5860,7 +5860,7 @@ button.is-pressing {
   flex-shrink: 0;
 }
 
-/* Status: 可領取 */
+/* Status: ?舫???*/
 .quest-claim-btn {
   padding: 6px 16px;
   border-radius: 20px;
@@ -5879,7 +5879,7 @@ button.is-pressing {
   box-shadow: 0 0 5px rgba(243, 193, 93, 0.2);
 }
 
-/* Status: 未完成 */
+/* Status: ?芸???*/
 .quest-claim-btn.is-disabled {
   background: rgba(100, 72, 20, 0.22);
   border: 1px solid rgba(180, 140, 60, 0.22);
@@ -5889,7 +5889,7 @@ button.is-pressing {
   transform: none;
 }
 
-/* Status: 已領取 */
+/* Status: 撌脤???*/
 .quest-claimed-badge {
   padding: 5px 12px;
   border-radius: 20px;
@@ -5900,7 +5900,7 @@ button.is-pressing {
   font-weight: 600;
 }
 
-/* ── Achievement groups ────────────────────────────── */
+/* ?? Achievement groups ?????????????????????????????? */
 .ach-group {
   position: relative;
   padding: 14px 14px 14px 18px;
@@ -6017,7 +6017,7 @@ button.is-pressing {
   padding: 2px 8px;
 }
 
-/* ─── Support Page ───────────────────────────────────────── */
+/* ??? Support Page ????????????????????????????????????????? */
 
 /* Body override: no page-level scroll */
 .cs-body-fixed {
@@ -6040,7 +6040,7 @@ button.is-pressing {
   flex-shrink: 0;
 }
 
-/* Scrollable wrapper — for ticket cards and new-form */
+/* Scrollable wrapper ??for ticket cards and new-form */
 .cs-list-scroll {
   overflow-y: auto;
   padding: 0 16px 32px;
@@ -6545,7 +6545,7 @@ button.is-pressing {
   box-sizing: border-box;
 }
 
-/* ─── News Page ──────────────────────────────────────────── */
+/* ??? News Page ???????????????????????????????????????????? */
 
 .news-group {
   display: flex;
@@ -6634,7 +6634,7 @@ button.is-pressing {
   border-top: 1px solid rgba(76, 159, 212, 0.18);
 }
 
-/* ─── Check-in Modal ─────────────────────────────────────── */
+/* ??? Check-in Modal ??????????????????????????????????????? */
 
 .ci-backdrop {
   position: fixed;
@@ -6907,7 +6907,7 @@ button.is-pressing {
 }
 
 .ci-day-spacer {
-  /* empty cell — pushes Day 5–7 to columns 2–4 */
+  /* empty cell ??pushes Day 5?? to columns 2?? */
 }
 
 .pt-top-container {
@@ -6922,11 +6922,10 @@ button.is-pressing {
   margin-bottom: 112px;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   POKER TABLE PAGE
-   ═══════════════════════════════════════════════════════════ */
+/* ????????????????????????????????????????????????????????????   POKER TABLE PAGE
+   ????????????????????????????????????????????????????????????*/
 
-/* ── Error bar ──────────────────────────────────────────── */
+/* ?? Error bar ???????????????????????????????????????????? */
 .pt-error-bar {
   position: fixed;
   top: 52px;
@@ -6943,7 +6942,7 @@ button.is-pressing {
   pointer-events: none;
 }
 
-/* ── Lobby ──────────────────────────────────────────────── */
+/* ?? Lobby ???????????????????????????????????????????????? */
 .pt-lobby {
   flex: 1;
   display: flex;
@@ -7174,7 +7173,7 @@ button.is-pressing {
   animation: none;
 }
 
-/* ── Waiting room ───────────────────────────────────────── */
+/* ?? Waiting room ????????????????????????????????????????? */
 .pt-wait {
   flex: 1;
   position: relative;
@@ -7312,7 +7311,7 @@ button.is-pressing {
   50%       { box-shadow: 0 0 0 6px rgba(226,206,135,0),  0 0 32px rgba(226,206,135,0.45), 0 6px 24px rgba(0,0,0,0.6); }
 }
 
-/* Acting indicator — glowing 3-D inverted triangular pyramid */
+/* Acting indicator ??glowing 3-D inverted triangular pyramid */
 .pt-acting-arrow {
   position: absolute;
   top: -30px;
@@ -7429,7 +7428,7 @@ button.is-pressing {
   overflow: hidden;
 }
 
-/* ── Header ─────────────────────────────────────────────── */
+/* ?? Header ??????????????????????????????????????????????? */
 .pt-header {
   display: flex;
   align-items: center;
@@ -7513,7 +7512,7 @@ button.is-pressing {
   flex-shrink: 0;
 }
 
-/* ── Portrait layout ────────────────────────────────────── */
+/* ?? Portrait layout ?????????????????????????????????????? */
 .pt-top-center {
   display: flex;
   justify-content: center;
@@ -7614,7 +7613,7 @@ button.is-pressing {
   backdrop-filter: blur(10px);
 }
 
-/* Pot chips — image based */
+/* Pot chips ??image based */
 .pt-pot-chips {
   display: flex;
   align-items: flex-end;
@@ -7648,13 +7647,13 @@ button.is-pressing {
   letter-spacing: 0.5px;
 }
 
-/* ── Win overlay ─────────────────────────────────────────── */
+/* ?? Win overlay ??????????????????????????????????????????? */
 @keyframes ptWinIn {
   from { opacity: 0; transform: translate(-50%,-50%) scale(0.7); }
   to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
 }
 /*
-  Coin toss animations — parabolic arc (up then down) + scaleX flip (simulates
+  Coin toss animations ??parabolic arc (up then down) + scaleX flip (simulates
   the coin spinning on its own axis, like a real tossed coin).
   No Z-axis rotation. Each variant throws in a different direction.
 */
@@ -7771,7 +7770,7 @@ button.is-pressing {
   letter-spacing: 1px;
 }
 
-/* Tossed chip coins — all burst from center of win card, fly in 5 directions */
+/* Tossed chip coins ??all burst from center of win card, fly in 5 directions */
 .pt-win-coins {
   position: absolute;
   top: 50%;
@@ -7789,7 +7788,7 @@ button.is-pressing {
   object-fit: contain;
   filter: drop-shadow(0 3px 8px rgba(0,0,0,0.7));
 }
-/* 8 coins, 5 trajectories, staggered delays — each coin is its own throw */
+/* 8 coins, 5 trajectories, staggered delays ??each coin is its own throw */
 .pt-win-coin:nth-child(1) { animation: ptCoinTossFL 1.00s ease-out 0.00s forwards; }
 .pt-win-coin:nth-child(2) { animation: ptCoinTossFR 0.92s ease-out 0.10s forwards; }
 .pt-win-coin:nth-child(3) { animation: ptCoinTossL  1.08s ease-out 0.05s forwards; }
@@ -7809,7 +7808,7 @@ button.is-pressing {
   z-index: 4;
 }
 
-/* ── Deal animation ─────────────────────────────────────── */
+/* ?? Deal animation ??????????????????????????????????????? */
 @keyframes ptDealIn {
   0%   { transform: translate(0, -55px) scale(0.55) rotate(-14deg); opacity: 0; }
   65%  { transform: translate(0, 4px)   scale(1.06) rotate(2deg);   opacity: 1; }
@@ -7836,7 +7835,7 @@ button.is-pressing {
 .pt-my-cards  .pcard:nth-child(1) { animation-delay: calc(var(--deal-base, 0s)); }
 .pt-my-cards  .pcard:nth-child(2) { animation-delay: calc(var(--deal-base, 0s) + 0.09s); }
 
-/* ── Seat component ─────────────────────────────────────── */
+/* ?? Seat component ??????????????????????????????????????? */
 .pt-seat {
   position: relative;
   display: flex;
@@ -7902,7 +7901,7 @@ button.is-pressing {
   background: rgba(10,10,14,0.5);
 }
 
-/* ── Badges ──────────────────────────────────────────────── */
+/* ?? Badges ???????????????????????????????????????????????? */
 .pt-badges {
   position: absolute;
   top: 0px;
@@ -7925,7 +7924,7 @@ button.is-pressing {
 .pt-badge-ai   { background: #c84040; color: #fff; letter-spacing: 0.3px; }
 .pt-badge-hand { background: rgba(226,206,135,0.15); color: #ffe870; border-color: rgba(226,206,135,0.35); text-shadow: 0 0 8px rgba(226,206,135,0.5); }
 
-/* ── Seat internals ─────────────────────────────────────── */
+/* ?? Seat internals ??????????????????????????????????????? */
 .pt-avatar {
   width: 45px;
   height: 45px;
@@ -8004,7 +8003,7 @@ button.is-pressing {
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7));
 }
 
-/* Bet chip — gold chip image with amount label */
+/* Bet chip ??gold chip image with amount label */
 .pt-bet-chip {
   position: absolute;
   top: -16px;
@@ -8036,7 +8035,7 @@ button.is-pressing {
   letter-spacing: 0;
 }
 
-/* ── Blackjack chip animations (chips rendered on table) ── */
+/* ?? Blackjack chip animations (chips rendered on table) ?? */
 @keyframes bj-chip-place {
   0%   { transform: scale(0);    opacity: 0; }
   65%  { transform: scale(1.28); opacity: 1; }
@@ -8062,7 +8061,7 @@ button.is-pressing {
 .bj-chip-lose      { animation: bj-chip-lose      0.68s cubic-bezier(0.55,0,1,0.45) forwards; }
 .bj-chip-lose-down { animation: bj-chip-lose-down 0.68s cubic-bezier(0.55,0,1,0.45) forwards; }
 
-/* ── Action panel ───────────────────────────────────────── */
+/* ?? Action panel ????????????????????????????????????????? */
 .pt-actions {
   position: absolute;
   bottom: 0;
@@ -8173,7 +8172,7 @@ button.is-pressing {
 }
 .pt-btn-allin:hover { filter: brightness(1.12); box-shadow: 0 6px 22px rgba(160,50,220,0.4); }
 
-/* ── Countdown bar ── */
+/* ?? Countdown bar ?? */
 .pt-countdown-wrap {
   position: relative;
   height: 18px;
@@ -8210,7 +8209,7 @@ button.is-pressing {
   line-height: 18px;
 }
 
-/* ── Hand strength badge ── */
+/* ?? Hand strength badge ?? */
 .pt-hand-badge {
   font-size: 10px;
   font-weight: 700;
@@ -8223,7 +8222,7 @@ button.is-pressing {
   text-shadow: 0 0 8px rgba(226,206,135,0.5);
 }
 
-/* ── Mute button in header ── */
+/* ?? Mute button in header ?? */
 .pt-mute-btn {
   cursor: pointer;
   width: 56px;
@@ -8297,7 +8296,7 @@ button.is-pressing {
   cursor: not-allowed;
 }
 
-/* ── Game modals ────────────────────────────────────────── */
+/* ?? Game modals ?????????????????????????????????????????? */
 .pt-modal-overlay {
   position: absolute;
   inset: 0;
@@ -8373,7 +8372,7 @@ button.is-pressing {
 }
 .pt-modal-confirm:hover { filter: brightness(1.15); }
 
-/* ── Leave Confirm Modal (shared, image-based) ──────────── */
+/* ?? Leave Confirm Modal (shared, image-based) ???????????? */
 .lcm-overlay {
   position: fixed;
   inset: 0;
@@ -8486,7 +8485,7 @@ button.is-pressing {
       }
     }
 
-/* ── Connecting overlay ─────────────────────────────────── */
+/* ?? Connecting overlay ??????????????????????????????????? */
 .pt-connecting-overlay {
   position: absolute;
   inset: 0;
@@ -8522,7 +8521,7 @@ button.is-pressing {
   letter-spacing: 1px;
 }
 
-/* ── Waiting room — ready system ────────────────────────── */
+/* ?? Waiting room ??ready system ?????????????????????????? */
 .pt-wait-dot {
   width: 8px;
   height: 8px;
@@ -8581,7 +8580,7 @@ button.is-pressing {
   opacity: 1;
 }
 
-/* ── Showdown card reveal ────────────────────────────────── */
+/* ?? Showdown card reveal ?????????????????????????????????? */
 .pt-win-showdown {
   display: flex;
   flex-direction: column;
@@ -8631,7 +8630,7 @@ button.is-pressing {
   text-shadow: 0 0 8px rgba(226, 206, 135, 0.5);
 }
 
-/* ── Playing card ───────────────────────────────────────── */
+/* ?? Playing card ????????????????????????????????????????? */
 .pcard {
   position: relative;
   background: linear-gradient(160deg, #fffef8 0%, #f4f0e8 100%);
@@ -8658,12 +8657,12 @@ button.is-pressing {
 .pcard-back {
   box-shadow: 0 2px 8px rgba(0,0,0,0.55);
 }
-/* Texas Hold'em — black/gold card back */
+/* Texas Hold'em ??black/gold card back */
 .pt-page .pcard-back {
   background: url('/texas-holdem/card-blackgold.png') center / 100% 100% no-repeat;
   border: none;
 }
-/* Big Two — purple/gold card back */
+/* Big Two ??purple/gold card back */
 .bt-game .pcard-back {
   background: url('/big-two/card-purplegold.png') center / 100% 100% no-repeat;
   border: none;
@@ -8710,7 +8709,7 @@ button.is-pressing {
 .pcard-xs .pcard-rank { font-size: 7px; line-height: 1; }
 .pcard-xs .pcard-suit { font-size: 6px; line-height: 1; }
 
-/* ── Narrow-screen fixes (≤380px width, e.g. Galaxy S5 360px) ─ */
+/* ?? Narrow-screen fixes (??80px width, e.g. Galaxy S5 360px) ? */
 @media (max-width: 380px) {
   /* Remove horizontal padding so seats get full 90px column width */
   .pt-side-col {
@@ -8722,7 +8721,7 @@ button.is-pressing {
     min-width: 0;
     width: 100%;
   }
-  /* Community cards: 5×34 + 4×1 = 174px fits in 180px center */
+  /* Community cards: 5?34 + 4?1 = 174px fits in 180px center */
   .pt-community-cards {
     gap: 1px;
   }
@@ -8740,7 +8739,7 @@ button.is-pressing {
   }
 }
 
-/* ── Short-screen fixes (≤680px height, e.g. Galaxy S5 640px) ─ */
+/* ?? Short-screen fixes (??80px height, e.g. Galaxy S5 640px) ? */
 @media (max-height: 680px) {
   /* Shrink top-container margin so the middle gets more vertical space */
   .pt-top-container {
@@ -8760,7 +8759,7 @@ button.is-pressing {
   }
 }
 
-/* ── Narrow + short combined (360×640 target) ─────────────── */
+/* ?? Narrow + short combined (360?640 target) ??????????????? */
 @media (max-width: 380px) and (max-height: 680px) {
   /* Push top seat to top of column (closer to dealer), bottom seat to bottom */
   .pt-side-col {
@@ -8771,28 +8770,27 @@ button.is-pressing {
   }
 }
 
-/* 超高螢幕 (平板/桌機) */
+/* 頞??Ｗ? (撟單/獢?) */
 @media (min-height: 1000px) {
   .enter-game-modal {
     height: 50%;
   }
 }
-/* 矮螢幕 (≤720px, 舊Android) */
+/* ?株撟?(??20px, ?ndroid) */
 @media (max-height: 720px) {
   .enter-game-modal {
     height: 78%;
   }
 }
-/* 超矮螢幕 (≤640px) */
+/* 頞?Ｗ? (??40px) */
 @media (max-height: 640px) {
   .enter-game-modal {
     height: 88%;
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Big Two (大老二) table
-   ═══════════════════════════════════════════════════════════ */
+/* ????????????????????????????????????????????????????????????   Big Two (憭扯?) table
+   ????????????????????????????????????????????????????????????*/
 
 .bt-game {
   display: flex;
@@ -8800,7 +8798,7 @@ button.is-pressing {
   height: calc(100dvh - 52px);   /* subtract header */
 }
 
-/* ── Arena: table fills everything, seats float at edges ── */
+/* ?? Arena: table fills everything, seats float at edges ?? */
 .bt-arena {
   flex: 1;
   position: relative;
@@ -8836,7 +8834,7 @@ button.is-pressing {
   transform: translateY(-50%);
 }
 
-/* ── Opponent seat cards ── */
+/* ?? Opponent seat cards ?? */
 .bt-opp {
   position: relative;
   display: flex;
@@ -8899,7 +8897,7 @@ button.is-pressing {
   font-weight: 600;
 }
 
-/* ── Opponent mini fan ── */
+/* ?? Opponent mini fan ?? */
 .bt-opp-fan {
   position: relative;
   width: 100%;
@@ -8932,7 +8930,7 @@ button.is-pressing {
   text-align: center;
 }
 
-/* ── Round table: PNG handles all visuals ── */
+/* ?? Round table: PNG handles all visuals ?? */
 .bt-table-wrap {
   border-radius: 40px;
   overflow: hidden;
@@ -8977,7 +8975,7 @@ button.is-pressing {
   z-index: 1;
 }
 
-/* ── Turn bar ── */
+/* ?? Turn bar ?? */
 .bt-turn-bar {
   font-size: 11px;
   color: rgba(225,215,178,0.4);
@@ -9007,7 +9005,7 @@ button.is-pressing {
   50%       { opacity: 0.55; }
 }
 
-/* ── Pile zone ── */
+/* ?? Pile zone ?? */
 .bt-pile-zone {
   display: flex;
   flex-direction: column;
@@ -9050,7 +9048,7 @@ button.is-pressing {
   border: 1px solid rgba(226,206,135,0.25);
 }
 
-/* ── Stacked pile ── */
+/* ?? Stacked pile ?? */
 .bt-pile-stack {
   position: relative;
   display: flex;
@@ -9106,7 +9104,7 @@ button.is-pressing {
   color: rgba(225,215,178,0.35);
 }
 
-/* ── Action toast ── */
+/* ?? Action toast ?? */
 .bt-action-toast {
   font-size: 11px;
   color: var(--gold);
@@ -9130,7 +9128,7 @@ button.is-pressing {
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ── Game error toast (above action bar) ── */
+/* ?? Game error toast (above action bar) ?? */
 @keyframes btErrorIn {
   from { opacity: 0; transform: translateY(-5px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -9148,7 +9146,7 @@ button.is-pressing {
   animation: btErrorIn 0.18s ease;
 }
 
-/* ── Fixed bottom section (buttons + fan) ── */
+/* ?? Fixed bottom section (buttons + fan) ?? */
 .bt-bottom {
   flex-shrink: 0;
   display: flex;
@@ -9160,7 +9158,7 @@ button.is-pressing {
   width: 100%;
 }
 
-/* ── Action bar (above the fan) ── */
+/* ?? Action bar (above the fan) ?? */
 .bt-action-bar {
   display: flex;
   flex-direction: row;
@@ -9211,7 +9209,7 @@ button.is-pressing {
 
 .bt-btn-play:not(:disabled):active { filter: brightness(0.88); }
 
-/* ── Arc fan hand ── */
+/* ?? Arc fan hand ?? */
 .bt-hand-area {
   /* top padding gives lifted/rotated cards room not to clip */
   padding: 28px 0 0;
@@ -9260,7 +9258,7 @@ button.is-pressing {
   animation-delay: calc(var(--deal-i, 0) * 80ms);
 }
 
-/* ── Result overlay ── */
+/* ?? Result overlay ?? */
 .bt-result-overlay {
   position: fixed;
   inset: 0;
@@ -9332,7 +9330,7 @@ button.is-pressing {
   to   { opacity: 1; }
 }
 
-/* ── Room entry / game-start overlay ── */
+/* ?? Room entry / game-start overlay ?? */
 @keyframes btEnterFade {
   0%   { opacity: 0; }
   15%  { opacity: 1; }
@@ -9387,7 +9385,7 @@ button.is-pressing {
   letter-spacing: 4px;
 }
 
-/* ── Thunder Joker Slot ───────────────────────────────────────────────────────── */
+/* ?? Thunder Joker Slot ????????????????????????????????????????????????????????? */
 .tj-page {
   position: relative;
   width: 100%;
@@ -9804,7 +9802,7 @@ button.is-pressing {
 .tj-spin-btn.is-off { opacity: 0.35; cursor: not-allowed; }
 .tj-spin-btn img { width: 100%; height: 80px; object-fit: contain; }
 
-/* ── Float text layer (per-spin win popups) ──────────────────────────────── */
+/* ?? Float text layer (per-spin win popups) ???????????????????????????????? */
 .tj-float-layer {
   position: absolute; inset: 0;
   pointer-events: none;
@@ -9826,7 +9824,7 @@ button.is-pressing {
   100% { opacity: 0;   transform: translateX(-50%) translateY(-75px) scale(0.85) }
 }
 
-/* ── Free Spins end cinematic overlay ────────────────────────────────────── */
+/* ?? Free Spins end cinematic overlay ?????????????????????????????????????? */
 .tj-fs-end-overlay {
   position: absolute; inset: 0;
   z-index: 90;
@@ -9971,7 +9969,7 @@ button.is-pressing {
 .tj-coin-rain  { filter: drop-shadow(0 0 4px #ffc400); }
 .tj-coin-burst { filter: drop-shadow(0 0 7px #ffc400) drop-shadow(0 0 14px #ff7a00); }
 
-/* ── Screen shake ────────────────────────────────────────────────────────── */
+/* ?? Screen shake ?????????????????????????????????????????????????????????? */
 @keyframes tjScreenShake {
   0%   { transform: translate(0, 0); }
   15%  { transform: translate(-6px, 4px); }
@@ -9983,7 +9981,7 @@ button.is-pressing {
 }
 .tj-page.is-shake { animation: tjScreenShake 0.45s ease-in-out; }
 
-/* ── Win overlay + phases ────────────────────────────────────────────────── */
+/* ?? Win overlay + phases ?????????????????????????????????????????????????? */
 .tj-overlay-win {
   position: absolute;
   inset: 0;
@@ -10193,7 +10191,7 @@ button.is-pressing {
   to   { opacity: 1; }
 }
 
-/* ── Auto spin count picker ─────────────────────────────────────────── */
+/* ?? Auto spin count picker ??????????????????????????????????????????? */
 .tj-auto-menu-wrap {
   position: absolute;
   inset: 0;
@@ -10264,7 +10262,7 @@ button.is-pressing {
   50%       { opacity: 0.5; }
 }
 
-/* ── Paytable / Info panels ──────────────────────────────────────────── */
+/* ?? Paytable / Info panels ???????????????????????????????????????????? */
 .tj-panel-overlay {
   position: absolute;
   inset: 0;
@@ -10504,7 +10502,7 @@ button.is-pressing {
   }
 }
 
-/* ─── Settings Page ──────────────────────────────────────── */
+/* ??? Settings Page ???????????????????????????????????????? */
 
 .settings-section {
   margin-bottom: 24px;
@@ -10756,9 +10754,9 @@ button.is-pressing {
   cursor: default;
 }
 
-/* ══════════════════════════════════════════════════════
+/* ??????????????????????????????????????????????????????
    Dragon Tiger Page
-   ══════════════════════════════════════════════════════ */
+   ?????????????????????????????????????????????????????? */
 
 .dt-page {
   display: flex;
@@ -11345,7 +11343,7 @@ button.is-pressing {
   margin-top: 1px;
 }
 .dt-bead-suit.is-red { color: #ffb0b0; }
-/* 龍=藍 虎=紅 和=綠 */
+/* 樴?????蝝???蝬?*/
 .dt-bead-dragon {
   background: radial-gradient(circle at 35% 35%, #5ab0f0, #1050a0);
   box-shadow: 0 1px 3px rgba(0,0,0,.5);
@@ -11489,7 +11487,7 @@ button.is-pressing {
   100% { opacity: 0;   transform: translateY(-10px); }
 }
 
-/* ── Dragon / Tiger win animations ──────────────────────────── */
+/* ?? Dragon / Tiger win animations ???????????????????????????? */
 
 .dt-dragon-win-overlay,
 .dt-tiger-win-overlay {
@@ -11561,7 +11559,7 @@ button.is-pressing {
   100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
 }
 
-/* ── Rules scroll modal ──────────────────────────────────────── */
+/* ?? Rules scroll modal ???????????????????????????????????????? */
 
 .dt-rule-btn {
   position: absolute;
@@ -11633,7 +11631,7 @@ button.is-pressing {
 }
 .dt-bgm-btn:active img { transform: scale(0.88); }
 
-/* ── Dragon Tiger history modal ───────────────────────── */
+/* ?? Dragon Tiger history modal ????????????????????????? */
 .dt-history-modal {
   position: relative;
   width: 88%;
@@ -11907,7 +11905,7 @@ button.is-pressing {
   color: #888;
 }
 
-/* ── Network toast ───────────────────────────────────────────────────── */
+/* ?? Network toast ????????????????????????????????????????????????????? */
 .lobby-net-toast {
   position: fixed;
   top: 64px;
@@ -11932,7 +11930,7 @@ button.is-pressing {
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ── 大廳雲朵 CSS 動畫（compositor thread，無 scroll 閃爍）── */
+/* ?? 憭批輒?脫 CSS ?嚗ompositor thread嚗 scroll ??嚗?? */
 .sky-cloud-drift {
   position: absolute;
   left: 0;
@@ -11974,7 +11972,7 @@ button.is-pressing {
     rgba(175,210,248,0)                   100%
   );
 }
-/* 底部薄雲霧 */
+/* 摨???*/
 .sky-mist {
   position: absolute;
   bottom: 0;
@@ -12006,244 +12004,3 @@ button.is-pressing {
   filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .7));
   transition: transform 120ms ease;
 }
-
-/* ── Lottery Page ─────────────────────────────────────────────────────────── */
-
-.lottery-game-tabs {
-  display: flex;
-  gap: 6px;
-  padding: 10px 16px 0;
-}
-.lottery-game-tab {
-  flex: 1;
-  padding: 8px 0;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  background: var(--panel-soft);
-  color: var(--text-soft);
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 150ms, color 150ms;
-}
-.lottery-game-tab.is-active {
-  background: var(--gold);
-  color: #1a1400;
-  border-color: var(--gold);
-  font-weight: 700;
-}
-
-.lottery-draw-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  font-size: 13px;
-  color: var(--text-soft);
-}
-.lottery-draw-info strong { color: var(--gold); }
-.lottery-no-draw { justify-content: center; color: var(--text-soft); }
-
-.lottery-sub-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--line);
-  padding: 0 16px;
-  gap: 0;
-}
-.lottery-sub-tab {
-  padding: 8px 14px;
-  background: none;
-  border: none;
-  color: var(--text-soft);
-  font-size: 13px;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 150ms, border-color 150ms;
-}
-.lottery-sub-tab.is-active {
-  color: var(--gold);
-  border-bottom-color: var(--gold);
-}
-
-.lottery-bet-panel,
-.lottery-results-panel,
-.lottery-mybets-panel {
-  padding: 12px 16px 24px;
-}
-
-.lottery-pick-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  color: var(--text-soft);
-  margin-bottom: 8px;
-}
-.lottery-quick-pick {
-  padding: 4px 12px;
-  border-radius: 20px;
-  border: 1px solid var(--gold);
-  background: none;
-  color: var(--gold);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.lottery-ball-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 5px;
-}
-.lottery-extra-grid {
-  grid-template-columns: repeat(8, 1fr);
-  max-width: 300px;
-}
-
-.lottery-ball {
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1.5px solid rgba(225, 215, 178, 0.3);
-  background: rgba(255,255,255,0.04);
-  color: var(--text-soft);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 120ms, border-color 120ms, color 120ms;
-  display: flex; align-items: center; justify-content: center;
-}
-.lottery-ball.is-picked {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: #1a1400;
-}
-.lottery-ball.is-extra { border-color: #e04060; color: #e04060; }
-.lottery-ball.is-extra.is-picked { background: #e04060; border-color: #e04060; color: #fff; }
-
-.lottery-picked-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-height: 32px;
-  margin: 10px 0;
-  padding: 6px 8px;
-  background: rgba(255,255,255,0.03);
-  border-radius: 8px;
-  border: 1px dashed var(--line);
-}
-.lottery-preview-ball {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: var(--gold);
-  color: #1a1400;
-  font-size: 11px;
-  font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-}
-.lottery-preview-ball.is-extra {
-  background: #e04060;
-  color: #fff;
-}
-
-.lottery-msg {
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  margin-bottom: 8px;
-  text-align: center;
-}
-.lottery-msg.is-ok  { background: rgba(50, 200, 100, 0.15); color: #60e090; }
-.lottery-msg.is-err { background: rgba(200, 50, 50, 0.15);  color: #f08080; }
-
-.lottery-bet-btn {
-  width: 100%;
-  padding: 13px;
-  border-radius: 10px;
-  border: none;
-  background: var(--gold);
-  color: #1a1400;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 150ms;
-}
-.lottery-bet-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.lottery-tier-table {
-  margin-top: 20px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  overflow: hidden;
-}
-.lottery-tier-header {
-  padding: 8px 12px;
-  background: rgba(255,255,255,0.04);
-  font-size: 12px;
-  color: var(--text-soft);
-  font-weight: 600;
-}
-.lottery-tier-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  border-top: 1px solid var(--line);
-  font-size: 12px;
-}
-.lottery-tier-name  { width: 40px; color: var(--gold); font-weight: 600; }
-.lottery-tier-cond  { flex: 1; color: var(--text-soft); }
-.lottery-tier-share { color: #80c0ff; font-weight: 600; }
-
-.lottery-result-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
-}
-.lottery-result-date { font-size: 12px; color: var(--text-soft); }
-.lottery-result-balls { display: flex; flex-wrap: wrap; gap: 5px; }
-.lottery-result-ball {
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.1);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 600;
-}
-.lottery-result-ball.is-bonus { background: #4080e0; }
-.lottery-result-ball.is-extra { background: #e04060; }
-
-.lottery-bet-row {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
-}
-.lottery-bet-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
-  font-size: 12px;
-}
-.lottery-bet-date   { color: var(--text-soft); }
-.lottery-bet-status { padding: 2px 8px; border-radius: 10px; background: rgba(255,255,255,0.08); font-size: 11px; }
-.lottery-bet-row.is-won  .lottery-bet-status { background: rgba(50,200,100,0.2); color: #60e090; }
-.lottery-bet-row.is-lost .lottery-bet-status { background: rgba(200,50,50,0.1);  color: #f08080; }
-.lottery-bet-prize  { color: #60e090; font-weight: 700; margin-left: auto; }
-.lottery-bet-numbers { display: flex; flex-wrap: wrap; gap: 4px; }
-.lottery-bet-ball {
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.08);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px;
-}
-.lottery-bet-ball.is-match { background: var(--gold); color: #1a1400; font-weight: 700; }
-.lottery-bet-ball.is-extra { border: 1px solid #e04060; }
-.lottery-bet-ball.is-extra.is-match { background: #e04060; color: #fff; }
-
-.lottery-empty {
-  text-align: center;
-  padding: 40px 0;
-  color: var(--text-soft);
-  font-size: 14px;
-}
-
-

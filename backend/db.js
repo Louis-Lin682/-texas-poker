@@ -240,51 +240,6 @@ export async function initDb() {
       ('thunder-joker', 'open', '')
     ON CONFLICT (slug) DO NOTHING;
 
-    CREATE TABLE IF NOT EXISTS lottery_draws (
-      id           BIGSERIAL PRIMARY KEY,
-      game_slug    TEXT NOT NULL,
-      period       TEXT NOT NULL DEFAULT '',
-      draw_date    DATE NOT NULL,
-      status       TEXT NOT NULL DEFAULT 'open',
-      numbers      INT[] NOT NULL DEFAULT '{}',
-      bonus_number INT,
-      extra_number INT,
-      prize_pool   NUMERIC NOT NULL DEFAULT 0,
-      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      drawn_at     TIMESTAMPTZ,
-      settled_at   TIMESTAMPTZ,
-      UNIQUE(game_slug, draw_date)
-    );
-    CREATE INDEX IF NOT EXISTS idx_lottery_draws_slug_status ON lottery_draws (game_slug, status);
-
-    CREATE TABLE IF NOT EXISTS lottery_tier_pools (
-      id           BIGSERIAL PRIMARY KEY,
-      draw_id      BIGINT NOT NULL REFERENCES lottery_draws(id) ON DELETE CASCADE,
-      tier         INT NOT NULL,
-      allocated    NUMERIC NOT NULL DEFAULT 0,
-      carried_in   NUMERIC NOT NULL DEFAULT 0,
-      total        NUMERIC NOT NULL DEFAULT 0,
-      winner_count INT NOT NULL DEFAULT 0,
-      prize_each   NUMERIC NOT NULL DEFAULT 0,
-      UNIQUE(draw_id, tier)
-    );
-
-    CREATE TABLE IF NOT EXISTS lottery_bets (
-      id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      draw_id      BIGINT NOT NULL REFERENCES lottery_draws(id),
-      game_slug    TEXT NOT NULL,
-      numbers      INT[] NOT NULL,
-      extra_number INT,
-      amount       INT NOT NULL DEFAULT 50,
-      tier_won     INT,
-      prize        NUMERIC NOT NULL DEFAULT 0,
-      status       TEXT NOT NULL DEFAULT 'pending',
-      placed_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      settled_at   TIMESTAMPTZ
-    );
-    CREATE INDEX IF NOT EXISTS idx_lottery_bets_draw ON lottery_bets (draw_id, status);
-    CREATE INDEX IF NOT EXISTS idx_lottery_bets_user ON lottery_bets (user_id, placed_at DESC);
   `)
 }
 

@@ -8,7 +8,6 @@ const FILTERS = [
   { id: 'favorites', label: '收藏' },
   { id: 'electronic', label: '電子' },
   { id: 'poker', label: '撲克' },
-  { id: 'lottery', label: '樂透' },
 ]
 
 const INITIAL_VISIBLE_COUNT = 12
@@ -34,7 +33,6 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
     favorites: INITIAL_VISIBLE_COUNT,
     electronic: INITIAL_VISIBLE_COUNT,
     poker: INITIAL_VISIBLE_COUNT,
-    lottery: INITIAL_VISIBLE_COUNT,
   }))
   const [animateBatchFrom, setAnimateBatchFrom] = useState(null)
 
