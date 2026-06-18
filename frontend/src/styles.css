@@ -11932,6 +11932,62 @@ button.is-pressing {
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+/* ── 大廳雲朵 CSS 動畫（compositor thread，無 scroll 閃爍）── */
+.sky-cloud-drift {
+  position: absolute;
+  left: 0;
+  will-change: transform;
+  animation: sky-drift var(--dur) linear var(--delay) infinite;
+}
+@keyframes sky-drift {
+  from { transform: translateX(var(--from)); }
+  to   { transform: translateX(var(--to)); }
+}
+.sky-cloud-bob {
+  width: 100%;
+  height: 100%;
+  animation: sky-bob var(--bob-dur) ease-in-out var(--bob-delay) infinite alternate;
+}
+@keyframes sky-bob {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-7px); }
+}
+.sky-puff {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.sky-puff-top {
+  background: radial-gradient(circle at 35% 35%,
+    rgba(255,255,255,var(--a))              0%,
+    rgba(240,250,255,calc(var(--a)*0.75))  45%,
+    rgba(215,235,255,calc(var(--a)*0.28))  80%,
+    rgba(195,220,255,0)                   100%
+  );
+}
+.sky-puff-bot {
+  background: radial-gradient(circle at 35% 35%,
+    rgba(232,247,255,calc(var(--a)*0.94))  0%,
+    rgba(210,232,252,calc(var(--a)*0.65))  45%,
+    rgba(190,218,250,calc(var(--a)*0.22))  80%,
+    rgba(175,210,248,0)                   100%
+  );
+}
+/* 底部薄雲霧 */
+.sky-mist {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 240px;
+  background: linear-gradient(to top,
+    rgba(255,255,255,0.82)  0%,
+    rgba(255,255,255,0.40)  55%,
+    rgba(255,255,255,0)    100%
+  );
+  pointer-events: none;
+}
+
 
 .pt-back-btn {
   width: 50%;
