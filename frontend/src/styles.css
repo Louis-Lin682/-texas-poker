@@ -11946,6 +11946,7 @@ button.is-pressing {
 .sky-cloud-bob {
   width: 100%;
   height: 100%;
+  filter: blur(7px);
   animation: sky-bob var(--bob-dur) ease-in-out var(--bob-delay) infinite alternate;
 }
 @keyframes sky-bob {
