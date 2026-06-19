@@ -56,13 +56,11 @@ function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
   const propsRef   = useRef({ onVolume, onToggle, enabled })
   propsRef.current = { onVolume, onToggle, enabled }
 
-  // Sync visual fill when volume changes from outside
   useEffect(() => {
     const el = sliderRef.current
     if (el) el.style.setProperty('--pct', `${Math.round(volume * 100)}%`)
   }, [volume])
 
-  // Pointer events — mount once, use propsRef for live values
   useEffect(() => {
     const el = sliderRef.current
     if (!el) return
@@ -79,7 +77,6 @@ function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
       if (!rect) return
       const v = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
       el.style.setProperty('--pct', `${Math.round(v * 100)}%`)
-      el.value = String(v)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       rafRef.current = requestAnimationFrame(() => { commit(v); rafRef.current = null })
     }
@@ -91,16 +88,9 @@ function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
       el.setPointerCapture(e.pointerId)
       applyAt(e.clientX)
     }
-    function onMove(e) {
-      if (!isDownRef.current) return
-      applyAt(e.clientX)
-    }
-    function onUp(e) {
-      if (!isDownRef.current) return
-      isDownRef.current = false
-      applyAt(e.clientX)
-    }
-    function onCancel() { isDownRef.current = false }
+    function onMove(e) { if (isDownRef.current) applyAt(e.clientX) }
+    function onUp(e)   { if (isDownRef.current) { isDownRef.current = false; applyAt(e.clientX) } }
+    function onCancel(){ isDownRef.current = false }
 
     el.addEventListener('pointerdown',   onDown)
     el.addEventListener('pointermove',   onMove)
@@ -113,7 +103,7 @@ function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
       el.removeEventListener('pointerup',     onUp)
       el.removeEventListener('pointercancel', onCancel)
     }
-  }, []) // mount/unmount only
+  }, [])
 
   return (
     <div className="settings-audio-block">
@@ -123,12 +113,14 @@ function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
       </div>
       <div className="settings-slider-row">
         <span className="settings-slider-icon">🔈</span>
-        <input
+        {/* div instead of input[type=range] — iOS hijacks native range touch events */}
+        <div
           ref={sliderRef}
-          type="range"
           className="settings-slider"
-          min={0} max={1} step={0.01}
-          defaultValue={volume}
+          role="slider"
+          aria-valuenow={Math.round(volume * 100)}
+          aria-valuemin={0}
+          aria-valuemax={100}
           style={{ '--pct': `${Math.round(volume * 100)}%` }}
         />
         <span className="settings-slider-icon">🔊</span>

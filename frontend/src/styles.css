@@ -12125,7 +12125,47 @@ button.is-pressing {
   border-radius: inherit;
 }
 
-/* 快速滑動時防止漏出黑底 */
-.phone-frame-lobby {
+/* 快速滑動時防止漏出黑底 — 放在 html 讓雲朵可透出 */
+html {
   background: linear-gradient(180deg, #4aa4dc 0%, #bfe8ff 40%, #7fc8f2 70%, #4aa4dc 100%);
+  min-height: 100%;
+}
+.phone-frame-lobby {
+  background: transparent;
+}
+
+/* div 版 slider（取代 input[type=range]，避免 iOS 原生 touch 攔截） */
+div.settings-slider {
+  position: relative;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  touch-action: none;
+  flex: 1;
+}
+div.settings-slider::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: var(--pct, 50%);
+  background: linear-gradient(90deg, #49bcf3, #188ccd);
+  border-radius: 2px;
+}
+div.settings-slider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: var(--pct, 50%);
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #f2df9f, #b99143);
+  box-shadow: 0 0 6px rgba(226, 206, 135, 0.45);
+}
+
+/* filter 按鈕：touch-action manipulation 移除 300ms 延遲 */
+.game-filter-segment-button {
+  touch-action: manipulation;
 }
