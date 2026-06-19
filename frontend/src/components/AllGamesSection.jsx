@@ -79,7 +79,17 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
                   data-no-global-click="true"
                   className={`game-filter-segment-button ${isActive ? 'is-active' : ''}`}
                   aria-pressed={isActive}
-                  onPointerDown={() => {
+                  onTouchStart={() => {
+                    if (filter.id === activeFilter) return
+                    play('uiClick')
+                    setAnimateBatchFrom(null)
+                    setActiveFilter(filter.id)
+                    setVisibleCounts((current) => ({
+                      ...current,
+                      [filter.id]: INITIAL_VISIBLE_COUNT,
+                    }))
+                  }}
+                  onClick={() => {
                     if (filter.id === activeFilter) return
                     play('uiClick')
                     setAnimateBatchFrom(null)
