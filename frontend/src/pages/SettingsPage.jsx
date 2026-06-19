@@ -1,11 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import PageShell from '../components/PageShell'
 import VipPageHeader from '../components/VipPageHeader'
 import { apiRequest } from '../services/apiClient'
 import {
   getAudioSettings,
   setGlobalBgmMuted,
-  setGlobalBgmVolume,
 } from '../hooks/useAudio'
 
 const SETTINGS_EVENT = 'audio:settings'
@@ -48,67 +47,14 @@ function SettingsRow({ label, children }) {
   )
 }
 
-function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
-  const sliderRef = useRef(null)
-  const propsRef  = useRef({ onVolume, onToggle, enabled })
-  propsRef.current = { onVolume, onToggle, enabled }
-
-  useEffect(() => {
-    const el = sliderRef.current
-    if (el) el.style.setProperty('--pct', `${Math.round(volume * 100)}%`)
-  }, [volume])
-
-  useEffect(() => {
-    const el = sliderRef.current
-    if (!el) return
-    function onInput() {
-      const v = parseFloat(el.value)
-      el.style.setProperty('--pct', `${Math.round(v * 100)}%`)
-      const { onVolume, onToggle, enabled } = propsRef.current
-      onVolume(v)
-      if (v === 0 && enabled)  onToggle(false)
-      if (v > 0  && !enabled) onToggle(true)
-    }
-    el.addEventListener('input', onInput)
-    return () => el.removeEventListener('input', onInput)
-  }, [])
-
-  return (
-    <div className="settings-audio-block">
-      <div className="settings-row">
-        <span className="settings-row-label">{label}</span>
-        <Toggle checked={enabled} onChange={onToggle} />
-      </div>
-      <div className="settings-slider-row">
-        <span className="settings-slider-icon">🔈</span>
-        <input
-          ref={sliderRef}
-          type="range"
-          className="settings-slider"
-          min={0} max={1} step={0.01}
-          defaultValue={volume}
-          style={{ '--pct': `${Math.round(volume * 100)}%` }}
-        />
-        <span className="settings-slider-icon">🔊</span>
-      </div>
-    </div>
-  )
-}
-
 export default function SettingsPage() {
   const token  = localStorage.getItem(TOKEN_KEY)
   const isAuth = Boolean(token)
 
-  const init = getAudioSettings()
-  const [bgmOn,  setBgmOn]  = useState(!init.bgmMuted)
-  const [bgmVol, setBgmVol] = useState(init.bgmVolume)
+  const [bgmOn, setBgmOn] = useState(!getAudioSettings().bgmMuted)
 
   useEffect(() => {
-    function sync() {
-      const s = getAudioSettings()
-      setBgmOn(!s.bgmMuted)
-      setBgmVol(s.bgmVolume)
-    }
+    function sync() { setBgmOn(!getAudioSettings().bgmMuted) }
     window.addEventListener(SETTINGS_EVENT, sync)
     return () => window.removeEventListener(SETTINGS_EVENT, sync)
   }, [])
@@ -123,11 +69,6 @@ export default function SettingsPage() {
   function handleBgmToggle(on) {
     setBgmOn(on)
     setGlobalBgmMuted(!on)
-  }
-
-  function handleBgmVol(v) {
-    setBgmVol(v)
-    setGlobalBgmVolume(v)
   }
 
   async function handleChangePwd(e) {
@@ -154,13 +95,13 @@ export default function SettingsPage() {
       <VipPageHeader title="設定" eyebrow="SETTINGS" />
 
       <SettingsSection title="音效設定">
-        <AudioBlock
-          label="背景音樂"
-          enabled={bgmOn}
-          onToggle={handleBgmToggle}
-          volume={bgmVol}
-          onVolume={handleBgmVol}
-        />
+        <SettingsRow label="背景音樂">
+          <Toggle checked={bgmOn} onChange={handleBgmToggle} />
+        </SettingsRow>
+        <div className="settings-divider" />
+        <SettingsRow label="推播通知">
+          <Toggle checked={pushOn} onChange={setPushOn} />
+        </SettingsRow>
       </SettingsSection>
 
       {isAuth && (
@@ -180,13 +121,6 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-
-          <div className="settings-divider" />
-
-          {/* 推播通知 */}
-          <SettingsRow label="接收遊戲推播通知">
-            <Toggle checked={pushOn} onChange={setPushOn} />
-          </SettingsRow>
 
           <div className="settings-divider" />
 

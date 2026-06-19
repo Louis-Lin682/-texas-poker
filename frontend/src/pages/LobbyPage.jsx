@@ -27,7 +27,7 @@ import { useGames } from '../hooks/useGames'
 import { getConfig } from '../services/gamesApi'
 import { API_BASE_URL } from '../services/apiClient'
 
-function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnterLobby, play, pause, isMuted, toggleMute, supportUnread, onSupportRead }) {
+function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnterLobby, play, pause, supportUnread, onSupportRead }) {
   const navigate = useNavigate()
   const [selectedGame, setSelectedGame] = useState(null)
   const [isCheckInOpen, setIsCheckInOpen] = useState(false)
@@ -143,7 +143,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
         </button>
       )} */}
       <div className="phone-frame phone-frame-lobby">
-        <NoticeTicker text={marqueeText} isMuted={isMuted} onToggleMute={toggleMute} />
+        <NoticeTicker text={marqueeText} />
         {auth.isAuthenticated ? (
           <ProfileCard
             profile={profile}

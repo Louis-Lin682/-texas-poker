@@ -11,7 +11,6 @@ const FILTERS = [
 
 const INITIAL_VISIBLE_COUNT = 12
 
-
 function PreviewOverlay() {
   return (
     <div className="preview-overlay" aria-hidden="true">
@@ -33,18 +32,38 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
     electronic: INITIAL_VISIBLE_COUNT,
     poker:      INITIAL_VISIBLE_COUNT,
   }))
-  const [animateBatchFrom, setAnimateBatchFrom] = useState(null)
 
-  const activeIndex = FILTERS.findIndex((filter) => filter.id === activeFilter)
+  const activeIndex = FILTERS.findIndex((f) => f.id === activeFilter)
 
-  const filteredItems = useMemo(() => {
-    if (activeFilter === 'all')       return items
-    if (activeFilter === 'favorites') return items.filter(game => favoriteIds.includes(game.id))
-    return items.filter((game) => game.category === activeFilter)
-  }, [activeFilter, items, favoriteIds])
+  // Precompute per-filter index for each item (for show-more cutoff)
+  const enriched = useMemo(() => {
+    const idx = { all: 0, favorites: 0, electronic: 0, poker: 0 }
+    return items.map((game) => {
+      const match = {
+        all:        true,
+        favorites:  favoriteIds.includes(game.id),
+        electronic: game.category === 'electronic',
+        poker:      game.category === 'poker',
+      }
+      const filterIdx = {}
+      Object.keys(match).forEach((fid) => {
+        if (match[fid]) filterIdx[fid] = ++idx[fid]
+      })
+      return { game, match, filterIdx }
+    })
+  }, [items, favoriteIds])
 
-  const visibleItems = filteredItems.slice(0, visibleCounts[activeFilter] ?? INITIAL_VISIBLE_COUNT)
-  const hasMore = filteredItems.length > visibleItems.length
+  const totalInFilter  = enriched.filter((e) => e.match[activeFilter]).length
+  const visibleInFilter = visibleCounts[activeFilter] ?? INITIAL_VISIBLE_COUNT
+  const hasMore = totalInFilter > visibleInFilter
+  const noFavorites = activeFilter === 'favorites' && totalInFilter === 0
+
+  function selectFilter(id) {
+    if (id === activeFilter) return
+    play('uiClick')
+    setActiveFilter(id)
+    setVisibleCounts((c) => ({ ...c, [id]: INITIAL_VISIBLE_COUNT }))
+  }
 
   return (
     <section className="content-panel">
@@ -68,62 +87,36 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
               aria-hidden="true"
               style={{ transform: `translateX(${activeIndex * 100}%)` }}
             />
-
-            {FILTERS.map((filter) => {
-              const isActive = filter.id === activeFilter
-
-              return (
-                <button
-                  key={filter.id}
-                  type="button"
-                  data-no-global-click="true"
-                  className={`game-filter-segment-button ${isActive ? 'is-active' : ''}`}
-                  aria-pressed={isActive}
-                  onTouchStart={() => {
-                    if (filter.id === activeFilter) return
-                    play('uiClick')
-                    setAnimateBatchFrom(null)
-                    setActiveFilter(filter.id)
-                    setVisibleCounts((current) => ({
-                      ...current,
-                      [filter.id]: INITIAL_VISIBLE_COUNT,
-                    }))
-                  }}
-                  onClick={() => {
-                    if (filter.id === activeFilter) return
-                    play('uiClick')
-                    setAnimateBatchFrom(null)
-                    setActiveFilter(filter.id)
-                    setVisibleCounts((current) => ({
-                      ...current,
-                      [filter.id]: INITIAL_VISIBLE_COUNT,
-                    }))
-                  }}
-                >
-                  {filter.label}
-                </button>
-              )
-            })}
+            {FILTERS.map((filter) => (
+              <button
+                key={filter.id}
+                type="button"
+                data-no-global-click="true"
+                className={`game-filter-segment-button ${filter.id === activeFilter ? 'is-active' : ''}`}
+                aria-pressed={filter.id === activeFilter}
+                onTouchStart={() => selectFilter(filter.id)}
+                onClick={() => selectFilter(filter.id)}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
-
         </div>
 
-        {activeFilter === 'favorites' && filteredItems.length === 0 ? (
-          <div className="all-games-empty">暫無收藏遊戲</div>
-        ) : null}
+        {noFavorites && <div className="all-games-empty">暫無收藏遊戲</div>}
 
         <div className="all-games-grid">
-          {visibleItems.map((game, index) => {
+          {enriched.map(({ game, match, filterIdx }) => {
+            const hidden = !match[activeFilter] || (filterIdx[activeFilter] ?? 0) > visibleInFilter
             const isFavorite = favoriteIds.includes(game.id)
             const isMaintenance = game.status === 'maintenance'
             const isPreview = game.status === 'preview'
-            const isNew = animateBatchFrom !== null && index >= animateBatchFrom
 
             return (
               <article
                 key={game.id}
-                className={`game-tile all-game-tile ${isMaintenance ? 'is-maintenance' : ''} ${isPreview ? 'is-preview' : ''} ${isNew ? 'is-new-batch' : ''}`}
-                style={isNew ? { '--batch-delay': `${(index - animateBatchFrom) * 40}ms` } : undefined}
+                className={`game-tile all-game-tile ${isMaintenance ? 'is-maintenance' : ''} ${isPreview ? 'is-preview' : ''}`}
+                style={hidden ? { display: 'none' } : undefined}
                 onClick={() => onGameClick?.(game)}
               >
                 <button
@@ -135,9 +128,14 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
                 >
                   <HeartIcon filled={isFavorite} />
                 </button>
-
                 <div className="game-art">
-                  <img className="game-image" src={game.imageUrl} alt={game.name} loading="lazy" onLoad={e => e.currentTarget.classList.add('img-loaded')} />
+                  <img
+                    className="game-image"
+                    src={game.imageUrl}
+                    alt={game.name}
+                    loading="lazy"
+                    onLoad={(e) => e.currentTarget.classList.add('img-loaded')}
+                  />
                   {isMaintenance ? <MaintenanceSpriteOverlay /> : null}
                   {isPreview ? <PreviewOverlay /> : null}
                 </div>
@@ -146,22 +144,21 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
           })}
         </div>
 
-        {hasMore ? (
+        {hasMore && (
           <button
             type="button"
             className="show-more-games-button"
             onClick={() => {
               play?.('uiWhoosh')
-              setAnimateBatchFrom(visibleItems.length)
-              setVisibleCounts((current) => ({
-                ...current,
-                [activeFilter]: (current[activeFilter] ?? INITIAL_VISIBLE_COUNT) + INITIAL_VISIBLE_COUNT,
+              setVisibleCounts((c) => ({
+                ...c,
+                [activeFilter]: (c[activeFilter] ?? INITIAL_VISIBLE_COUNT) + INITIAL_VISIBLE_COUNT,
               }))
             }}
           >
             顯示更多
           </button>
-        ) : null}
+        )}
       </>}
     </section>
   )

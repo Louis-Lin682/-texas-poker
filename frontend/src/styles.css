@@ -12174,3 +12174,8 @@ div.settings-slider::after {
 .sky-cloud-bob {
   filter: none;
 }
+
+/* box-shadow 替代 blur：bake 進 compositor layer，無每幀成本 */
+.sky-puff {
+  box-shadow: 0 0 16px 8px rgba(255, 255, 255, 0.12);
+}

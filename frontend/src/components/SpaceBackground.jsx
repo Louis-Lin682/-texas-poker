@@ -1,79 +1,87 @@
-// CSS-based cloud animation — runs on compositor thread, no scroll flicker
+import { useEffect, useRef } from 'react'
 
 function rand(min, max) { return Math.random() * (max - min) + min }
 
-function makePuffs(n, cloudWvw) {
-  const out = []
+function drawCloud(ctx, cx, cy, wPx, alpha) {
+  const n      = Math.round(rand(12, 18))
+  const baseR  = wPx * 0.24
+
   for (let i = 0; i < n; i++) {
-    const u     = rand(-0.85, 0.85)
-    const dome  = 0.52 * Math.sqrt(Math.max(0, 1 - u * u))
-    const pxPct = (u + 1) / 2 * 100
-    const pyPct = 55 - dome * rand(0.25, 1) * 80 + rand(0, 6)
-    const prPct = rand(18, 36) * (0.60 + 0.40 * (1 - Math.abs(u)))
-    const prVw  = (prPct * cloudWvw / 100).toFixed(2)
-    out.push({ pxPct: pxPct.toFixed(2), pyPct: pyPct.toFixed(2), prVw, top: pyPct < 52 })
+    const u    = rand(-0.85, 0.85)
+    const dome = 0.52 * Math.sqrt(Math.max(0, 1 - u * u))
+    const px   = cx + u * wPx * 0.5
+    const py   = cy - dome * rand(0.3, 1.0) * wPx * 0.38 + rand(-4, 4)
+    const r    = baseR * rand(0.55, 1.0) * (0.65 + 0.35 * (1 - Math.abs(u)))
+    const isTop = dome > 0.2
+
+    const grad = ctx.createRadialGradient(
+      px - r * 0.2, py - r * 0.2, 0,
+      px, py, r
+    )
+    if (isTop) {
+      grad.addColorStop(0,    `rgba(255,255,255,${alpha})`)
+      grad.addColorStop(0.45, `rgba(240,250,255,${(alpha * 0.70).toFixed(2)})`)
+      grad.addColorStop(0.75, `rgba(215,235,255,${(alpha * 0.25).toFixed(2)})`)
+      grad.addColorStop(1,    `rgba(195,220,255,0)`)
+    } else {
+      grad.addColorStop(0,    `rgba(232,247,255,${(alpha * 0.92).toFixed(2)})`)
+      grad.addColorStop(0.45, `rgba(210,232,252,${(alpha * 0.60).toFixed(2)})`)
+      grad.addColorStop(0.75, `rgba(190,218,250,${(alpha * 0.18).toFixed(2)})`)
+      grad.addColorStop(1,    `rgba(175,210,248,0)`)
+    }
+
+    ctx.beginPath()
+    ctx.arc(px, py, r, 0, Math.PI * 2)
+    ctx.fillStyle = grad
+    ctx.fill()
   }
-  return out
 }
 
-// [wVw, yVh, speedVwPerSec, nPuffs]
-const CONFIGS = [
-  [32,  8, 1.6,  7],
-  [52, 20, 2.0, 10],
-  [58, 15, 1.9, 10],
-  [48, 30, 2.2, 10],
-  [70, 36, 2.5, 12],
+// [xPct, yPct, widthPct, alpha]
+const CLOUD_DEFS = [
+  [15,  8, 45, 0.88],
+  [78, 15, 42, 0.90],
+  [45, 25, 55, 0.82],
+  [10, 38, 48, 0.85],
+  [80, 42, 50, 0.80],
+  [45, 55, 44, 0.83],
+  [15, 65, 46, 0.81],
+  [80, 68, 42, 0.84],
 ]
 
-const CLOUDS = CONFIGS.map(([wVw, yVh, speed, nPuffs]) => {
-  const travelVw = 100 + wVw
-  const durS     = (travelVw / speed).toFixed(1)
-  const delayS   = (-(rand(0, 1) * travelVw / speed)).toFixed(1)
-  const bobDurS  = rand(7, 14).toFixed(1)
-  const bobDelay = rand(-8, 0).toFixed(1)
-  const alpha    = rand(0.76, 0.95).toFixed(2)
-  return { wVw, yVh, durS, delayS, bobDurS, bobDelay, alpha, puffs: makePuffs(nPuffs, wVw) }
-})
-
 export default function SpaceBackground() {
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-      {CLOUDS.map((c, ci) => (
-        <div
-          key={ci}
-          className="sky-cloud-drift"
-          style={{
-            top:    `${c.yVh}vh`,
-            width:  `${c.wVw}vw`,
-            height: `${(c.wVw * 0.60).toFixed(1)}vw`,
-            '--from':      `-${c.wVw}vw`,
-            '--to':        '100vw',
-            '--dur':       `${c.durS}s`,
-            '--delay':     `${c.delayS}s`,
-            '--bob-dur':   `${c.bobDurS}s`,
-            '--bob-delay': `${c.bobDelay}s`,
-          }}
-        >
-          <div className="sky-cloud-bob">
-            {c.puffs.map((p, pi) => (
-              <div
-                key={pi}
-                className={`sky-puff ${p.top ? 'sky-puff-top' : 'sky-puff-bot'}`}
-                style={{
-                  left:   `${p.pxPct}%`,
-                  top:    `${p.pyPct}%`,
-                  width:  `${p.prVw}vw`,
-                  height: `${p.prVw}vw`,
-                  '--a':  c.alpha,
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
+  const canvasRef = useRef(null)
 
-      {/* Bottom mist — 2 footer heights */}
-      <div className="sky-mist" />
-    </div>
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const w = window.innerWidth
+    const h = window.innerHeight
+    canvas.width  = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+
+    CLOUD_DEFS.forEach(([xPct, yPct, wPct, alpha]) => {
+      const cx   = w * xPct / 100
+      const cy   = h * yPct / 100
+      const wPx  = w * wPct / 100
+      drawCloud(ctx, cx, cy, wPx, alpha)
+    })
+  }, [])
+
+  return (
+    <>
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 0,
+          pointerEvents: 'none', width: '100%', height: '100%',
+        }}
+      />
+      <div
+        className="sky-mist"
+        style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 0, pointerEvents: 'none' }}
+      />
+    </>
   )
 }

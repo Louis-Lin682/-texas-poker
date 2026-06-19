@@ -130,16 +130,6 @@ function App() {
           }}
           play={play}
           pause={pause}
-          isMuted={bgmMuted}
-          toggleMute={() => {
-            if (bgmMuted) {
-              setGlobalBgmMuted(false)
-              playLobbyBgm()
-            } else {
-              setGlobalBgmMuted(true)
-              pause('lobbyBgm')
-            }
-          }}
           supportUnread={supportUnread}
           onSupportRead={resetSupportUnread}
         />
