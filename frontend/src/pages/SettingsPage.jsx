@@ -49,11 +49,8 @@ function SettingsRow({ label, children }) {
 }
 
 function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
-  const sliderRef  = useRef(null)
-  const isDownRef  = useRef(false)
-  const rectRef    = useRef(null)
-  const rafRef     = useRef(null)
-  const propsRef   = useRef({ onVolume, onToggle, enabled })
+  const sliderRef = useRef(null)
+  const propsRef  = useRef({ onVolume, onToggle, enabled })
   propsRef.current = { onVolume, onToggle, enabled }
 
   useEffect(() => {
@@ -64,45 +61,16 @@ function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
   useEffect(() => {
     const el = sliderRef.current
     if (!el) return
-
-    function commit(v) {
+    function onInput() {
+      const v = parseFloat(el.value)
+      el.style.setProperty('--pct', `${Math.round(v * 100)}%`)
       const { onVolume, onToggle, enabled } = propsRef.current
       onVolume(v)
       if (v === 0 && enabled)  onToggle(false)
       if (v > 0  && !enabled) onToggle(true)
     }
-
-    function applyAt(clientX) {
-      const rect = rectRef.current
-      if (!rect) return
-      const v = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
-      el.style.setProperty('--pct', `${Math.round(v * 100)}%`)
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      rafRef.current = requestAnimationFrame(() => { commit(v); rafRef.current = null })
-    }
-
-    function onDown(e) {
-      e.preventDefault()
-      isDownRef.current = true
-      rectRef.current = el.getBoundingClientRect()
-      el.setPointerCapture(e.pointerId)
-      applyAt(e.clientX)
-    }
-    function onMove(e) { if (isDownRef.current) applyAt(e.clientX) }
-    function onUp(e)   { if (isDownRef.current) { isDownRef.current = false; applyAt(e.clientX) } }
-    function onCancel(){ isDownRef.current = false }
-
-    el.addEventListener('pointerdown',   onDown)
-    el.addEventListener('pointermove',   onMove)
-    el.addEventListener('pointerup',     onUp)
-    el.addEventListener('pointercancel', onCancel)
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      el.removeEventListener('pointerdown',   onDown)
-      el.removeEventListener('pointermove',   onMove)
-      el.removeEventListener('pointerup',     onUp)
-      el.removeEventListener('pointercancel', onCancel)
-    }
+    el.addEventListener('input', onInput)
+    return () => el.removeEventListener('input', onInput)
   }, [])
 
   return (
@@ -113,14 +81,12 @@ function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
       </div>
       <div className="settings-slider-row">
         <span className="settings-slider-icon">🔈</span>
-        {/* div instead of input[type=range] — iOS hijacks native range touch events */}
-        <div
+        <input
           ref={sliderRef}
+          type="range"
           className="settings-slider"
-          role="slider"
-          aria-valuenow={Math.round(volume * 100)}
-          aria-valuemin={0}
-          aria-valuemax={100}
+          min={0} max={1} step={0.01}
+          defaultValue={volume}
           style={{ '--pct': `${Math.round(volume * 100)}%` }}
         />
         <span className="settings-slider-icon">🔊</span>

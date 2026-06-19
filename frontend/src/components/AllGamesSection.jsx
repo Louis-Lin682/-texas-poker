@@ -79,9 +79,8 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
                   data-no-global-click="true"
                   className={`game-filter-segment-button ${isActive ? 'is-active' : ''}`}
                   aria-pressed={isActive}
-                  onPointerDown={(e) => {
+                  onPointerDown={() => {
                     if (filter.id === activeFilter) return
-                    e.preventDefault()
                     play('uiClick')
                     setAnimateBatchFrom(null)
                     setActiveFilter(filter.id)
