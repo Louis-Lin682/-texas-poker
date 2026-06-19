@@ -12169,3 +12169,8 @@ div.settings-slider::after {
 .game-filter-segment-button {
   touch-action: manipulation;
 }
+
+/* 雲朵 blur 在 iOS GPU 極昂貴（每幀 offscreen pass），移除以防卡頓 */
+.sky-cloud-bob {
+  filter: none;
+}
