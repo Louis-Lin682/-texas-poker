@@ -56,12 +56,12 @@ const DT_BET_LABEL = {
 }
 
 const DATE_CHIPS = [
+  { label: '全部',  value: 'all'        },
   { label: '今天',  value: 'today'      },
   { label: '本週',  value: 'week'       },
   { label: '上週',  value: 'last-week'  },
   { label: '本月',  value: 'month'      },
   { label: '上月',  value: 'last-month' },
-  { label: '全部',  value: 'all'        },
 ]
 
 function getPresetRange(value) {
