@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLoading } from '../context/LoadingContext'
+import SpaceBackground from './SpaceBackground'
 
 const SRC_W    = 1254
 const SRC_H    = 1254
@@ -50,6 +51,8 @@ export default function LoadingOverlay() {
       }}
       onTransitionEnd={() => { if (!visible) setMounted(false) }}
     >
+      <SpaceBackground />
+
       {/* Sprite */}
       <div style={{
         width: DISP_W, height: DISP_H,

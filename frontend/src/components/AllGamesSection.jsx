@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react'
 import HeartIcon from './HeartIcon'
 import MaintenanceSpriteOverlay from './MaintenanceSpriteOverlay'
-import SectionHeader from './SectionHeader'
 
 const FILTERS = [
-  { id: 'all', label: '全部' },
-  { id: 'favorites', label: '收藏' },
+  { id: 'all',        label: '全部' },
+  { id: 'favorites',  label: '收藏' },
   { id: 'electronic', label: '電子' },
-  { id: 'poker', label: '撲克' },
+  { id: 'poker',      label: '撲克' },
 ]
 
 const INITIAL_VISIBLE_COUNT = 12
@@ -29,17 +28,17 @@ function PreviewOverlay() {
 function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play, onGameClick }) {
   const [activeFilter, setActiveFilter] = useState('all')
   const [visibleCounts, setVisibleCounts] = useState(() => ({
-    all: INITIAL_VISIBLE_COUNT,
-    favorites: INITIAL_VISIBLE_COUNT,
+    all:        INITIAL_VISIBLE_COUNT,
+    favorites:  INITIAL_VISIBLE_COUNT,
     electronic: INITIAL_VISIBLE_COUNT,
-    poker: INITIAL_VISIBLE_COUNT,
+    poker:      INITIAL_VISIBLE_COUNT,
   }))
   const [animateBatchFrom, setAnimateBatchFrom] = useState(null)
 
   const activeIndex = FILTERS.findIndex((filter) => filter.id === activeFilter)
 
   const filteredItems = useMemo(() => {
-    if (activeFilter === 'all') return items
+    if (activeFilter === 'all')       return items
     if (activeFilter === 'favorites') return items.filter(game => favoriteIds.includes(game.id))
     return items.filter((game) => game.category === activeFilter)
   }, [activeFilter, items, favoriteIds])
@@ -49,12 +48,8 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
 
   return (
     <section className="content-panel">
-      <div className="content-panel-icon">
-        <img src="./game-icon.png" alt="" />
-        <SectionHeader title="全部遊戲" />
-        {!isLoading && (
-          <span className="game-filter-count">{filteredItems.length} 款遊戲</span>
-        )}
+      <div className="hot-banner-title">
+        <img src="/allGameTags.png" alt="全部遊戲" />
       </div>
 
       {isLoading && (
@@ -134,12 +129,8 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
 
                 <div className="game-art">
                   <img className="game-image" src={game.imageUrl} alt={game.name} loading="lazy" onLoad={e => e.currentTarget.classList.add('img-loaded')} />
-                  {/* <div className="art-glow" /> */}
                   {isMaintenance ? <MaintenanceSpriteOverlay /> : null}
                   {isPreview ? <PreviewOverlay /> : null}
-                  <div className="art-title">
-                    <span>{game.name}</span>
-                  </div>
                 </div>
               </article>
             )
