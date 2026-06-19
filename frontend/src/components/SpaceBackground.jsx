@@ -61,6 +61,14 @@ export default function SpaceBackground() {
     canvas.height = h
     const ctx = canvas.getContext('2d')
 
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, h)
+    skyGrad.addColorStop(0,   '#4aa4dc')
+    skyGrad.addColorStop(0.4, '#bfe8ff')
+    skyGrad.addColorStop(0.7, '#7fc8f2')
+    skyGrad.addColorStop(1,   '#4aa4dc')
+    ctx.fillStyle = skyGrad
+    ctx.fillRect(0, 0, w, h)
+
     CLOUD_DEFS.forEach(([xPct, yPct, wPct, alpha]) => {
       const cx   = w * xPct / 100
       const cy   = h * yPct / 100
