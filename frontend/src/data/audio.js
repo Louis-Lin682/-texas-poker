@@ -8,8 +8,8 @@ export const audioMap = {
     volume: 0.42,
   },
   lobbyBgm: { src: '/audio/bgm/BgSound.mp3',         volume: 0.28, loop: true, bgm: true },
-  pt_bgm:   { src: '/audio/game/gameBgSound.mp3',    volume: 0.28, loop: true, bgm: true },
-  bj_bgm:   { src: '/audio/game/gameBgSound.mp3',    volume: 0.28, loop: true, bgm: true },
+  pt_bgm:   { src: '/audio/game/gameBgSound.mp3',    volume: 0.28, loop: true, bgm: true, gameOnly: true },
+  bj_bgm:   { src: '/audio/game/gameBgSound.mp3',    volume: 0.28, loop: true, bgm: true, gameOnly: true },
   cardDeal: {
     src: '/audio/game/fly_card.mp3',
     volume: 0.55,
@@ -19,6 +19,7 @@ export const audioMap = {
     volume: 0.28,
     loop: true,
     bgm: true,
+    gameOnly: true,
   },
   pt_nowYou:  { src: '/audio/Texas_Poker/game/now-you.mp3',  volume: 0.85 },
   bj_win:         { src: '/audio/blackjack/game/win.mp3',             volume: 0.85 },

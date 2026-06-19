@@ -8,6 +8,8 @@ import {
   setGlobalBgmVolume,
 } from '../hooks/useAudio'
 
+const SETTINGS_EVENT = 'audio:settings'
+
 const TOKEN_KEY = 'texas_holdem_auth_token'
 
 function SettingsSection({ title, children }) {
@@ -142,6 +144,16 @@ export default function SettingsPage() {
   const init = getAudioSettings()
   const [bgmOn,  setBgmOn]  = useState(!init.bgmMuted)
   const [bgmVol, setBgmVol] = useState(init.bgmVolume)
+
+  useEffect(() => {
+    function sync() {
+      const s = getAudioSettings()
+      setBgmOn(!s.bgmMuted)
+      setBgmVol(s.bgmVolume)
+    }
+    window.addEventListener(SETTINGS_EVENT, sync)
+    return () => window.removeEventListener(SETTINGS_EVENT, sync)
+  }, [])
 
   const [pushOn,   setPushOn]   = useState(true)
   const [pwdOpen,  setPwdOpen]  = useState(false)

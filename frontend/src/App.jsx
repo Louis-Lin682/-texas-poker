@@ -63,6 +63,10 @@ function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const [hasEnteredLobby, setHasEnteredLobby] = useState(false)
+  const markEntered = () => {
+    localStorage.setItem('lobby_entered', '1')
+    setHasEnteredLobby(true)
+  }
 
   const { play, pause, stop, preload, bgmMuted } = useAudio()
   const { unreadCount: supportUnread, resetUnread: resetSupportUnread } = useSupportWs({ token: auth.token })
@@ -75,6 +79,7 @@ function App() {
     preload(['uiClick', 'uiWhoosh', 'lobbyBgm'])
   }, [preload])
 
+
   useEffect(() => {
     if (!hasEnteredLobby) return
     if (skipBgmEffect.current) { skipBgmEffect.current = false; return }
@@ -83,12 +88,12 @@ function App() {
     } else if (!bgmMuted) {
       playLobbyBgm()
     }
-  }, [location.pathname, hasEnteredLobby, stop])
+  }, [location.pathname, hasEnteredLobby, bgmMuted, stop])
 
   useEffect(() => {
     if (hasEnteredLobby) return
     if (location.pathname === '/' || location.pathname === '/auth') return
-    setHasEnteredLobby(true)
+    markEntered()
   }, [location.pathname, hasEnteredLobby])
 
   const openAuthPage  = () => navigate('/auth')
@@ -119,7 +124,8 @@ function App() {
           hasEnteredLobby={hasEnteredLobby}
           onEnterLobby={() => {
             skipBgmEffect.current = true
-            setHasEnteredLobby(true)
+            markEntered()
+            stop('lobbyBgm')
             playLobbyBgm()
           }}
           play={play}

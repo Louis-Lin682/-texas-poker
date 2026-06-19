@@ -10,9 +10,9 @@ function readFloat(key, def) {
   return isNaN(v) ? def : Math.max(0, Math.min(1, v))
 }
 
-let _bgmMuted  = localStorage.getItem(K.bgmMuted) === '1'
-let _bgmVolume = readFloat(K.bgmVol, 1)
-let _sfxVolume = readFloat(K.sfxVol, 1)
+let _bgmMuted  = false  // always unmuted on fresh load; mute is session-only
+let _bgmVolume = 1  // session-only; resets on refresh
+let _sfxVolume = 1  // session-only; resets on refresh
 
 // ── Howl instance cache ───────────────────────────────────────────────────────
 const _howls  = {}   // key → Howl
@@ -21,6 +21,7 @@ const _bgmIds = {}   // key → active BGM sound ID (for pause/resume tracking)
 function _vol(key) {
   const c = audioMap[key]
   if (!c) return 0
+  if (c.gameOnly) return (c.volume ?? 1) * _bgmVolume
   return c.bgm
     ? (_bgmMuted ? 0 : (c.volume ?? 1) * _bgmVolume)
     : (c.volume ?? 1) * _sfxVolume
@@ -68,10 +69,12 @@ export function muteHowl(key, muted) {
 // ── Public settings API ───────────────────────────────────────────────────────
 const SETTINGS_EVENT = 'audio:settings'
 
-export function setGlobalBgmMuted(v) {
+export function setGlobalBgmMuted(v, persist = false) {
   _bgmMuted = v
-  localStorage.setItem(K.bgmMuted, v ? '1' : '0')
-  Object.keys(audioMap).filter(k => audioMap[k].bgm).forEach(k => _howls[k]?.volume(_vol(k)))
+  if (persist) localStorage.setItem(K.bgmMuted, v ? '1' : '0')
+  Object.keys(audioMap)
+    .filter(k => audioMap[k].bgm && !audioMap[k].gameOnly)
+    .forEach(k => _howls[k]?.volume(_vol(k)))
   window.dispatchEvent(new Event(SETTINGS_EVENT))
 }
 
@@ -79,14 +82,12 @@ export function setGlobalSfxMuted() {}  // kept for API compat; SFX is always on
 
 export function setGlobalBgmVolume(v) {
   _bgmVolume = v
-  localStorage.setItem(K.bgmVol, String(v))
   Object.keys(audioMap).filter(k => audioMap[k].bgm).forEach(k => _howls[k]?.volume(_vol(k)))
   window.dispatchEvent(new Event(SETTINGS_EVENT))
 }
 
 export function setGlobalSfxVolume(v) {
   _sfxVolume = v
-  localStorage.setItem(K.sfxVol, String(v))
   Object.keys(audioMap).filter(k => !audioMap[k].bgm).forEach(k => _howls[k]?.volume(_vol(k)))
   window.dispatchEvent(new Event(SETTINGS_EVENT))
 }
@@ -110,16 +111,14 @@ export function useAudio() {
 
     if (c.bgm) {
       if (_bgmIds[key] !== undefined) {
-        if (overrides.volume !== undefined) howl.volume(_bgmMuted ? 0 : overrides.volume * _bgmVolume)
+        if (overrides.volume !== undefined) howl.volume(c.gameOnly ? overrides.volume * _bgmVolume : (_bgmMuted ? 0 : overrides.volume * _bgmVolume))
         if (overrides.loop   !== undefined) howl.loop(overrides.loop)
         // Already playing → no-op; paused → resume from current position
         if (howl.playing(_bgmIds[key])) return true
         howl.play(_bgmIds[key])
         return true
       }
-      howl.stop()
-      delete _bgmIds[key]
-      if (overrides.volume !== undefined) howl.volume(_bgmMuted ? 0 : overrides.volume)
+      if (overrides.volume !== undefined) howl.volume(c.gameOnly ? overrides.volume * _bgmVolume : (_bgmMuted ? 0 : overrides.volume * _bgmVolume))
       if (overrides.loop   !== undefined) howl.loop(overrides.loop)
       _bgmIds[key] = howl.play()
     } else {
@@ -143,9 +142,8 @@ export function useAudio() {
     if (_bgmIds[key] !== undefined) {
       _howls[key]?.stop(_bgmIds[key])
       delete _bgmIds[key]
-    } else {
-      _howls[key]?.stop()
     }
+    // no-op when nothing is playing — avoids resetting preloaded html5 audio element
   }, [])
 
   const stopAll = useCallback(() => {
