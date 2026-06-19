@@ -1938,8 +1938,6 @@ initDbWithRetry()
     dbReady = true
     console.log('Database ready.')
 
-    // Keep Neon from autosuspending (free tier sleeps after 5 min of no queries)
-    setInterval(() => query('SELECT 1').catch(() => {}), 4 * 60 * 1000)
 
     // Auto-close inactive support tickets
     async function autoCloseTickets() {
