@@ -74,7 +74,10 @@ export function setGlobalBgmMuted(v, persist = false) {
   if (persist) localStorage.setItem(K.bgmMuted, v ? '1' : '0')
   Object.keys(audioMap)
     .filter(k => audioMap[k].bgm && !audioMap[k].gameOnly)
-    .forEach(k => _howls[k]?.volume(_vol(k)))
+    .forEach(k => {
+      muteHowl(k, v)                    // iOS: audio.volume is read-only; use audio.muted instead
+      if (!v) _howls[k]?.volume(_vol(k)) // restore volume on unmute for non-iOS
+    })
   window.dispatchEvent(new Event(SETTINGS_EVENT))
 }
 
