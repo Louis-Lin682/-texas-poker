@@ -16,7 +16,7 @@ import SettingsPage from './pages/SettingsPage'
 import ThunderJokerPage from './pages/ThunderJokerPage'
 import SupportPage from './pages/SupportPage'
 import { useAuth } from './hooks/useAuth'
-import { useAudio } from './hooks/useAudio'
+import { useAudio, setGlobalBgmMuted } from './hooks/useAudio'
 import { useGlobalButtonFeedback } from './hooks/useGlobalButtonFeedback'
 import { useIdleTimeout } from './hooks/useIdleTimeout'
 import { useSupportWs } from './hooks/useSupportWs'
@@ -64,10 +64,9 @@ function App() {
   const location = useLocation()
   const [hasEnteredLobby, setHasEnteredLobby] = useState(false)
 
-  const { play, pause, stop, preload } = useAudio()
+  const { play, pause, stop, preload, bgmMuted } = useAudio()
   const { unreadCount: supportUnread, resetUnread: resetSupportUnread } = useSupportWs({ token: auth.token })
   const skipBgmEffect = useRef(false)
-  const [isLobbyBgmMuted, setIsLobbyBgmMuted] = useState(false)
   const playLobbyBgm = () => play('lobbyBgm', { volume: 0.28, loop: true })
 
   const isLobby = !NON_LOBBY_PATHS.some(p => location.pathname === p || location.pathname.startsWith(p + '/'))
@@ -78,14 +77,13 @@ function App() {
 
   useEffect(() => {
     if (!hasEnteredLobby) return
-    // Skip when triggered by the Enter button click — that handler already called play()
     if (skipBgmEffect.current) { skipBgmEffect.current = false; return }
-    if (GAME_ROUTES.includes(location.pathname) || isLobbyBgmMuted) {
+    if (GAME_ROUTES.includes(location.pathname)) {
       stop('lobbyBgm')
-    } else {
+    } else if (!bgmMuted) {
       playLobbyBgm()
     }
-  }, [location.pathname, hasEnteredLobby, isLobbyBgmMuted, stop])
+  }, [location.pathname, hasEnteredLobby, stop])
 
   useEffect(() => {
     if (hasEnteredLobby) return
@@ -120,21 +118,21 @@ function App() {
           onCenterLogoClick={enterMain}
           hasEnteredLobby={hasEnteredLobby}
           onEnterLobby={() => {
-            skipBgmEffect.current = true  // prevent BGM effect from firing pause()
-            setIsLobbyBgmMuted(false)     // lobby mute is only for the current visit
+            skipBgmEffect.current = true
             setHasEnteredLobby(true)
             playLobbyBgm()
           }}
           play={play}
           pause={pause}
-          isMuted={isLobbyBgmMuted}
+          isMuted={bgmMuted}
           toggleMute={() => {
-            setIsLobbyBgmMuted(muted => {
-              const next = !muted
-              if (next) pause('lobbyBgm')
-              else playLobbyBgm()
-              return next
-            })
+            if (bgmMuted) {
+              setGlobalBgmMuted(false)
+              playLobbyBgm()
+            } else {
+              setGlobalBgmMuted(true)
+              pause('lobbyBgm')
+            }
           }}
           supportUnread={supportUnread}
           onSupportRead={resetSupportUnread}

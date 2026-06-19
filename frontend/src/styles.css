@@ -12124,3 +12124,8 @@ button.is-pressing {
 .game-art {
   border-radius: inherit;
 }
+
+/* 快速滑動時防止漏出黑底 */
+.phone-frame-lobby {
+  background: linear-gradient(180deg, #4aa4dc 0%, #bfe8ff 40%, #7fc8f2 70%, #4aa4dc 100%);
+}

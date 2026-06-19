@@ -47,66 +47,71 @@ function SettingsRow({ label, children }) {
 }
 
 function AudioBlock({ label, enabled, onToggle, volume, onVolume }) {
-  const sliderRef = useRef(null)
+  const sliderRef  = useRef(null)
+  const isDownRef  = useRef(false)
+  const rectRef    = useRef(null)
+  const rafRef     = useRef(null)
+  const propsRef   = useRef({ onVolume, onToggle, enabled })
+  propsRef.current = { onVolume, onToggle, enabled }
 
-  // Sync visual fill when volume changes from outside (e.g. toggle resets)
+  // Sync visual fill when volume changes from outside
   useEffect(() => {
     const el = sliderRef.current
     if (el) el.style.setProperty('--pct', `${Math.round(volume * 100)}%`)
   }, [volume])
 
-  // Native + touch listeners — iOS Safari may not fire `input` during drag
+  // Pointer events — mount once, use propsRef for live values
   useEffect(() => {
     const el = sliderRef.current
     if (!el) return
 
-    function apply(v) {
-      el.style.setProperty('--pct', `${Math.round(v * 100)}%`)
+    function commit(v) {
+      const { onVolume, onToggle, enabled } = propsRef.current
       onVolume(v)
       if (v === 0 && enabled)  onToggle(false)
       if (v > 0  && !enabled) onToggle(true)
     }
 
-    function onNative() { apply(parseFloat(el.value)) }
-
-    let startX = 0, startY = 0, dragging = false
-
-    function onTouchStart(e) {
-      startX   = e.touches[0].clientX
-      startY   = e.touches[0].clientY
-      dragging = false
-    }
-
-    function onTouch(e) {
-      const touch = e.touches?.[0] ?? e.changedTouches?.[0]
-      if (!touch) return
-      // Determine drag direction on first move
-      if (e.touches && !dragging) {
-        const dx = Math.abs(touch.clientX - startX)
-        const dy = Math.abs(touch.clientY - startY)
-        if (dy > dx) return   // vertical scroll — let browser handle it
-        dragging = true
-      }
-      e.preventDefault()
-      const rect = el.getBoundingClientRect()
-      const v = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width))
+    function applyAt(clientX) {
+      const rect = rectRef.current
+      if (!rect) return
+      const v = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+      el.style.setProperty('--pct', `${Math.round(v * 100)}%`)
       el.value = String(v)
-      apply(v)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(() => { commit(v); rafRef.current = null })
     }
 
-    el.addEventListener('input',      onNative)
-    el.addEventListener('change',     onNative)
-    el.addEventListener('touchstart', onTouchStart, { passive: true })
-    el.addEventListener('touchmove',  onTouch,      { passive: false })
-    el.addEventListener('touchend',   onTouch)
-    return () => {
-      el.removeEventListener('input',      onNative)
-      el.removeEventListener('change',     onNative)
-      el.removeEventListener('touchstart', onTouchStart)
-      el.removeEventListener('touchmove',  onTouch)
-      el.removeEventListener('touchend',   onTouch)
+    function onDown(e) {
+      e.preventDefault()
+      isDownRef.current = true
+      rectRef.current = el.getBoundingClientRect()
+      el.setPointerCapture(e.pointerId)
+      applyAt(e.clientX)
     }
-  }) // no deps — re-attach on every render to capture fresh enabled/onToggle/onVolume
+    function onMove(e) {
+      if (!isDownRef.current) return
+      applyAt(e.clientX)
+    }
+    function onUp(e) {
+      if (!isDownRef.current) return
+      isDownRef.current = false
+      applyAt(e.clientX)
+    }
+    function onCancel() { isDownRef.current = false }
+
+    el.addEventListener('pointerdown',   onDown)
+    el.addEventListener('pointermove',   onMove)
+    el.addEventListener('pointerup',     onUp)
+    el.addEventListener('pointercancel', onCancel)
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      el.removeEventListener('pointerdown',   onDown)
+      el.removeEventListener('pointermove',   onMove)
+      el.removeEventListener('pointerup',     onUp)
+      el.removeEventListener('pointercancel', onCancel)
+    }
+  }, []) // mount/unmount only
 
   return (
     <div className="settings-audio-block">

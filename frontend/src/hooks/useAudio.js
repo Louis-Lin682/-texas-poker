@@ -110,7 +110,7 @@ export function useAudio() {
 
     if (c.bgm) {
       if (_bgmIds[key] !== undefined) {
-        if (overrides.volume !== undefined) howl.volume(overrides.volume)
+        if (overrides.volume !== undefined) howl.volume(_bgmMuted ? 0 : overrides.volume * _bgmVolume)
         if (overrides.loop   !== undefined) howl.loop(overrides.loop)
         // Already playing → no-op; paused → resume from current position
         if (howl.playing(_bgmIds[key])) return true
@@ -119,7 +119,7 @@ export function useAudio() {
       }
       howl.stop()
       delete _bgmIds[key]
-      if (overrides.volume !== undefined) howl.volume(overrides.volume)
+      if (overrides.volume !== undefined) howl.volume(_bgmMuted ? 0 : overrides.volume)
       if (overrides.loop   !== undefined) howl.loop(overrides.loop)
       _bgmIds[key] = howl.play()
     } else {
