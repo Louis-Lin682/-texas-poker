@@ -59,6 +59,14 @@ const ZONE_DEFS = {
   tiger_diamond: { left: '87.25%', top: '87%',  width: '7.75%', height: '16%' },
 }
 
+const ZONE_PAYOUTS = {
+  dragon: '1:1', tiger: '1:1', tie: '1:8',
+  dragon_big: '1:1', dragon_small: '1:1', dragon_odd: '1:1', dragon_even: '1:1',
+  dragon_spade: '1:3', dragon_heart: '1:3', dragon_club: '1:3', dragon_diamond: '1:3',
+  tiger_big: '1:1',  tiger_small: '1:1',  tiger_odd: '1:1',  tiger_even: '1:1',
+  tiger_spade: '1:3', tiger_heart: '1:3',  tiger_club: '1:3',  tiger_diamond: '1:3',
+}
+
 const SUIT_RED   = new Set(['♥', '♦'])
 const MAX_VISIBLE = 5
 
@@ -1084,6 +1092,9 @@ export default function DragonTigerPage({ auth }) {
                 myBet={myBets[zone]}
                 small={isSuitZone(zone)}
               />
+              <span className={`dt-zone-payout${isSuitZone(zone) ? ' is-small' : ''}${['dragon','tiger','tie'].includes(zone) ? ' is-top' : ''}`}>
+                {ZONE_PAYOUTS[zone]}
+              </span>
             </button>
           ))}
         </div>

@@ -12179,3 +12179,27 @@ div.settings-slider::after {
 .sky-puff {
   box-shadow: 0 0 16px 8px rgba(255, 255, 255, 0.12);
 }
+
+/* Dragon Tiger zone payout label */
+.dt-zone-payout {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(226, 206, 135, 0.9);
+  pointer-events: none;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+.dt-zone-payout.is-small {
+  font-size: 0.58rem;
+  bottom: 3px;
+}
+.dt-zone-payout.is-top {
+  bottom: unset;
+  top: 5px;
+  font-size: 1.72rem;
+}
