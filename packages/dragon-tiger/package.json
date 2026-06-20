@@ -1,0 +1,16 @@
+{
+  "name": "dragon-tiger",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start":       "node --no-warnings server.js",
+    "start:admin": "node --no-warnings admin-server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv":   "^17.4.2",
+    "pg":       "^8.21.0",
+    "ws":       "^8.20.1"
+  }
+}
