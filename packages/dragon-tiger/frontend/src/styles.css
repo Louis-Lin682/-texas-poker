@@ -1,0 +1,53 @@
+/* Import the full game styles — DT-specific classes are prefixed dt- */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap');
+
+/* Login page */
+.dt-login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d0d10;
+}
+.dt-login-card {
+  background: #18181c;
+  border: 1px solid rgba(226,206,135,0.15);
+  border-radius: 14px;
+  padding: 2.5rem 2rem;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.dt-login-title {
+  font-family: "Noto Serif TC", serif;
+  font-size: 1.8rem;
+  color: #e2ce87;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+.dt-login-input {
+  background: #111115;
+  border: 1px solid rgba(226,206,135,0.2);
+  border-radius: 8px;
+  color: #f4eedf;
+  padding: 0.6rem 0.9rem;
+  font-size: 1rem;
+  width: 100%;
+  outline: none;
+}
+.dt-login-input:focus { border-color: #c9b46a; }
+.dt-login-error { color: #e05c5c; font-size: 0.85rem; text-align: center; }
+.dt-login-btn {
+  background: #e2ce87;
+  color: #0d0d10;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.25rem;
+}
+.dt-login-btn:hover    { background: #c9b46a; }
+.dt-login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
