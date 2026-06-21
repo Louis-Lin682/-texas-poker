@@ -287,16 +287,9 @@ function BJSeat({ player, isActing, dealVisible = Infinity }) {
 }
 
 // ── Lobby ──────────────────────────────────────────────────
-// minBuyIn = chips the player is configured to bring; used to gate higher tiers
-function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBalance = 0, minBuyIn = 3000 }) {
+function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBalance = 0, minBuyIn = 0 }) {
   const [isSpinning, setIsSpinning] = useState(false)
-  // A preset is locked when the configured bring-in (minBuyIn) is below that tier's required buy-in
-  // OR when the user simply doesn't have enough balance
-  const isLocked = (p) => minBuyIn < p.buyIn || userBalance < p.buyIn
-
-  // Default to first unlocked preset
-  const defaultIdx = MAX_BET_PRESETS.findIndex(p => !isLocked(p))
-  const [selectedMaxBet, setSelectedMaxBet] = useState(defaultIdx < 0 ? 0 : defaultIdx)
+  const [selectedMaxBet, setSelectedMaxBet] = useState(0)
 
   function handleRefresh() {
     if (isSpinning) return
@@ -305,7 +298,7 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBal
   }
 
   const selectedPreset = MAX_BET_PRESETS[selectedMaxBet]
-  const canCreate = status === 'connected' && !isLocked(selectedPreset)
+  const canCreate = status === 'connected'
 
   return (
     <div className="pt-lobby">
@@ -319,27 +312,21 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBal
       <div className="pt-bet-unit-row">
         <span className="pt-bet-unit-label">最大下注</span>
         <div className="pt-bet-unit-btns">
-          {MAX_BET_PRESETS.map((p, i) => {
-            const locked = isLocked(p)
-            return (
-              <button key={i} type="button"
-                className={`pt-bet-unit-btn${selectedMaxBet === i ? ' is-active' : ''}${locked ? ' is-locked' : ''}`}
-                onClick={() => !locked && setSelectedMaxBet(i)}
-                disabled={locked}
-                title={locked ? `需要帶入 ${fmtNum(p.buyIn)} 籌碼` : undefined}>
-                {locked ? '🔒 ' : ''}{p.label}
-                <span style={{ fontSize: 10, opacity: 0.75, marginLeft: 2 }}>
-                  ({p.maxBet >= 1000 ? `${p.maxBet / 1000}K` : p.maxBet})
-                </span>
-              </button>
-            )
-          })}
+          {MAX_BET_PRESETS.map((p, i) => (
+            <button key={i} type="button"
+              className={`pt-bet-unit-btn${selectedMaxBet === i ? ' is-active' : ''}`}
+              onClick={() => setSelectedMaxBet(i)}>
+              {p.label}
+              <span style={{ fontSize: 10, opacity: 0.75, marginLeft: 2 }}>
+                ({p.maxBet >= 1000 ? `${p.maxBet / 1000}K` : p.maxBet})
+              </span>
+            </button>
+          ))}
         </div>
       </div>
       <button type="button" className="pt-lobby-create"
         onClick={() => onCreateRoom({ maxBet: selectedPreset.maxBet, buyIn: minBuyIn })}
-        disabled={!canCreate}
-        title={!canCreate && status === 'connected' ? `需要帶入 ${fmtNum(selectedPreset.buyIn)} 籌碼才能開桌` : undefined}>
+        disabled={!canCreate}>
         + 建立新房間
       </button>
       <div className="pt-room-list">
@@ -347,10 +334,6 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBal
           <div className="pt-room-empty">目前沒有房間，來建立第一間吧！</div>
         ) : rooms.map(r => {
           const roomMaxBet = r.maxBet ?? 0
-          const requiredBuyIn = MAX_BET_PRESETS.find(p => p.maxBet === roomMaxBet)?.buyIn ?? roomMaxBet
-          const affordable = minBuyIn >= requiredBuyIn && userBalance >= requiredBuyIn
-          const canJoin = status === 'connected' && r.phase === 'waiting' &&
-            r.playerCount < r.maxPlayers && affordable
           return (
             <div key={r.id} className="pt-room-item">
               <div className="pt-room-meta">
@@ -364,18 +347,12 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBal
               </div>
               <div className="pt-room-bottom">
                 <span className="pt-room-players">{r.playerCount} / {r.maxPlayers} 玩家</span>
-                {(() => {
-                  const isInsufficient = !affordable && r.phase === 'waiting' && r.playerCount < r.maxPlayers
-                  return (
-                    <button type="button"
-                      className={`pt-room-join${isInsufficient ? ' is-locked' : ''}`}
-                      onClick={() => onJoinRoom(r.id, minBuyIn)}
-                      disabled={!canJoin}
-                      title={isInsufficient ? `需要帶入 ${fmtNum(requiredBuyIn)} 籌碼` : undefined}>
-                      {isInsufficient ? '🔒 籌碼不足' : '加入'}
-                    </button>
-                  )
-                })()}
+                <button type="button"
+                  className="pt-room-join"
+                  onClick={() => onJoinRoom(r.id, minBuyIn)}
+                  disabled={status !== 'connected' || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers}>
+                  加入
+                </button>
               </div>
             </div>
           )
@@ -556,7 +533,7 @@ export default function BlackjackTablePage({ auth }) {
   useEffect(() => {
     if (cashoutBalance != null && !cashoutShown.current) {
       cashoutShown.current = true
-      auth?.refreshUser?.()
+      auth?.applyBalance?.(cashoutBalance)
     }
   }, [cashoutBalance]) // eslint-disable-line react-hooks/exhaustive-deps
 

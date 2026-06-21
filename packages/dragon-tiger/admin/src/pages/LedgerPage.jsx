@@ -11,6 +11,53 @@ const TYPE_LABEL = {
   admin_adj: '後台調整',
 }
 
+const RESULT_LABEL = { dragon: '龍勝', tiger: '虎勝', tie: '和局' }
+const BET_LABEL = {
+  dragon: '龍', tiger: '虎', tie: '和',
+  dragon_big: '龍大', dragon_small: '龍小', dragon_odd: '龍單', dragon_even: '龍雙',
+  dragon_spade: '龍♠', dragon_heart: '龍♥', dragon_club: '龍♣', dragon_diamond: '龍♦',
+  tiger_big: '虎大', tiger_small: '虎小', tiger_odd: '虎單', tiger_even: '虎雙',
+  tiger_spade: '虎♠', tiger_heart: '虎♥', tiger_club: '虎♣', tiger_diamond: '虎♦',
+}
+
+function DetailCell({ detail }) {
+  if (!detail) return <span className="admin-detail-empty">—</span>
+
+  const d = typeof detail === 'string' ? JSON.parse(detail) : detail
+
+  if (d.result) {
+    const dc = d.dragonCard
+    const tc = d.tigerCard
+    const bets = d.bets ? Object.entries(d.bets).filter(([, v]) => v > 0) : []
+    return (
+      <div className="admin-detail-block">
+        <div className="admin-detail-result">
+          {RESULT_LABEL[d.result] ?? d.result}
+          {dc && tc && (
+            <span className="admin-detail-cards">
+              　龍 {dc.rank}{dc.suit} vs 虎 {tc.rank}{tc.suit}
+            </span>
+          )}
+        </div>
+        {bets.length > 0 && (
+          <div className="admin-detail-bets">
+            {bets.map(([zone, amt]) => (
+              <span key={zone} className="admin-detail-bet-tag">
+                {BET_LABEL[zone] ?? zone} {fmt(amt)}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="admin-detail-payout">
+          下注 {fmt(d.totalBet)}　派彩 {fmt(d.payout)}
+        </div>
+      </div>
+    )
+  }
+
+  return <span className="admin-detail-empty">{JSON.stringify(d).slice(0, 80)}</span>
+}
+
 export default function LedgerPage() {
   const [entries, setEntries] = useState([])
   const [userId,  setUserId]  = useState('')
@@ -54,7 +101,7 @@ export default function LedgerPage() {
       <div className="admin-card">
         <table className="admin-table">
           <thead>
-            <tr><th>時間</th><th>帳號</th><th>類型</th><th>金額</th><th>備註</th></tr>
+            <tr><th>時間</th><th>帳號</th><th>類型</th><th>損益</th><th>開牌 / 下注明細</th></tr>
           </thead>
           <tbody>
             {entries.map(e => (
@@ -65,7 +112,7 @@ export default function LedgerPage() {
                 <td className={e.amount >= 0 ? 'admin-amt-pos' : 'admin-amt-neg'}>
                   {e.amount >= 0 ? '+' : ''}{fmt(e.amount)}
                 </td>
-                <td className="admin-meta">{e.meta ? JSON.stringify(e.meta).slice(0, 60) : '—'}</td>
+                <td><DetailCell detail={e.detail} /></td>
               </tr>
             ))}
           </tbody>

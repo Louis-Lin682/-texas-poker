@@ -210,6 +210,7 @@ export async function initDb() {
 
     CREATE TABLE IF NOT EXISTS dt_round_history (
       id          BIGSERIAL PRIMARY KEY,
+      round_id    INTEGER,
       result      TEXT NOT NULL,
       dragon_rank TEXT NOT NULL,
       dragon_suit TEXT NOT NULL,
@@ -217,6 +218,7 @@ export async function initDb() {
       tiger_suit  TEXT NOT NULL,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE dt_round_history ADD COLUMN IF NOT EXISTS round_id INTEGER;
 
     CREATE TABLE IF NOT EXISTS game_configs (
       slug         TEXT PRIMARY KEY,

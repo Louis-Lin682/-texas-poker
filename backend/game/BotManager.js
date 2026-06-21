@@ -14,6 +14,12 @@ const BOT_DEFS = [
   { username: '阿文', balance: 10000 },
   { username: '小慧', balance: 10000 },
   { username: '大山', balance: 10000 },
+  { username: '阿偉', balance: 10000 },
+  { username: '小花', balance: 10000 },
+  { username: '大強', balance: 10000 },
+  { username: '阿珍', balance: 10000 },
+  { username: '小明', balance: 10000 },
+  { username: '大海', balance: 10000 },
 ]
 
 export class BotManager {
@@ -72,6 +78,10 @@ export class BotManager {
 
         try {
           game.addPlayer({ id: botId, username: botInfo.username, balance: buyIn })
+          // Re-assert roomId: _handleDragonTigerTurn may have cleared it while this
+          // bot was still pending (not yet in game.players). Must be set before
+          // syncBalances runs or it will skip this bot entirely (info.roomId !== game.roomId).
+          botInfo.roomId        = roomId
           botInfo.inGameBalance = buyIn  // baseline for delta sync
           const rt = setTimeout(() => {
             try { game.setReady(botId) } catch {}
@@ -432,7 +442,7 @@ export class BotManager {
       const delta = p.balance - prev
       if (delta !== 0) {
         dbQuery('UPDATE users SET balance = balance + $1 WHERE id = $2', [delta, p.id])
-          .catch(() => {})
+          .catch(err => console.error('[syncBal ERR]', p.id, delta, err.message))
       }
       info.inGameBalance = p.balance
       info.balance       = p.balance

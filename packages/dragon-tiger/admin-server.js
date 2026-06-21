@@ -2,10 +2,17 @@ import 'dotenv/config'
 import http from 'node:http'
 import bcrypt from 'bcryptjs'
 import { query, initDb } from './core/db.js'
-import { getConfig, saveConfig } from './core/config.js'
+import { getConfig, saveConfig, loadConfig } from './core/config.js'
 
-const PORT        = Number(process.env.ADMIN_PORT        || 4001)
-const CORS_ORIGIN = process.env.ADMIN_CORS_ORIGIN        || 'http://localhost:5174'
+const PORT        = Number(process.env.ADMIN_PORT || 4001)
+const GAME_PORT   = Number(process.env.PORT       || 4000)
+const CORS_ORIGIN = process.env.ADMIN_CORS_ORIGIN || 'http://localhost:5174'
+
+async function notifyGameServer() {
+  try {
+    await fetch(`http://localhost:${GAME_PORT}/internal/reload-config`, { method: 'POST' })
+  } catch {}
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -35,7 +42,7 @@ async function getAdmin(req) {
   if (!auth.startsWith('Bearer ')) return null
   const token = auth.slice(7)
   const { rows } = await query(
-    'SELECT a.* FROM admin_accounts a JOIN admin_sessions s ON s.admin_id = a.id WHERE s.token = $1 AND s.expires_at > NOW()',
+    'SELECT a.* FROM dt_admin_accounts a JOIN dt_admin_sessions s ON s.admin_id = a.id WHERE s.token = $1 AND s.expires_at > NOW()',
     [token]
   )
   return rows[0] ?? null
@@ -68,7 +75,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && path === '/admin/login') {
       const { username, password } = await readBody(req)
       const { rows } = await query(
-        'SELECT * FROM admin_accounts WHERE username = $1 AND suspended_at IS NULL',
+        'SELECT * FROM dt_admin_accounts WHERE username = $1 AND suspended_at IS NULL',
         [username]
       )
       const admin = rows[0]
@@ -77,7 +84,7 @@ const server = http.createServer(async (req, res) => {
       }
       const token = crypto.randomUUID()
       await query(
-        `INSERT INTO admin_sessions (admin_id, token, expires_at)
+        `INSERT INTO dt_admin_sessions (admin_id, token, expires_at)
          VALUES ($1, $2, NOW() + INTERVAL '12 hours')`,
         [admin.id, token]
       )
@@ -99,6 +106,7 @@ const server = http.createServer(async (req, res) => {
       if (!admin) return
       const { config, note } = await readBody(req)
       const versionId = await saveConfig(config, admin.username, note ?? '')
+      notifyGameServer()
       return sendJson(res, 200, { versionId, config: getConfig() }, origin)
     }
 
@@ -168,7 +176,7 @@ const server = http.createServer(async (req, res) => {
       const filter = userId ? 'WHERE l.user_id = $3' : ''
       const params = userId ? [limit + 1, offset, userId] : [limit + 1, offset]
       const { rows } = await query(
-        `SELECT l.id, l.user_id, u.username, l.type, l.amount, l.meta, l.created_at
+        `SELECT l.id, l.user_id, u.username, l.type, l.amount, l.detail, l.created_at
          FROM ledger l JOIN users u ON u.id = l.user_id
          ${filter} ORDER BY l.created_at DESC LIMIT $1 OFFSET $2`,
         params
@@ -184,7 +192,7 @@ const server = http.createServer(async (req, res) => {
       const admin = await auth(req, res, origin)
       if (!admin) return
       const { rows } = await query(
-        'SELECT id, username, role, suspended_at, created_at FROM admin_accounts ORDER BY created_at'
+        'SELECT id, username, role, suspended_at, created_at FROM dt_admin_accounts ORDER BY created_at'
       )
       return sendJson(res, 200, { accounts: rows }, origin)
     }
@@ -196,7 +204,7 @@ const server = http.createServer(async (req, res) => {
       const { username, password, role } = await readBody(req)
       const hash = await bcrypt.hash(password, 12)
       const { rows } = await query(
-        `INSERT INTO admin_accounts (username, password_hash, role)
+        `INSERT INTO dt_admin_accounts (username, password_hash, role)
          VALUES ($1, $2, $3) RETURNING id, username, role, created_at`,
         [username, hash, role ?? 'cs']
       )
@@ -215,7 +223,7 @@ const server = http.createServer(async (req, res) => {
 
 async function ensureAdminTables() {
   await query(`
-    CREATE TABLE IF NOT EXISTS admin_accounts (
+    CREATE TABLE IF NOT EXISTS dt_admin_accounts (
       id            SERIAL PRIMARY KEY,
       username      VARCHAR(64) UNIQUE NOT NULL,
       password_hash VARCHAR(128)       NOT NULL,
@@ -225,9 +233,9 @@ async function ensureAdminTables() {
     )
   `)
   await query(`
-    CREATE TABLE IF NOT EXISTS admin_sessions (
+    CREATE TABLE IF NOT EXISTS dt_admin_sessions (
       id         SERIAL PRIMARY KEY,
-      admin_id   INTEGER NOT NULL REFERENCES admin_accounts(id) ON DELETE CASCADE,
+      admin_id   INTEGER NOT NULL REFERENCES dt_admin_accounts(id) ON DELETE CASCADE,
       token      VARCHAR(128) UNIQUE NOT NULL,
       expires_at TIMESTAMPTZ NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -239,6 +247,7 @@ async function ensureAdminTables() {
 
 initDb()
   .then(() => ensureAdminTables())
+  .then(() => loadConfig())
   .then(() => {
     server.listen(PORT, () => console.log(`Dragon Tiger admin server listening on :${PORT}`))
   })

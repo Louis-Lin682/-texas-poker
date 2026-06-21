@@ -46,8 +46,8 @@ function settleCardBets(bets, side, val, suit, cfg) {
   if (val === 7 && sevenRule === 'push') {
     p += big + small
   } else if (val !== 7) {
-    if (val > 7) p += big   * (1 + (cfg['payout.big']   ?? 1))
-    else         p += small * (1 + (cfg['payout.small'] ?? 1))
+    if (val > 7) p += Math.floor(big   * (1 + (cfg['payout.big']   ?? 1)))
+    else         p += Math.floor(small * (1 + (cfg['payout.small'] ?? 1)))
   }
 
   const odd  = bets[`${side}_odd`]  || 0
@@ -55,15 +55,15 @@ function settleCardBets(bets, side, val, suit, cfg) {
   if (val === 7 && sevenRule === 'push') {
     p += odd + even
   } else if (val !== 7) {
-    if (val % 2 === 1) p += odd  * (1 + (cfg['payout.odd']  ?? 1))
-    else               p += even * (1 + (cfg['payout.even'] ?? 1))
+    if (val % 2 === 1) p += Math.floor(odd  * (1 + (cfg['payout.odd']  ?? 1)))
+    else               p += Math.floor(even * (1 + (cfg['payout.even'] ?? 1)))
   }
 
   const wonSuitKey = SUIT_KEY[suit]
   const suitMult   = 1 + (cfg['payout.suit'] ?? 3)
   for (const key of Object.keys(SUIT_KEY)) {
     const betAmt = bets[`${side}_${SUIT_KEY[key]}`] || 0
-    if (SUIT_KEY[key] === wonSuitKey) p += betAmt * suitMult
+    if (SUIT_KEY[key] === wonSuitKey) p += Math.floor(betAmt * suitMult)
   }
 
   return p
@@ -253,9 +253,9 @@ export class DragonTigerGame {
         payout += b.tie * tiePayout
         payout += Math.floor(b.dragon * tiRefund) + Math.floor(b.tiger * tiRefund)
       } else if (this.result === 'dragon') {
-        payout += b.dragon * mainPayout
+        payout += Math.floor(b.dragon * mainPayout)
       } else {
-        payout += b.tiger * mainPayout
+        payout += Math.floor(b.tiger * mainPayout)
       }
 
       // Side bets (independent of main result)

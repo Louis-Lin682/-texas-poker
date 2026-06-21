@@ -16,6 +16,7 @@ import QuestsPage from './pages/QuestsPage'
 import ReportsPage from './pages/ReportsPage'
 import GamesPage from './pages/GamesPage'
 import RoomsPage from './pages/RoomsPage'
+import DragonTigerConfigPage from './pages/DragonTigerConfigPage'
 
 function RequireAuth({ children }) {
   const { admin, loading } = useAdminAuth()
@@ -35,6 +36,7 @@ function AppRoutes() {
         <Route path="/members/:id/ledger" element={<MemberLedgerPage />} />
         <Route path="/reports"     element={<ReportsPage />} />
         <Route path="/games"       element={<GamesPage />} />
+        <Route path="/games/dragon-tiger/config" element={<DragonTigerConfigPage />} />
         <Route path="/rooms"       element={<RoomsPage />} />
         <Route path="/events"      element={<EventsPage />} />
         <Route path="/news"          element={<AdminNewsPage />} />

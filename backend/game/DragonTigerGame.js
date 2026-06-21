@@ -1,6 +1,5 @@
-const BETTING_MS = 20_000
-const DEAL_MS    = 3_000
-const RESULT_MS  = 5_000
+const DEAL_MS   = 3_000
+const RESULT_MS = 5_000
 
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
 const SUITS  = ['♠','♥','♦','♣']
@@ -36,44 +35,47 @@ function shuffle(arr) {
   return arr
 }
 
-// Settle big/small + odd/even + suit side bets for one card
-function settleCardBets(bets, side, val, suit) {
+function settleCardBets(bets, side, val, suit, cfg) {
   let p = 0
+  const sevenRule = cfg['seven_rule'] ?? 'push'
 
-  // Big (8-K) / Small (A-6) — 7 = push
   const big   = bets[`${side}_big`]   || 0
   const small = bets[`${side}_small`] || 0
-  if      (val === 7) p += big + small        // push: return stake
-  else if (val > 7)  p += big   * 2           // big wins 1:1
-  else               p += small * 2           // small wins 1:1
+  if (val === 7 && sevenRule === 'push') {
+    p += big + small
+  } else if (val !== 7) {
+    if (val > 7) p += Math.floor(big   * (1 + (cfg['payout.big']   ?? 1)))
+    else         p += Math.floor(small * (1 + (cfg['payout.small'] ?? 1)))
+  }
 
-  // Odd / Even — 7 = push
   const odd  = bets[`${side}_odd`]  || 0
   const even = bets[`${side}_even`] || 0
-  if      (val === 7)          p += odd + even // push
-  else if (val % 2 === 1)      p += odd  * 2  // odd wins
-  else                         p += even * 2  // even wins
+  if (val === 7 && sevenRule === 'push') {
+    p += odd + even
+  } else if (val !== 7) {
+    if (val % 2 === 1) p += Math.floor(odd  * (1 + (cfg['payout.odd']  ?? 1)))
+    else               p += Math.floor(even * (1 + (cfg['payout.even'] ?? 1)))
+  }
 
-  // Suit bets — 1:3 (4× return)
   const wonSuitKey = SUIT_KEY[suit]
+  const suitMult   = 1 + (cfg['payout.suit'] ?? 3)
   for (const key of Object.keys(SUIT_KEY)) {
-    const betKey  = `${side}_${SUIT_KEY[key]}`
-    const betAmt  = bets[betKey] || 0
-    if (SUIT_KEY[key] === wonSuitKey) p += betAmt * 4
+    const betAmt = bets[`${side}_${SUIT_KEY[key]}`] || 0
+    if (SUIT_KEY[key] === wonSuitKey) p += Math.floor(betAmt * suitMult)
   }
 
   return p
 }
 
 export class DragonTigerGame {
-  constructor({ roomId, maxPlayers = 9999, minBet = 20, maxBet = 10000 } = {}) {
+  constructor({ roomId, maxPlayers = 9999, getConfig = () => ({}) } = {}) {
     this.roomId     = roomId
     this.gameSlug   = 'dragon-tiger'
     this.maxPlayers = maxPlayers
-    this.minBet     = minBet
-    this.maxBet     = maxBet
+    this.getConfig  = getConfig
     this.phase      = 'idle'
     this.players    = []
+    this._roundCfg  = {}
 
     this.dragonCard = null
     this.tigerCard  = null
@@ -93,8 +95,6 @@ export class DragonTigerGame {
     this._startBetting()
   }
 
-  // ── Player management ─────────────────────────────────────
-
   addPlayer({ id, username, balance }) {
     if (this.players.find(p => p.id === id)) return
     if (this.players.length >= this.maxPlayers) throw new Error('房間已滿')
@@ -109,7 +109,7 @@ export class DragonTigerGame {
     this._emit('state_update')
   }
 
-  setReady() {} // no-op — continuous game needs no ready
+  setReady() {}
 
   cancelLastBet(id) {
     if (this.phase !== 'betting') throw new Error('目前不是下注階段')
@@ -134,8 +134,6 @@ export class DragonTigerGame {
     this._emit('state_update')
   }
 
-  // ── Betting ───────────────────────────────────────────────
-
   placeBet(id, zone, amount) {
     if (this.phase !== 'betting') throw new Error('目前不是下注階段')
     if (!VALID_ZONES.has(zone))   throw new Error('無效下注區域')
@@ -144,24 +142,18 @@ export class DragonTigerGame {
     if (amount <= 0) throw new Error('下注金額無效')
     if (amount > p.balance) throw new Error('籌碼不足')
     const totalBet = Object.values(p.bets).reduce((a, v) => a + v, 0)
-    if (totalBet + amount > this.maxBet) throw new Error('超過最高下注限額')
+    const maxBet = this._roundCfg['max_bet'] ?? 10000
+    if (totalBet + amount > maxBet) throw new Error('超過最高下注限額')
 
-    // Simulate bets after this placement for conflict checks
     const next = { ...p.bets, [zone]: (p.bets[zone] || 0) + amount }
     const has = (z) => next[z] > 0
 
-    // 龍 + 虎 互斥（含三者全押）
     if (has('dragon') && has('tiger')) throw new Error('龍虎不能同時下注')
-
-    // 同側大 + 小 互斥
     if (has('dragon_big') && has('dragon_small')) throw new Error('龍大/龍小不能同時下注')
     if (has('tiger_big')  && has('tiger_small'))  throw new Error('虎大/虎小不能同時下注')
-
-    // 同側單 + 雙 互斥
     if (has('dragon_odd') && has('dragon_even')) throw new Error('龍單/龍雙不能同時下注')
     if (has('tiger_odd')  && has('tiger_even'))  throw new Error('虎單/虎雙不能同時下注')
 
-    // 同側四種花色全押
     const dragonSuits = ['dragon_spade','dragon_heart','dragon_club','dragon_diamond']
     const tigerSuits  = ['tiger_spade', 'tiger_heart', 'tiger_club', 'tiger_diamond']
     if (dragonSuits.every(z => has(z))) throw new Error('龍方花色不能全押')
@@ -173,14 +165,15 @@ export class DragonTigerGame {
     this._emit('state_update')
   }
 
-  // ── Phase transitions ─────────────────────────────────────
-
   _startBetting() {
+    this._roundCfg  = { ...this.getConfig() }
+    const bettingMs = this._roundCfg['bet_time_ms'] ?? 20000
+
     this.phase      = 'betting'
     this.dragonCard = null
     this.tigerCard  = null
     this.result     = null
-    this.countdown  = Math.round(BETTING_MS / 1000)
+    this.countdown  = Math.round(bettingMs / 1000)
     this.roundId++
 
     for (const p of this.players) {
@@ -201,7 +194,7 @@ export class DragonTigerGame {
       clearInterval(this._interval)
       this._interval = null
       this._deal()
-    }, BETTING_MS)
+    }, bettingMs)
   }
 
   _deal() {
@@ -233,19 +226,22 @@ export class DragonTigerGame {
       const totalBet = Object.values(b).reduce((a, v) => a + v, 0)
       let payout = 0
 
-      // Main bets
+      const cfg        = this._roundCfg
+      const tiePayout  = 1 + (cfg['payout.tie']       ?? 8)
+      const tieRefund  =      cfg['payout.tie_refund'] ?? 0.5
+      const mainPayout = 1 + (cfg['payout.dragon']     ?? 1)
+
       if (isTie) {
-        payout += b.tie * 9
-        payout += Math.floor(b.dragon / 2) + Math.floor(b.tiger / 2)
+        payout += b.tie * tiePayout
+        payout += Math.floor(b.dragon * tieRefund) + Math.floor(b.tiger * tieRefund)
       } else if (this.result === 'dragon') {
-        payout += b.dragon * 2
+        payout += Math.floor(b.dragon * mainPayout)
       } else {
-        payout += b.tiger * 2
+        payout += Math.floor(b.tiger * mainPayout)
       }
 
-      // Side bets (independent of main result)
-      payout += settleCardBets(b, 'dragon', dv, ds)
-      payout += settleCardBets(b, 'tiger',  tv, ts)
+      payout += settleCardBets(b, 'dragon', dv, ds, cfg)
+      payout += settleCardBets(b, 'tiger',  tv, ts, cfg)
 
       p.balance      += payout
       p.payout        = payout
@@ -283,8 +279,6 @@ export class DragonTigerGame {
     this._interval = null
     this._timer    = null
   }
-
-  // ── State ─────────────────────────────────────────────────
 
   stateForPlayer(_id) {
     return {

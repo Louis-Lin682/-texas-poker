@@ -10,5 +10,5 @@ export default function App() {
   if (!authed) {
     return <LoginPage onLogin={() => setAuthed(true)} />
   }
-  return <DragonTigerPage onLogout={() => { localStorage.removeItem(TOKEN_KEY); setAuthed(false) }} />
+  return <DragonTigerPage />
 }

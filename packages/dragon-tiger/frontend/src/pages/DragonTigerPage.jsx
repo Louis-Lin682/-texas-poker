@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDragonTigerSocket } from '../hooks/useDragonTigerSocket.js'
 import { useGameStatus } from '../hooks/useGameStatus.js'
@@ -28,14 +28,14 @@ const ZONE_KEYS = [
 ]
 
 const BET_LABELS = {
-  dragon: '樴?, tiger: '??, tie: '??,
-  dragon_big: '樴之', dragon_small: '樴?', dragon_odd: '樴', dragon_even: '樴?',
-  dragon_spade: '樴?', dragon_heart: '樴', dragon_club: '樴', dragon_diamond: '樴',
-  tiger_big: '?之', tiger_small: '??', tiger_odd: '?', tiger_even: '??',
-  tiger_spade: '??', tiger_heart: '?', tiger_club: '?', tiger_diamond: '?',
+  dragon: '龍', tiger: '虎', tie: '和',
+  dragon_big: '龍大', dragon_small: '龍小', dragon_odd: '龍單', dragon_even: '龍雙',
+  dragon_spade: '龍♠', dragon_heart: '龍♥', dragon_club: '龍♣', dragon_diamond: '龍♦',
+  tiger_big: '虎大', tiger_small: '虎小', tiger_odd: '虎單', tiger_even: '虎雙',
+  tiger_spade: '虎♠', tiger_heart: '虎♥', tiger_club: '虎♣', tiger_diamond: '虎♦',
 }
 
-// Absolute positions within .dt-zones-area (covers top:29%?ottom:17% of table)
+// Absolute positions within .dt-zones-area (covers top:29%–bottom:17% of table)
 // Tune these percentages to align with the background image zones
 const ZONE_DEFS = {
   dragon:        { left: '4%',     top: '0%',   width: '31%',   height: '58%' },
@@ -59,7 +59,7 @@ const ZONE_DEFS = {
   tiger_diamond: { left: '87.25%', top: '87%',  width: '7.75%', height: '16%' },
 }
 
-const ZONE_PAYOUTS = {
+const DEFAULT_ZONE_PAYOUTS = {
   dragon: '1:1', tiger: '1:1', tie: '1:8',
   dragon_big: '1:1', dragon_small: '1:1', dragon_odd: '1:1', dragon_even: '1:1',
   dragon_spade: '1:3', dragon_heart: '1:3', dragon_club: '1:3', dragon_diamond: '1:3',
@@ -67,7 +67,32 @@ const ZONE_PAYOUTS = {
   tiger_spade: '1:3', tiger_heart: '1:3',  tiger_club: '1:3',  tiger_diamond: '1:3',
 }
 
-const SUIT_RED   = new Set(['??, '??])
+function cfgToPayouts(cfg) {
+  const fmt = v => Number.isInteger(v) ? `1:${v}` : `1:${Number(v).toFixed(2)}`
+  return {
+    dragon:         fmt(cfg['payout.dragon'] ?? 1),
+    tiger:          fmt(cfg['payout.tiger']  ?? 1),
+    tie:            fmt(cfg['payout.tie']    ?? 8),
+    dragon_big:     fmt(cfg['payout.big']    ?? 1),
+    dragon_small:   fmt(cfg['payout.small']  ?? 1),
+    dragon_odd:     fmt(cfg['payout.odd']    ?? 1),
+    dragon_even:    fmt(cfg['payout.even']   ?? 1),
+    dragon_spade:   fmt(cfg['payout.suit']   ?? 3),
+    dragon_heart:   fmt(cfg['payout.suit']   ?? 3),
+    dragon_club:    fmt(cfg['payout.suit']   ?? 3),
+    dragon_diamond: fmt(cfg['payout.suit']   ?? 3),
+    tiger_big:      fmt(cfg['payout.big']    ?? 1),
+    tiger_small:    fmt(cfg['payout.small']  ?? 1),
+    tiger_odd:      fmt(cfg['payout.odd']    ?? 1),
+    tiger_even:     fmt(cfg['payout.even']   ?? 1),
+    tiger_spade:    fmt(cfg['payout.suit']   ?? 3),
+    tiger_heart:    fmt(cfg['payout.suit']   ?? 3),
+    tiger_club:     fmt(cfg['payout.suit']   ?? 3),
+    tiger_diamond:  fmt(cfg['payout.suit']   ?? 3),
+  }
+}
+
+const SUIT_RED   = new Set(['♥', '♦'])
 const MAX_VISIBLE = 5
 
 function fmt(n) {
@@ -83,7 +108,7 @@ function isSuitZone(zone) {
     zone.endsWith('_club')  || zone.endsWith('_diamond')
 }
 
-// ?? Floating draggable chip tray ???????????????????????????
+// ── Floating draggable chip tray ───────────────────────────
 function DraggableChipTray({ selectedChip, onSelectChip, visible }) {
   const trayRef    = useRef(null)
   const isDragging = useRef(false)
@@ -150,9 +175,9 @@ function DraggableChipTray({ selectedChip, onSelectChip, visible }) {
   )
 }
 
-// ?? Bead road (?頝? ?????????????????????????????????????
+// ── Bead road (珠盤路) ─────────────────────────────────────
 const BEAD_ROWS = 6
-const RED_SUITS = new Set(['??, '??])
+const RED_SUITS = new Set(['♥', '♦'])
 
 function BeadRoad({ history, onLoadMore, hasMore }) {
   const scrollRef   = useRef(null)
@@ -172,7 +197,7 @@ function BeadRoad({ history, onLoadMore, hasMore }) {
     prevWidth.current = el.scrollWidth
   }, [history.length])
 
-  // JS touch scroll ??bypasses passive-listener and parent overflow:hidden issues on mobile
+  // JS touch scroll — bypasses passive-listener and parent overflow:hidden issues on mobile
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
@@ -206,13 +231,13 @@ function BeadRoad({ history, onLoadMore, hasMore }) {
     if (e.currentTarget.scrollLeft < 80 && hasMore) onLoadMore?.()
   }
 
-  // history is newest-first; reverse for left(old)?ight(new) display
+  // history is newest-first; reverse for left(old)→right(new) display
   const items = [...history].reverse()
   const pad = (BEAD_ROWS - (items.length % BEAD_ROWS)) % BEAD_ROWS
 
   return (
     <div className="dt-bead-road-wrap">
-      <span className="dt-bead-road-label">?頝?/span>
+      <span className="dt-bead-road-label">珠盤路</span>
       <div className="dt-bead-road-scroll" ref={scrollRef} onScroll={onScroll}>
         <div className="dt-bead-road-grid">
           {items.map((r, i) => {
@@ -220,7 +245,7 @@ function BeadRoad({ history, onLoadMore, hasMore }) {
             const suit = card?.suit ?? ''
             return (
               <div key={r._key ?? i} className={`dt-bead dt-bead-${r.result}`}>
-                <span className="dt-bead-rank">{card?.rank ?? '??}</span>
+                <span className="dt-bead-rank">{card?.rank ?? '—'}</span>
                 <span className={`dt-bead-suit ${RED_SUITS.has(suit) ? 'is-red' : ''}`}>{suit}</span>
               </div>
             )
@@ -300,7 +325,7 @@ function ZoneBetDisplay({ placements, totalBet, myBet, small }) {
               ? (totalBet >= 1000 ? `${Math.floor(totalBet / 1000)}K` : String(totalBet))
               : fmt(totalBet)}
           </span>
-          {!small && myBet > 0 && <span className="dt-zone-my-bet">??{fmt(myBet)}</span>}
+          {!small && myBet > 0 && <span className="dt-zone-my-bet">我 {fmt(myBet)}</span>}
         </div>
       )}
     </>
@@ -421,8 +446,8 @@ function TigerWinAnim({ onDone }) {
   )
 }
 
-const SUIT_COLOR = { '??: '#e05050', '??: '#e05050', '??: '#e8e0cc', '??: '#e8e0cc' }
-const RESULT_LABEL = { dragon: '樴?', tiger: '??', tie: '??' }
+const SUIT_COLOR = { '♥': '#e05050', '♦': '#e05050', '♠': '#e8e0cc', '♣': '#e8e0cc' }
+const RESULT_LABEL = { dragon: '龍勝', tiger: '虎勝', tie: '和局' }
 const RESULT_COLOR = { dragon: '#5b8cff', tiger: '#ff7c5b', tie: '#c8a84b' }
 
 function HistoryModal({ history, onClose }) {
@@ -433,7 +458,7 @@ function HistoryModal({ history, onClose }) {
         <div className="dt-history-inner">
           <button type="button" className="dt-history-close" onClick={onClose}></button>
           {history.length === 0 ? (
-            <div className="dt-history-empty">?砍撠閮?</div>
+            <div className="dt-history-empty">本場尚無記錄</div>
           ) : (
           <div className="dt-history-list">
             {history.map(r => {
@@ -442,7 +467,7 @@ function HistoryModal({ history, onClose }) {
               return (
                 <div key={r._key ?? `${r.roundId}-${r.ts}`} className="dt-history-row">
                   <div className="dt-history-row-top">
-                    <span className="dt-history-round">蝚?{r.roundId} 撅</span>
+                    <span className="dt-history-round">第 {r.roundId} 局</span>
                     <span className="dt-history-result" style={{ color: RESULT_COLOR[r.result] }}>
                       {RESULT_LABEL[r.result]}
                     </span>
@@ -453,14 +478,14 @@ function HistoryModal({ history, onClose }) {
                     )}
                   </div>
                   <div className="dt-history-cards">
-                    <span className="dt-history-card-label">樴?/span>
+                    <span className="dt-history-card-label">龍</span>
                     <span className="dt-history-card" style={{ color: SUIT_COLOR[dc?.suit] }}>
-                      {dc ? `${dc.rank}${dc.suit}` : '??}
+                      {dc ? `${dc.rank}${dc.suit}` : '—'}
                     </span>
                     <span className="dt-history-card-sep">vs</span>
-                    <span className="dt-history-card-label">??/span>
+                    <span className="dt-history-card-label">虎</span>
                     <span className="dt-history-card" style={{ color: SUIT_COLOR[tc?.suit] }}>
-                      {tc ? `${tc.rank}${tc.suit}` : '??}
+                      {tc ? `${tc.rank}${tc.suit}` : '—'}
                     </span>
                   </div>
                   {r.bets?.length > 0 && (
@@ -483,7 +508,11 @@ function HistoryModal({ history, onClose }) {
   )
 }
 
-function RulesModal({ onClose }) {
+function RulesModal({ onClose, zonePayouts = {}, dtConfig = {} }) {
+  const refund     = dtConfig['payout.tie_refund'] ?? 0.5
+  const sevenRule  = dtConfig['seven_rule'] ?? 'push'
+  const refundText = refund === 0.5 ? '退半注' : refund === 1 ? '退全注' : `退 ${Math.round(refund * 100)}%`
+  const sevenText  = sevenRule === 'push' ? '7 點＝退注' : '7 點＝莊家吃注'
   return (
     <div className="dt-rules-overlay" onClick={onClose}>
       <div className="dt-rules-scroll" onClick={e => e.stopPropagation()}>
@@ -491,39 +520,39 @@ function RulesModal({ onClose }) {
         <div className="dt-scroll-body">
           <img src="/DragonTiger/scrollBody.png" alt="" className="dt-scroll-body-bg" draggable={false} />
           <div className="dt-scroll-content">
-            <h3 className="dt-rules-title">樴?擛??閬?</h3>
+            <h3 className="dt-rules-title">龍虎鬥 遊戲規則</h3>
 
             <div className="dt-rules-section">
-              <div className="dt-rules-section-title">銝餅釣鞈?</div>
-              <div className="dt-rules-row"><span>樴?/ ??/span><span>1 : 1嚗?撅??釣嚗?/span></div>
-              <div className="dt-rules-row"><span>??/span><span>1 : 8</span></div>
+              <div className="dt-rules-section-title">主注賠率</div>
+              <div className="dt-rules-row"><span>龍 / 虎</span><span>{zonePayouts.dragon ?? '1:1'}（和局{refundText}）</span></div>
+              <div className="dt-rules-row"><span>和</span><span>{zonePayouts.tie ?? '1:8'}</span></div>
             </div>
 
             <div className="dt-rules-section">
-              <div className="dt-rules-section-title">憭?/ 撠??舀釣嚗?/div>
-              <div className="dt-rules-row"><span>憭改?8?嚗?/span><span>1 : 1</span></div>
-              <div className="dt-rules-row"><span>撠?A??嚗?/span><span>1 : 1</span></div>
-              <div className="dt-rules-note">7 暺??瘜?/div>
+              <div className="dt-rules-section-title">大 / 小（副注）</div>
+              <div className="dt-rules-row"><span>大（8–K）</span><span>{zonePayouts.dragon_big ?? '1:1'}</span></div>
+              <div className="dt-rules-row"><span>小（A–6）</span><span>{zonePayouts.dragon_small ?? '1:1'}</span></div>
+              <div className="dt-rules-note">{sevenText}</div>
             </div>
 
             <div className="dt-rules-section">
-              <div className="dt-rules-section-title">??/ ???舀釣嚗?/div>
-              <div className="dt-rules-row"><span>?格暺?/span><span>1 : 1</span></div>
-              <div className="dt-rules-row"><span>?暺?/span><span>1 : 1</span></div>
-              <div className="dt-rules-note">7 暺??瘜?/div>
+              <div className="dt-rules-section-title">單 / 雙（副注）</div>
+              <div className="dt-rules-row"><span>單數點</span><span>{zonePayouts.dragon_odd ?? '1:1'}</span></div>
+              <div className="dt-rules-row"><span>雙數點</span><span>{zonePayouts.dragon_even ?? '1:1'}</span></div>
+              <div className="dt-rules-note">{sevenText}</div>
             </div>
 
             <div className="dt-rules-section">
-              <div className="dt-rules-section-title">?梯嚗瘜剁?</div>
-              <div className="dt-rules-row"><span>????????隞颱?</span><span>1 : 3</span></div>
+              <div className="dt-rules-section-title">花色（副注）</div>
+              <div className="dt-rules-row"><span>♠ ♥ ♣ ♦ 任一</span><span>{zonePayouts.dragon_spade ?? '1:3'}</span></div>
             </div>
 
             <div className="dt-rules-section">
-              <div className="dt-rules-section-title">銝釣?</div>
-              <div className="dt-rules-note">?駁???銝??銝釣</div>
-              <div className="dt-rules-note">?餃??游之??銝??銝釣</div>
-              <div className="dt-rules-note">?餃??游??銝??銝釣</div>
-              <div className="dt-rules-note">?餃??游?蝔株?脖??臬??/div>
+              <div className="dt-rules-section-title">下注限制</div>
+              <div className="dt-rules-note">・龍與虎不可同時下注</div>
+              <div className="dt-rules-note">・同側大與小不可同時下注</div>
+              <div className="dt-rules-note">・同側單與雙不可同時下注</div>
+              <div className="dt-rules-note">・同側四種花色不可全押</div>
             </div>
           </div>
         </div>
@@ -564,10 +593,10 @@ function ResultOverlay({ result, myPayout, myTotalBet }) {
   const outcomeImg = isTie ? '/DragonTiger/game/ju.png' : '/DragonTiger/game/sheng.png'
 
   let netClass = 'is-tie'
-  let netText  = '?砍???嚗?'
+  let netText  = '本局損益：0'
   if (myTotalBet > 0) {
-    if (won)        { netClass = 'is-win';  netText = `?砍???嚗?${fmt(net)}` }
-    else if (net < 0) { netClass = 'is-lose'; netText = `?砍???嚗?${fmt(Math.abs(net))}` }
+    if (won)        { netClass = 'is-win';  netText = `本局損益：+${fmt(net)}` }
+    else if (net < 0) { netClass = 'is-lose'; netText = `本局損益：-${fmt(Math.abs(net))}` }
   }
 
   return (
@@ -592,12 +621,12 @@ export default function DragonTigerPage({ auth }) {
   const navigate  = useNavigate()
   const location  = useLocation()
   const gameStatus = useGameStatus('dragon-tiger')
-  const buyIn     = location.state?.buyIn ?? parseInt(localStorage.getItem('cfg_min_buy_in') || '3000', 10)
+  const buyIn     = location.state?.buyIn ?? 0
   const { play, preload } = useAudio()
 
   const {
     status, rooms, roomsReady, roomId, myId, gameState, error,
-    cashoutBalance, wasKicked, refreshRooms, createRoom, joinRoom, leaveRoom,
+    cashoutBalance, wasKicked, liveConfig, refreshRooms, createRoom, joinRoom, leaveRoom,
     placeBet, cancelLastBet, cancelBets,
   } = useDragonTigerSocket({ minBuyIn: buyIn })
 
@@ -613,16 +642,32 @@ export default function DragonTigerPage({ auth }) {
   const [roundHistory,   setRoundHistory]   = useState([])
   const [hasMoreDb,      setHasMoreDb]      = useState(true)
   const [loadingDb,      setLoadingDb]      = useState(false)
-  const dbCountRef    = useRef(0)   // tracks how many DB rounds are loaded (for offset)
-  const loadingDbRef  = useRef(false) // sync guard against concurrent fetches
+  const dbCountRef    = useRef(0)
+  const loadingDbRef  = useRef(false)
   const [showDragonWin,  setShowDragonWin]  = useState(false)
   const [showTigerWin,   setShowTigerWin]   = useState(false)
   const [dtBgmMuted,     setDtBgmMuted]     = useState(false)
   const dtBgmRef = useRef(null)
+  const [zonePayouts,    setZonePayouts]    = useState(DEFAULT_ZONE_PAYOUTS)
+  const [dtConfig,       setDtConfig]       = useState({})
 
   useEffect(() => {
-    if (!location.state) navigate('/', { replace: true })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    fetch(`${API_BASE_URL}/dt-config`)
+      .then(r => r.json())
+      .then(d => { setZonePayouts(cfgToPayouts(d.config)); setDtConfig(d.config) })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!liveConfig) return
+    setZonePayouts(cfgToPayouts(liveConfig))
+    setDtConfig(liveConfig)
+  }, [liveConfig])
+
+  const doLogout = () => {
+    localStorage.removeItem('dt_auth_token')
+    window.location.reload()
+  }
 
   // Intercept browser / mobile back button
   const roomIdRef = useRef(null)
@@ -632,7 +677,7 @@ export default function DragonTigerPage({ auth }) {
     const onPop = () => {
       window.history.pushState(null, '', window.location.href)
       if (roomIdRef.current) setShowLeaveConfirm(true)
-      else navigate('/')
+      else doLogout()
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
@@ -647,7 +692,7 @@ export default function DragonTigerPage({ auth }) {
 
   useEffect(() => {
     if (!wasKicked) return
-    const t = setTimeout(() => navigate('/'), 3000)
+    const t = setTimeout(() => doLogout(), 3000)
     return () => clearTimeout(t)
   }, [wasKicked]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -667,6 +712,7 @@ export default function DragonTigerPage({ auth }) {
         setHasMoreDb(data.hasMore)
         setRoundHistory(data.rounds.map(r => ({
           _key:       `db-${r.dbId}`,
+          roundId:    r.roundId,
           result:     r.result,
           dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
           tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
@@ -693,6 +739,7 @@ export default function DragonTigerPage({ auth }) {
           .filter(r => !seen.has(`db-${r.dbId}`))
           .map(r => ({
             _key:       `db-${r.dbId}`,
+            roundId:    r.roundId,
             result:     r.result,
             dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
             tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
@@ -705,7 +752,7 @@ export default function DragonTigerPage({ auth }) {
   }, [hasMoreDb])
 
 
-  // Dragon Tiger BGM ??raw Audio element with click fallback
+  // Dragon Tiger BGM — raw Audio element with click fallback
   useEffect(() => {
     const { bgmVolume } = getAudioSettings()
     const audio = new Audio('/audio/DragonTiger/dragon-tiger-bg.mp3')
@@ -746,7 +793,7 @@ export default function DragonTigerPage({ auth }) {
     if (!roomsReady) joinedRef.current = false
   }, [roomsReady])
 
-  // Auto-join a dragon-tiger room ??wait for first room_list before acting
+  // Auto-join — standalone auto-joins on WS connect; createRoom/joinRoom are no-ops
   useEffect(() => {
     if (status !== 'connected' || !roomsReady || joinedRef.current || roomId) return
     const dtRoom = rooms.find(r => r.gameType === 'dragon-tiger' && r.playerCount < r.maxPlayers)
@@ -856,7 +903,7 @@ export default function DragonTigerPage({ auth }) {
               play('dt_chips')
             } else {
               const id   = chipId + 0.1
-              const text = `${p.username} ??{BET_LABELS[z]} ${fmt(diff)}`
+              const text = `${p.username} 押${BET_LABELS[z]} ${fmt(diff)}`
               setBetActivities(a => [...a.slice(-2), { id, text }])
               setTimeout(() => setBetActivities(a => a.filter(x => x.id !== id)), 2500)
             }
@@ -875,13 +922,13 @@ export default function DragonTigerPage({ auth }) {
 
   const handleLeave = () => {
     if (roomId) { setShowLeaveConfirm(true); return }
-    navigate('/')
+    doLogout()
   }
 
   const confirmLeave = () => {
     setShowLeaveConfirm(false)
     leaveRoom()
-    navigate('/')
+    setTimeout(doLogout, 500)
   }
 
   const handleZoneTap = (zone) => {
@@ -917,7 +964,7 @@ export default function DragonTigerPage({ auth }) {
     if (myId) prevPlayerBetsRef.current[myId] = Object.fromEntries(ZONE_KEYS.map(z => [z, 0]))
   }
 
-  // ?? Derived state ??????????????????????????????????????????
+  // ── Derived state ──────────────────────────────────────────
 
   const phase      = gameState?.phase ?? 'idle'
   const countdown  = gameState?.countdown ?? 0
@@ -963,12 +1010,12 @@ export default function DragonTigerPage({ auth }) {
     }
   }, [isResult])
 
-  // ?? Render ?????????????????????????????????????????????????
+  // ── Render ─────────────────────────────────────────────────
 
   if (status === 'no_auth') {
     return (
       <div className="dt-page">
-        <div className="dt-center-msg">隢??餃??脣?</div>
+        <div className="dt-center-msg">請先登入才能進入遊戲</div>
       </div>
     )
   }
@@ -979,9 +1026,9 @@ export default function DragonTigerPage({ auth }) {
       {(gameStatus?.status === 'maintenance' || gameStatus?.status === 'updating') && (
         <div className="game-maint-overlay">
           <div className="game-maint-box">
-            <div className="mt-title">{gameStatus.status === 'maintenance' ? '?蝬剛風銝? : '??湔銝?}</div>
+            <div className="mt-title">{gameStatus.status === 'maintenance' ? '遊戲維護中' : '遊戲更新中'}</div>
             {gameStatus.notice && <div className="mt-notice">{gameStatus.notice}</div>}
-            <div className="mt-sub">?祈???嚗?敺?閰?/div>
+            <div className="mt-sub">敬請期待，稍後再試</div>
           </div>
         </div>
       )}
@@ -989,8 +1036,8 @@ export default function DragonTigerPage({ auth }) {
       {wasKicked && (
         <div className="kicked-overlay">
           <div className="kicked-overlay-box">
-            <div className="kicked-title">?典歇鋡怎恣?蝘餃?輸?</div>
-            <div className="kicked-sub">?喳?餈?憭批輒...</div>
+            <div className="kicked-title">您已被管理員移出房間</div>
+            <div className="kicked-sub">即將返回大廳...</div>
           </div>
         </div>
       )}
@@ -998,7 +1045,7 @@ export default function DragonTigerPage({ auth }) {
       {/* Leave confirm modal */}
       {showLeaveConfirm && (
         <LeaveConfirmModal
-          body="?ａ?敺?蝯?蝐Ⅳ銝西??之撱喋?
+          body="離開後將結算籌碼並返回大廳。"
           onConfirm={confirmLeave}
           onCancel={() => setShowLeaveConfirm(false)}
         />
@@ -1007,7 +1054,7 @@ export default function DragonTigerPage({ auth }) {
       {/* Reconnecting overlay */}
       {status === 'connecting' && (
         <div className="dt-reconnecting-overlay">
-          <span>????銝?..</span>
+          <span>重新連線中...</span>
         </div>
       )}
 
@@ -1026,13 +1073,13 @@ export default function DragonTigerPage({ auth }) {
             )}
             {!isBetting && phase !== 'idle' && (
               <span className="dt-phase-label">
-                {phase === 'dealing' ? '蝧餌?銝? : phase === 'result' ? '蝯?銝? : ''}
+                {phase === 'dealing' ? '翻牌中' : phase === 'result' ? '結算中' : ''}
               </span>
             )}
           </div>
         </div>
         <div className="dt-header-right">
-          <span className="dt-balance-label">蝺?鈭箸</span>
+          <span className="dt-balance-label">線上人數</span>
           <span className="dt-balance-val">{players.length}</span>
         </div>
       </div>
@@ -1056,25 +1103,25 @@ export default function DragonTigerPage({ auth }) {
 
         {/* Rule button */}
         <button type="button" className="dt-rule-btn" onClick={() => setShowRules(true)} data-no-global-click="true">
-          <img src="/DragonTiger/ruleIcon.png" alt="閬?" draggable={false} />
+          <img src="/DragonTiger/ruleIcon.png" alt="規則" draggable={false} />
         </button>
 
         {/* Ledger button */}
         <button type="button" className="dt-ledger-btn" onClick={() => setShowHistory(true)} data-no-global-click="true">
-          <img src="/DragonTiger/accounting.png" alt="撣喳?" draggable={false} />
+          <img src="/DragonTiger/accounting.png" alt="帳務" draggable={false} />
         </button>
 
         {/* Cards */}
         <div className="dt-cards-area">
-          <img src="/DragonTiger/DragonIcon.png" alt="樴? className="dt-card-label dt-label-dragon" draggable={false} />
+          <img src="/DragonTiger/DragonIcon.png" alt="龍" className="dt-card-label dt-label-dragon" draggable={false} />
           <div className="dt-cards-row">
             <PlayingCard card={dragonCard} faceDown={faceDown} delay={0} />
             <PlayingCard card={tigerCard}  faceDown={faceDown} delay={600} />
           </div>
-          <img src="/DragonTiger/TigerIcon.png" alt="?? className="dt-card-label dt-label-tiger" draggable={false} />
+          <img src="/DragonTiger/TigerIcon.png" alt="虎" className="dt-card-label dt-label-tiger" draggable={false} />
         </div>
 
-        {/* Bet zones ??absolutely positioned over background */}
+        {/* Bet zones — absolutely positioned over background */}
         <div className="dt-zones-area">
           {ZONE_KEYS.map(zone => (
             <button
@@ -1093,20 +1140,20 @@ export default function DragonTigerPage({ auth }) {
                 small={isSuitZone(zone)}
               />
               <span className={`dt-zone-payout${isSuitZone(zone) ? ' is-small' : ''}${['dragon','tiger','tie'].includes(zone) ? ' is-top' : ''}`}>
-                {ZONE_PAYOUTS[zone]}
+                {zonePayouts[zone]}
               </span>
             </button>
           ))}
         </div>
 
-        {/* Bet action buttons ??sit on the table rail */}
+        {/* Bet action buttons — sit on the table rail */}
         {myTotalBet > 0 && isBetting && (
           <div className="dt-rail-actions">
             <button type="button" className="dt-rail-undo" onClick={handleUndoBet} data-no-global-click="true">
-              <img src="/DragonTiger/undo.png" alt="?日" draggable={false} />
+              <img src="/DragonTiger/undo.png" alt="撤銷" draggable={false} />
             </button>
             <button type="button" className="dt-rail-clear" onClick={handleCancelBets} data-no-global-click="true">
-              <img src="/DragonTiger/clear.png" alt="?冽?" draggable={false} />
+              <img src="/DragonTiger/clear.png" alt="全清" draggable={false} />
             </button>
           </div>
         )}
@@ -1153,13 +1200,13 @@ export default function DragonTigerPage({ auth }) {
         <div className="dt-bet-summary-bar">
           {ZONE_KEYS.filter(z => (myBets[z] || 0) > 0).map(z => (
             <span key={z} className={`dt-bet-tag dt-bet-${z.split('_')[0]}`}>
-              {BET_LABELS[z]}嚗fmt(myBets[z])}
+              {BET_LABELS[z]}：{fmt(myBets[z])}
             </span>
           ))}
         </div>
       )}
 
-      {/* Bead road ??always visible at the bottom */}
+      {/* Bead road — always visible at the bottom */}
       <BeadRoad history={roundHistory} onLoadMore={loadMoreHistory} hasMore={hasMoreDb} />
 
       {/* Floating chip tray */}
@@ -1172,7 +1219,7 @@ export default function DragonTigerPage({ auth }) {
       {/* Cashout notice */}
       {cashoutBalance !== null && (
         <div className="dt-cashout-notice">
-          撌脩?蝞???撣單擗? {fmt(cashoutBalance)}
+          已結算 — 帳戶餘額 {fmt(cashoutBalance)}
         </div>
       )}
 
@@ -1182,7 +1229,7 @@ export default function DragonTigerPage({ auth }) {
 
 
       {/* Rules modal */}
-      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
+      {showRules && <RulesModal onClose={() => setShowRules(false)} zonePayouts={zonePayouts} dtConfig={dtConfig} />}
 
       {/* History modal */}
       {showHistory && <HistoryModal history={roundHistory} onClose={() => setShowHistory(false)} />}
@@ -1191,7 +1238,7 @@ export default function DragonTigerPage({ auth }) {
       {showAllPlayers && (
         <div className="dt-players-modal-overlay" onClick={() => setShowAllPlayers(false)}>
           <div className="dt-players-modal" onClick={e => e.stopPropagation()}>
-            <div className="dt-pmodal-title">?祆??拙振</div>
+            <div className="dt-pmodal-title">本桌玩家</div>
             {sortedPlayers.map(p => (
               <div key={p.id} className={`dt-pmodal-row ${p.id === myId ? 'is-me' : ''}`}>
                 <span className="dt-pmodal-name">{p.username}</span>
@@ -1199,7 +1246,7 @@ export default function DragonTigerPage({ auth }) {
               </div>
             ))}
             <button type="button" className="dt-pmodal-close" onClick={() => setShowAllPlayers(false)}>
-              ??
+              關閉
             </button>
           </div>
         </div>
@@ -1207,4 +1254,3 @@ export default function DragonTigerPage({ auth }) {
     </div>
   )
 }
-

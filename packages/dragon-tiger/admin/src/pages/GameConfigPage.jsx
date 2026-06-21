@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api.js'
 
 const FIELDS = [
-  { key: 'payout.dragon',     label: '龍 賠率 (1:N)',    type: 'number', step: 0.1 },
-  { key: 'payout.tiger',      label: '虎 賠率 (1:N)',    type: 'number', step: 0.1 },
-  { key: 'payout.tie',        label: '和 賠率 (1:N)',    type: 'number', step: 1   },
-  { key: 'payout.tie_refund', label: '和局退還比例',      type: 'number', step: 0.05, hint: '0.5 = 退半' },
-  { key: 'payout.big',        label: '大 賠率 (1:N)',    type: 'number', step: 0.1 },
-  { key: 'payout.small',      label: '小 賠率 (1:N)',    type: 'number', step: 0.1 },
-  { key: 'payout.odd',        label: '單 賠率 (1:N)',    type: 'number', step: 0.1 },
-  { key: 'payout.even',       label: '雙 賠率 (1:N)',    type: 'number', step: 0.1 },
-  { key: 'payout.suit',       label: '花色 賠率 (1:N)',  type: 'number', step: 0.5 },
+  { key: 'payout.dragon',     label: '龍 賠率 (1:N)',    type: 'number', step: 0.01 },
+  { key: 'payout.tiger',      label: '虎 賠率 (1:N)',    type: 'number', step: 0.01 },
+  { key: 'payout.tie',        label: '和 賠率 (1:N)',    type: 'number', step: 0.01 },
+  { key: 'payout.tie_refund', label: '和局退還比例',      type: 'number', step: 0.01, hint: '0.5 = 退半' },
+  { key: 'payout.big',        label: '大 賠率 (1:N)',    type: 'number', step: 0.01 },
+  { key: 'payout.small',      label: '小 賠率 (1:N)',    type: 'number', step: 0.01 },
+  { key: 'payout.odd',        label: '單 賠率 (1:N)',    type: 'number', step: 0.01 },
+  { key: 'payout.even',       label: '雙 賠率 (1:N)',    type: 'number', step: 0.01 },
+  { key: 'payout.suit',       label: '花色 賠率 (1:N)',  type: 'number', step: 0.01 },
   { key: 'seven_rule',        label: '7 規則',           type: 'select', options: [
     { value: 'push', label: 'push — 退還邊注' },
     { value: 'lose', label: 'lose — 莊家吃注' },

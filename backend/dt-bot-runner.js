@@ -238,18 +238,23 @@ async function main() {
   const { id: myId, token } = await ensureRunner()
   log(`Runner account id=${myId}  (${RUNNER_NAME})`)
 
-  await topupBots()
-
-  // Snapshot total chips before play: runner + all bots + house bank.
-  // House is included because DT round settlement moves chips between
-  // players and the house — the combined total is what must stay fixed.
+  // Global chip snapshot — SUM(ALL users) is the only true zero-sum invariant.
+  // Scoping to runner+bots+house is misleading: bots in *other* rooms (poker/BJ)
+  // may win chips from human players whose balances aren't in that narrow set,
+  // making chips appear created even when accounting is correct.
   const { rows: [snapRow] } = await query(
-    `SELECT COALESCE(SUM(balance), 0)::bigint AS total
-       FROM users WHERE username = $1 OR username = $2 OR is_bot = true`,
+    `SELECT COALESCE(SUM(balance), 0)::bigint AS total FROM users`,
+  )
+  // Also snapshot runner+bots+house for DT-specific per-account diagnosis
+  const { rows: snapAccounts } = await query(
+    `SELECT username, balance FROM users WHERE username = $1 OR username = $2 OR is_bot = true ORDER BY username`,
     [RUNNER_NAME, HOUSE_USERNAME],
   )
   const startTotal = Number(snapRow.total)
-  log(`Chip snapshot : ${startTotal.toLocaleString()} (runner + bots + house)`)
+  const snapMap    = new Map(snapAccounts.map(r => [r.username, Number(r.balance)]))
+  log(`Chip snapshot : ${startTotal.toLocaleString()} (ALL users total)`)
+
+  await topupBots()
 
   const ws = await wsConnect(token)
   log('WebSocket connected')
@@ -262,6 +267,10 @@ async function main() {
   }
 
   try { ws.terminate() } catch {}
+  // Give server 8 s to flush all async DB writes (cashout, syncBalances, house adjust).
+  // With Neon network latency and pool max=5, ~40 fire-and-forget writes across 10 rounds
+  // can take 3-4 s to fully commit — 2 s was too short and caused false-positive drift.
+  await new Promise(r => setTimeout(r, 8000))
 
   // ── Final report ──────────────────────────────────────────────────────
   const mins = ((Date.now() - stats.t0) / 60_000).toFixed(1)
@@ -279,31 +288,54 @@ async function main() {
     }
   }
 
-  // Zero-sum check: SUM(balance) over runner + bots + house must be conserved
-  // (modulo deliberate bot top-ups), since the house absorbs the exact
-  // opposite of every round's player net — see RoomManager.js round_result.
+  // ── Global zero-sum check ─────────────────────────────────────────────
+  // SUM(ALL user balances) must be conserved modulo known external injections
+  // (bot top-ups). Scoping to runner+bots+house only is misleading because
+  // bots active in *other* rooms (poker/BJ) can win chips from human players
+  // whose balances aren't in that set, causing false-positive chip-creation.
   try {
     const runStartIso = new Date(stats.t0).toISOString()
-    const { rows: [zs] } = await query(`
-      SELECT
-        (SELECT COALESCE(SUM(balance), 0)::bigint FROM users WHERE username = $1 OR username = $2 OR is_bot = true) AS end_total,
-        (SELECT COALESCE(SUM(amount),  0)::bigint FROM ledger WHERE type = 'bot_topup' AND created_at >= $3) AS topup_injected,
-        (SELECT balance FROM users WHERE username = $2) AS house_balance
-    `, [RUNNER_NAME, HOUSE_USERNAME, runStartIso])
-    const endTotal      = Number(zs.end_total)
-    const topupInjected = Number(zs.topup_injected)
-    const houseBalance  = Number(zs.house_balance)
-    const expectedEnd   = startTotal + topupInjected
-    const delta         = endTotal - expectedEnd
-    log('\n── Zero-sum check (runner + bots + house) ──')
+
+    const { rows: [endTotalRow] } = await query(
+      `SELECT COALESCE(SUM(balance), 0)::bigint AS total FROM users`,
+    )
+    const { rows: [topupRow] } = await query(
+      `SELECT COALESCE(SUM(amount), 0)::bigint AS injected
+         FROM ledger WHERE type = 'bot_topup' AND created_at >= $1`,
+      [runStartIso],
+    )
+    const { rows: endAccounts } = await query(
+      `SELECT username, balance FROM users WHERE username = $1 OR username = $2 OR is_bot = true ORDER BY username`,
+      [RUNNER_NAME, HOUSE_USERNAME],
+    )
+
+    const endGlobalTotal = Number(endTotalRow.total)
+    const topupInjected  = Number(topupRow.injected)
+    const endMap         = new Map(endAccounts.map(r => [r.username, Number(r.balance)]))
+    const houseBalance   = endMap.get(HOUSE_USERNAME) ?? 0
+    const expectedEnd    = startTotal + topupInjected
+    const delta          = endGlobalTotal - expectedEnd
+
+    log('\n── Zero-sum check (ALL users) ──')
     log(`  Start total    : ${startTotal.toLocaleString()}`)
     log(`  Topup injected : ${topupInjected.toLocaleString()}`)
     log(`  Expected end   : ${expectedEnd.toLocaleString()}`)
-    log(`  Actual end     : ${endTotal.toLocaleString()}`)
-    log(`  House balance  : ${houseBalance.toLocaleString()}  (net player profit this run: ${(-houseBalance).toLocaleString()})`)
+    log(`  Actual end     : ${endGlobalTotal.toLocaleString()}`)
     log(`  Delta          : ${delta.toLocaleString()}  ${Math.abs(delta) < 10 ? '✓ OK' : '⚠  INVESTIGATE'}`)
+
+    // DT-specific per-account breakdown (runner + bots + house only)
+    log('\n── DT account delta (runner + bots + house) ──')
+    log(`  House balance  : ${houseBalance.toLocaleString()}`)
+    const allNames = new Set([...snapMap.keys(), ...endMap.keys()])
+    for (const name of [...allNames].sort()) {
+      const s = snapMap.get(name) ?? 0
+      const e = endMap.get(name) ?? 0
+      const d = e - s
+      if (d !== 0) log(`  ${name.padEnd(20)} ${s.toLocaleString().padStart(10)} → ${e.toLocaleString().padStart(10)}  (${d > 0 ? '+' : ''}${d.toLocaleString()})`)
+    }
+
     if (Math.abs(delta) >= 10) {
-      log('  Chips may have been created/destroyed, or the house offset is wrong — check round_result handling in RoomManager.js!', 'WARN')
+      log('  ⚠  Global chip total drifted — check round_result in RoomManager.js!', 'WARN')
     }
   } catch (err) {
     recordError('zero-sum query', err)

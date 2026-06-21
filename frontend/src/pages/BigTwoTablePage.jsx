@@ -44,17 +44,11 @@ function BtBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
 
 // ── Lobby ─────────────────────────────────────────────────────────────────────
 const BET_UNITS = [10, 50, 100, 500]
-const MIN_UNIT_MULTIPLE = 50  // need at least 50× betUnit to sit down
-
 function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }) {
   const isConnected = status === 'connected'
   const [spinning, setSpinning] = useState(false)
 
-  const canAfford = (u) => buyIn >= u * MIN_UNIT_MULTIPLE
-
-  const [betUnit, setBetUnit] = useState(
-    () => BET_UNITS.find(canAfford) ?? BET_UNITS[0]
-  )
+  const [betUnit, setBetUnit] = useState(BET_UNITS[0])
 
   function handleRefresh() {
     if (spinning) return
@@ -75,21 +69,16 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
       <div className="pt-bet-unit-row">
         <span className="pt-bet-unit-label">底分</span>
         <div className="pt-bet-unit-btns">
-          {BET_UNITS.map(u => {
-            const ok = canAfford(u)
-            return (
-              <button
-                key={u}
-                type="button"
-                className={`pt-bet-unit-btn${betUnit === u ? ' is-active' : ''}${!ok ? ' is-locked' : ''}`}
-                onClick={() => ok && setBetUnit(u)}
-                disabled={!ok}
-                title={!ok ? `需帶入至少 ${new Intl.NumberFormat('en-US').format(u * MIN_UNIT_MULTIPLE)}` : ''}
-              >
-                {!ok ? '🔒 ' : ''}{u}
-              </button>
-            )
-          })}
+          {BET_UNITS.map(u => (
+            <button
+              key={u}
+              type="button"
+              className={`pt-bet-unit-btn${betUnit === u ? ' is-active' : ''}`}
+              onClick={() => setBetUnit(u)}
+            >
+              {u}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -100,35 +89,26 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
       <div className="pt-room-list">
         {rooms.length === 0 ? (
           <div className="pt-room-empty">目前沒有大老二房間，來建立第一間吧！</div>
-        ) : rooms.map(r => {
-          const canJoin = buyIn >= (r.betUnit ?? 10) * MIN_UNIT_MULTIPLE
-          return (
-            <div key={r.id} className="pt-room-item">
-              <div className="pt-room-meta">
-                <span className="pt-room-id-tag">#{r.id}</span>
-                <span className="pt-room-blinds">單位 {r.betUnit ?? 10}</span>
-                <span className="pt-room-phase">{BT_PHASE[r.phase] ?? r.phase}</span>
-              </div>
-              <div className="pt-room-bottom">
-                <span className="pt-room-players">{r.playerCount} / {r.maxPlayers} 玩家</span>
-                {(() => {
-                  const isInsufficient = !canJoin && r.phase === 'waiting' && r.playerCount < r.maxPlayers
-                  return (
-                    <button
-                      type="button"
-                      className={`pt-room-join${isInsufficient ? ' is-locked' : ''}`}
-                      onClick={() => onJoinRoom(r.id, buyIn)}
-                      disabled={!isConnected || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers || !canJoin}
-                      title={!canJoin ? `需帶入至少 ${new Intl.NumberFormat('en-US').format((r.betUnit ?? 10) * MIN_UNIT_MULTIPLE)}` : ''}
-                    >
-                      {isInsufficient ? '🔒 籌碼不足' : '加入'}
-                    </button>
-                  )
-                })()}
-              </div>
+        ) : rooms.map(r => (
+          <div key={r.id} className="pt-room-item">
+            <div className="pt-room-meta">
+              <span className="pt-room-id-tag">#{r.id}</span>
+              <span className="pt-room-blinds">單位 {r.betUnit ?? 10}</span>
+              <span className="pt-room-phase">{BT_PHASE[r.phase] ?? r.phase}</span>
             </div>
-          )
-        })}
+            <div className="pt-room-bottom">
+              <span className="pt-room-players">{r.playerCount} / {r.maxPlayers} 玩家</span>
+              <button
+                type="button"
+                className="pt-room-join"
+                onClick={() => onJoinRoom(r.id, buyIn)}
+                disabled={!isConnected || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers}
+              >
+                加入
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -604,7 +584,7 @@ function BigTwoTablePage({ auth }) {
   }, [wasKicked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (cashoutBalance !== null) auth?.refreshUser?.()
+    if (cashoutBalance !== null) auth?.applyBalance?.(cashoutBalance)
   }, [cashoutBalance, auth])
 
   const BT_VOICE = {

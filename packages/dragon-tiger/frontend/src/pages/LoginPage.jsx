@@ -3,7 +3,19 @@ import { API_BASE_URL } from '../services/apiClient.js'
 
 const TOKEN_KEY = 'dt_auth_token'
 
+async function authFetch(path, body) {
+  const res  = await fetch(`${API_BASE_URL}${path}`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message ?? '請求失敗')
+  return data
+}
+
 export default function LoginPage({ onLogin }) {
+  const [mode,     setMode]     = useState('login')   // 'login' | 'register'
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState('')
@@ -14,13 +26,8 @@ export default function LoginPage({ onLogin }) {
     setError('')
     setLoading(true)
     try {
-      const res  = await fetch(`${API_BASE_URL}/auth/login`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ username, password }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message ?? '登入失敗')
+      const path = mode === 'login' ? '/auth/login' : '/auth/register'
+      const data = await authFetch(path, { username, password })
       localStorage.setItem(TOKEN_KEY, data.token)
       if (data.userId) localStorage.setItem('dt_user_id', String(data.userId))
       onLogin()
@@ -39,7 +46,10 @@ export default function LoginPage({ onLogin }) {
         <input className="dt-login-input" type="password" placeholder="密碼" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
         {error && <p className="dt-login-error">{error}</p>}
         <button className="dt-login-btn" type="submit" disabled={loading}>
-          {loading ? '登入中…' : '登入'}
+          {loading ? '處理中…' : mode === 'login' ? '登入' : '註冊'}
+        </button>
+        <button type="button" className="dt-login-switch" onClick={() => { setMode(m => m === 'login' ? 'register' : 'login'); setError('') }}>
+          {mode === 'login' ? '還沒有帳號？註冊' : '已有帳號？登入'}
         </button>
       </form>
     </div>

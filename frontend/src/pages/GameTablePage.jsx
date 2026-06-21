@@ -213,18 +213,11 @@ const BLIND_PRESETS = [
   { label: '高限',  smallBlind: 50,  bigBlind: 100 },
   { label: '豪華',  smallBlind: 100, bigBlind: 200 },
 ]
-const MIN_BB_MULTIPLE = 50  // need at least 50× big blind to sit down
-
 function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }) {
   const isConnected = status === 'connected'
   const [isSpinning, setIsSpinning] = useState(false)
 
-  const canAfford = (p) => buyIn >= p.bigBlind * MIN_BB_MULTIPLE
-
-  // Default to the first affordable preset
-  const [selectedPreset, setSelectedPreset] = useState(
-    () => Math.max(0, BLIND_PRESETS.findIndex(canAfford))
-  )
+  const [selectedPreset, setSelectedPreset] = useState(0)
 
   function handleRefresh() {
     if (isSpinning) return
@@ -251,21 +244,16 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
       <div className="pt-bet-unit-row">
         <span className="pt-bet-unit-label">盲注</span>
         <div className="pt-bet-unit-btns">
-          {BLIND_PRESETS.map((p, i) => {
-            const ok = canAfford(p)
-            return (
-              <button
-                key={i}
-                type="button"
-                className={`pt-bet-unit-btn${selectedPreset === i ? ' is-active' : ''}${!ok ? ' is-locked' : ''}`}
-                onClick={() => ok && setSelectedPreset(i)}
-                disabled={!ok}
-                title={!ok ? `需帶入至少 ${new Intl.NumberFormat('en-US').format(p.bigBlind * MIN_BB_MULTIPLE)}` : ''}
-              >
-                {!ok ? '🔒 ' : ''}{p.label}
-              </button>
-            )
-          })}
+          {BLIND_PRESETS.map((p, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`pt-bet-unit-btn${selectedPreset === i ? ' is-active' : ''}`}
+              onClick={() => setSelectedPreset(i)}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -278,35 +266,26 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
       <div className="pt-room-list">
         {rooms.length === 0 ? (
           <div className="pt-room-empty">目前沒有房間，來建立第一間吧！</div>
-        ) : rooms.map(r => {
-          const canJoin = buyIn >= (r.bigBlind ?? 0) * MIN_BB_MULTIPLE
-          return (
-            <div key={r.id} className="pt-room-item">
-              <div className="pt-room-meta">
-                <span className="pt-room-id-tag">#{r.id}</span>
-                <span className="pt-room-blinds">{r.smallBlind}/{r.bigBlind}</span>
-                <span className="pt-room-phase">{PHASE_LABEL[r.phase] ?? r.phase}</span>
-              </div>
-              <div className="pt-room-bottom">
-                <span className="pt-room-players">{r.playerCount} / {r.maxPlayers} 玩家</span>
-                {(() => {
-                  const isInsufficient = !canJoin && r.phase === 'waiting' && r.playerCount < r.maxPlayers
-                  return (
-                    <button
-                      type="button"
-                      className={`pt-room-join${isInsufficient ? ' is-locked' : ''}`}
-                      onClick={() => onJoinRoom(r.id)}
-                      disabled={!isConnected || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers || !canJoin}
-                      title={!canJoin ? `需帶入至少 ${new Intl.NumberFormat('en-US').format((r.bigBlind ?? 0) * MIN_BB_MULTIPLE)}` : ''}
-                    >
-                      {isInsufficient ? '🔒 籌碼不足' : '加入'}
-                    </button>
-                  )
-                })()}
-              </div>
+        ) : rooms.map(r => (
+          <div key={r.id} className="pt-room-item">
+            <div className="pt-room-meta">
+              <span className="pt-room-id-tag">#{r.id}</span>
+              <span className="pt-room-blinds">{r.smallBlind}/{r.bigBlind}</span>
+              <span className="pt-room-phase">{PHASE_LABEL[r.phase] ?? r.phase}</span>
             </div>
-          )
-        })}
+            <div className="pt-room-bottom">
+              <span className="pt-room-players">{r.playerCount} / {r.maxPlayers} 玩家</span>
+              <button
+                type="button"
+                className="pt-room-join"
+                onClick={() => onJoinRoom(r.id)}
+                disabled={!isConnected || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers}
+              >
+                加入
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -397,7 +376,7 @@ function GameTablePage({ auth }) {
   }, [wasKicked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (cashoutBalance !== null) auth?.refreshUser?.()
+    if (cashoutBalance !== null) auth?.applyBalance?.(cashoutBalance)
   }, [cashoutBalance]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const { play, stop, preload } = useAudio()

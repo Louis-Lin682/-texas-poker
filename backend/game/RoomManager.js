@@ -7,6 +7,7 @@ import { PokerGame } from './PokerGame.js'
 import { BigTwoGame } from './BigTwoGame.js'
 import { BlackjackGame } from './BlackjackGame.js'
 import { DragonTigerGame } from './DragonTigerGame.js'
+import { getConfig as getDtConfig } from './dragonTigerConfig.js'
 import { decideBigTwo } from './BigTwoBotPlayer.js'
 
 // DIAGNOSTIC: chip-conservation audit trail, used to track down the zero-sum
@@ -75,7 +76,7 @@ export class RoomManager {
       : isBlackjack
         ? new BlackjackGame({ roomId, ...options })
         : isDragonTiger
-          ? new DragonTigerGame({ roomId, ...options })
+          ? new DragonTigerGame({ roomId, ...options, getConfig: getDtConfig })
           : new PokerGame({ roomId, ...options })
 
     game.onEvent = (event) => this._handleGameEvent(event)
@@ -176,6 +177,14 @@ export class RoomManager {
 
       if (type === 'join_room') {
         await this._joinRoom(ws, info, payload.roomId, payload.buyIn ?? 1000)
+        // DT: humans auto-join existing ambient rooms (not create_room), so
+        // fillRoom was never called for this room. Top up bots whenever a human joins.
+        const dtGame = this.rooms.get(payload.roomId)
+        if (dtGame?.gameSlug === 'dragon-tiger') {
+          const existingBots = dtGame.players.filter(p => this.botManager?.isBot(p.id)).length
+          const needed = Math.max(0, 3 - existingBots)
+          if (needed > 0) this.botManager?.fillRoom(dtGame, payload.roomId, needed)
+        }
         return
       }
 
@@ -295,11 +304,13 @@ export class RoomManager {
     if (game.players.length >= game.maxPlayers) return this._sendError(ws, '房間已滿')
 
     if (this.pool) {
-      const { rowCount } = await dbQuery(
-        'UPDATE users SET balance = balance - $1 WHERE id = $2 AND balance >= $1',
-        [buyIn, info.userId],
+      // Always read actual DB balance — client's buyIn may be stale
+      const { rows: [balRow] } = await dbQuery(
+        'SELECT balance FROM users WHERE id = $1', [info.userId],
       )
-      if (rowCount === 0) return this._sendError(ws, '餘額不足，無法進場')
+      buyIn = Number(balRow?.balance ?? 0)
+      if (buyIn <= 0) return this._sendError(ws, '餘額不足，無法進場')
+      await dbQuery('UPDATE users SET balance = 0 WHERE id = $1', [info.userId])
     }
 
     // Record buy-in in ledger
@@ -539,6 +550,19 @@ export class RoomManager {
       for (const p of game.players) p.balance += (p.totalBet ?? 0)
       game.pot = 0
     }
+    // For DT: refund bots' pending (unresolved) bets so they aren't silently
+    // destroyed when the room closes mid-round. House already absorbed the
+    // leaving human's bets via _dtPendingBet; bots' bets just get cancelled.
+    // MUST check phase: in 'result' phase p.bets still holds the just-settled
+    // round's values (cleared in _startBetting, 5 s later) — refunding them
+    // would double-credit bots and create chips out of thin air.
+    if (game.gameSlug === 'dragon-tiger' &&
+        (game.phase === 'betting' || game.phase === 'dealing')) {
+      for (const p of game.players) {
+        const pending = Object.values(p.bets || {}).reduce((a, v) => a + v, 0)
+        if (pending > 0) p.balance += pending
+      }
+    }
     this.botManager?.syncBalances(game)
     this._auditChips(ctx, roomId)
     game.destroy()
@@ -656,8 +680,8 @@ export class RoomManager {
           const st = data.state
           if (st?.dragonCard && st?.tigerCard && st?.result) {
             dbQuery(
-              'INSERT INTO dt_round_history (result, dragon_rank, dragon_suit, tiger_rank, tiger_suit) VALUES ($1,$2,$3,$4,$5)',
-              [st.result, st.dragonCard.rank, st.dragonCard.suit, st.tigerCard.rank, st.tigerCard.suit],
+              'INSERT INTO dt_round_history (round_id, result, dragon_rank, dragon_suit, tiger_rank, tiger_suit) VALUES ($1,$2,$3,$4,$5,$6)',
+              [st.roundId ?? null, st.result, st.dragonCard.rank, st.dragonCard.suit, st.tigerCard.rank, st.tigerCard.suit],
             ).catch(err => console.error('[dt history]', err))
           }
         }

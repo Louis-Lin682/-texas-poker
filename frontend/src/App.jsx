@@ -119,6 +119,7 @@ function App() {
       <div style={{ display: isLobby ? 'block' : 'none', height: '100%' }}>
         <LobbyPage
           auth={auth}
+          isActive={isLobby}
           onGoLogin={enterMain}
           onCenterLogoClick={enterMain}
           hasEnteredLobby={hasEnteredLobby}

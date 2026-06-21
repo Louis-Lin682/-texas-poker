@@ -42,7 +42,12 @@ export default function AdminLayout() {
 
   const NAV_ITEMS = useMemo(() => [
     { key: '/members',  icon: <TeamOutlined />,            label: <Link to="/members">會員管理</Link> },
-    { key: '/games',    icon: <ControlOutlined />,          label: <Link to="/games">遊戲管理</Link> },
+    { key: '/games',    icon: <ControlOutlined />,          label: <Link to="/games">遊戲管理</Link>,
+      children: [
+        { key: '/games',                       label: <Link to="/games">遊戲開關</Link> },
+        { key: '/games/dragon-tiger/config',   label: <Link to="/games/dragon-tiger/config">龍虎賠率</Link> },
+      ],
+    },
     { key: '/rooms',    icon: <AppstoreOutlined />,         label: <Link to="/rooms">房間管理</Link> },
     { key: '/reports',  icon: <BarChartOutlined />,         label: <Link to="/reports">遊戲報表</Link> },
     { key: '/events',   icon: <AlertOutlined />,            label: <Link to="/events">限時活動</Link> },
@@ -63,8 +68,15 @@ export default function AdminLayout() {
   ], [supportUnread])
 
   const selected = useMemo(() => {
-    const match = NAV_ITEMS.find(i => location.pathname.startsWith(i.key))
-    return match ? [match.key] : []
+    for (const item of NAV_ITEMS) {
+      if (item.children) {
+        const sorted = [...item.children].sort((a, b) => b.key.length - a.key.length)
+        const child = sorted.find(c => location.pathname === c.key || location.pathname.startsWith(c.key + '/'))
+        if (child) return [child.key]
+      }
+      if (!item.children && location.pathname.startsWith(item.key)) return [item.key]
+    }
+    return []
   }, [location.pathname, NAV_ITEMS])
 
   async function handleLogout() {
@@ -97,6 +109,7 @@ export default function AdminLayout() {
         <Menu
           mode="inline"
           selectedKeys={selected}
+          defaultOpenKeys={['/games']}
           items={NAV_ITEMS}
           style={{ background: '#111118', border: 0, marginTop: 8 }}
           theme="dark"

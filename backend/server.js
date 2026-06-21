@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { WebSocketServer } from 'ws'
 import pool, { initDb, query } from './db.js'
 import { RoomManager, HOUSE_USERNAME } from './game/RoomManager.js'
+import { loadConfig as loadDtConfig, saveConfig as saveDtConfig, getConfig as getDtConfig } from './game/dragonTigerConfig.js'
 import { BotManager } from './game/BotManager.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -617,7 +618,7 @@ const server = http.createServer(async (request, response) => {
       const limit  = Math.min(Number(url.searchParams.get('limit')  || 60), 120)
       const offset = Math.max(Number(url.searchParams.get('offset') || 0),  0)
       const { rows } = await query(
-        `SELECT id, result, dragon_rank, dragon_suit, tiger_rank, tiger_suit
+        `SELECT id, round_id, result, dragon_rank, dragon_suit, tiger_rank, tiger_suit
          FROM dt_round_history
          ORDER BY id DESC
          LIMIT $1 OFFSET $2`,
@@ -627,6 +628,7 @@ const server = http.createServer(async (request, response) => {
       sendJson(response, 200, {
         rounds: rows.slice(0, limit).map(r => ({
           dbId:       Number(r.id),
+          roundId:    r.round_id ?? Number(r.id),
           result:     r.result,
           dragonRank: r.dragon_rank,
           dragonSuit: r.dragon_suit,
@@ -636,6 +638,22 @@ const server = http.createServer(async (request, response) => {
         hasMore,
       }, effectiveCors)
       return
+    }
+
+    if (request.method === 'GET' && pathname === '/dt-config') {
+      const DT_DEFAULTS = {
+        'payout.dragon': 1, 'payout.tiger': 1, 'payout.tie': 8,
+        'payout.tie_refund': 0.5, 'payout.big': 1, 'payout.small': 1,
+        'payout.odd': 1, 'payout.even': 1, 'payout.suit': 3,
+        'seven_rule': 'push', 'min_bet': 20, 'max_bet': 10000,
+      }
+      const { rows } = await query(
+        `SELECT gcv.config FROM game_config_current gcc
+         JOIN game_config_versions gcv ON gcv.id = gcc.version_id
+         WHERE gcc.game = 'dragon-tiger'`
+      )
+      const cfg = rows.length ? { ...DT_DEFAULTS, ...rows[0].config } : DT_DEFAULTS
+      sendJson(response, 200, { config: cfg }, effectiveCors); return
     }
 
     if (request.method === 'GET' && pathname === '/game-configs') {
@@ -1659,6 +1677,25 @@ const server = http.createServer(async (request, response) => {
         sendJson(response, 200, rows[0], effectiveCors); return
       }
 
+      if (pathname === '/admin/dt-config' && request.method === 'GET') {
+        sendJson(response, 200, { config: getDtConfig() }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/dt-config' && request.method === 'PUT') {
+        const { config, note } = await getRequestBody(request)
+        const versionId = await saveDtConfig(config, admin.username, note ?? '')
+        sendJson(response, 200, { versionId, config: getDtConfig() }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/dt-config/history' && request.method === 'GET') {
+        const { rows } = await query(
+          `SELECT id, version, config, changed_by, note, created_at
+           FROM game_config_versions WHERE game = 'dragon-tiger'
+           ORDER BY version DESC LIMIT 50`
+        )
+        sendJson(response, 200, { history: rows }, effectiveCors); return
+      }
+
       sendJson(response, 404, { message: 'Admin route not found.' }, effectiveCors); return
     }
 
@@ -1882,6 +1919,7 @@ server.listen(port, "0.0.0.0", () => {
 async function initDbWithRetry(attemptsLeft = 10) {
   try {
     await initDb()
+    await loadDtConfig()
   } catch (err) {
     if (attemptsLeft > 0) {
       console.log(`DB not ready yet, retrying in 3s… (${attemptsLeft} left)`)
@@ -1979,8 +2017,7 @@ initDbWithRetry()
       if (g3) botManager.fillRoom(g3, r3, bt3BotCount)
 
       const r4 = roomManager.createRoom({ gameType: 'dragon-tiger', gameSlug: 'dragon-tiger', maxPlayers: 6, minBet: 20, maxBet: 10000 })
-      const g4 = roomManager.getRoom(r4)
-      if (g4) botManager.fillRoom(g4, r4, 3)
+      // No bots seeded here — DT bots are added when the first human joins (join_room handler)
     }
   })
   .catch((error) => {

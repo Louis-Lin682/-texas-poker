@@ -12183,7 +12183,7 @@ div.settings-slider::after {
 /* Dragon Tiger zone payout label */
 .dt-zone-payout {
   position: absolute;
-  bottom: 5px;
+  bottom: 3px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.72rem;

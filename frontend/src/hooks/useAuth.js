@@ -50,17 +50,25 @@ export function useAuth() {
   }, [token])
 
   const refreshUser = useCallback(async () => {
-    if (!token) return
+    if (!token) return null
     setIsRefreshingBalance(true)
     try {
       const nextUser = await getMe(token)
       setUser(nextUser)
+      return nextUser
     } catch {
-      // silently ignore
+      return null
     } finally {
       setIsRefreshingBalance(false)
     }
   }, [token])
+
+  // Update balance directly from a server-pushed value (e.g. balance_update WS
+  // message after cashout) without a round-trip to /me, preventing a race where
+  // the lobby's mount refreshUser hits the DB before the cashout UPDATE commits.
+  const applyBalance = useCallback((balance) => {
+    setUser(prev => prev ? { ...prev, balance } : prev)
+  }, [])
 
   const value = useMemo(
     () => ({
@@ -71,9 +79,10 @@ export function useAuth() {
       user,
       setToken,
       refreshUser,
+      applyBalance,
       logout: () => setToken(''),
     }),
-    [isCheckingAuth, isRefreshingBalance, token, user, refreshUser],
+    [isCheckingAuth, isRefreshingBalance, token, user, refreshUser, applyBalance],
   )
 
   return value

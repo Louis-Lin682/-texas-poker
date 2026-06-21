@@ -59,12 +59,37 @@ const ZONE_DEFS = {
   tiger_diamond: { left: '87.25%', top: '87%',  width: '7.75%', height: '16%' },
 }
 
-const ZONE_PAYOUTS = {
+const DEFAULT_ZONE_PAYOUTS = {
   dragon: '1:1', tiger: '1:1', tie: '1:8',
   dragon_big: '1:1', dragon_small: '1:1', dragon_odd: '1:1', dragon_even: '1:1',
   dragon_spade: '1:3', dragon_heart: '1:3', dragon_club: '1:3', dragon_diamond: '1:3',
   tiger_big: '1:1',  tiger_small: '1:1',  tiger_odd: '1:1',  tiger_even: '1:1',
   tiger_spade: '1:3', tiger_heart: '1:3',  tiger_club: '1:3',  tiger_diamond: '1:3',
+}
+
+function cfgToPayouts(cfg) {
+  const fmt = v => Number.isInteger(v) ? `1:${v}` : `1:${Number(v).toFixed(2)}`
+  return {
+    dragon:         fmt(cfg['payout.dragon'] ?? 1),
+    tiger:          fmt(cfg['payout.tiger']  ?? 1),
+    tie:            fmt(cfg['payout.tie']    ?? 8),
+    dragon_big:     fmt(cfg['payout.big']    ?? 1),
+    dragon_small:   fmt(cfg['payout.small']  ?? 1),
+    dragon_odd:     fmt(cfg['payout.odd']    ?? 1),
+    dragon_even:    fmt(cfg['payout.even']   ?? 1),
+    dragon_spade:   fmt(cfg['payout.suit']   ?? 3),
+    dragon_heart:   fmt(cfg['payout.suit']   ?? 3),
+    dragon_club:    fmt(cfg['payout.suit']   ?? 3),
+    dragon_diamond: fmt(cfg['payout.suit']   ?? 3),
+    tiger_big:      fmt(cfg['payout.big']    ?? 1),
+    tiger_small:    fmt(cfg['payout.small']  ?? 1),
+    tiger_odd:      fmt(cfg['payout.odd']    ?? 1),
+    tiger_even:     fmt(cfg['payout.even']   ?? 1),
+    tiger_spade:    fmt(cfg['payout.suit']   ?? 3),
+    tiger_heart:    fmt(cfg['payout.suit']   ?? 3),
+    tiger_club:     fmt(cfg['payout.suit']   ?? 3),
+    tiger_diamond:  fmt(cfg['payout.suit']   ?? 3),
+  }
 }
 
 const SUIT_RED   = new Set(['♥', '♦'])
@@ -483,7 +508,11 @@ function HistoryModal({ history, onClose }) {
   )
 }
 
-function RulesModal({ onClose }) {
+function RulesModal({ onClose, zonePayouts = {}, dtConfig = {} }) {
+  const refund     = dtConfig['payout.tie_refund'] ?? 0.5
+  const sevenRule  = dtConfig['seven_rule'] ?? 'push'
+  const refundText = refund === 0.5 ? '退半注' : refund === 1 ? '退全注' : `退 ${Math.round(refund * 100)}%`
+  const sevenText  = sevenRule === 'push' ? '7 點＝退注' : '7 點＝莊家吃注'
   return (
     <div className="dt-rules-overlay" onClick={onClose}>
       <div className="dt-rules-scroll" onClick={e => e.stopPropagation()}>
@@ -495,27 +524,27 @@ function RulesModal({ onClose }) {
 
             <div className="dt-rules-section">
               <div className="dt-rules-section-title">主注賠率</div>
-              <div className="dt-rules-row"><span>龍 / 虎</span><span>1 : 1（和局退半注）</span></div>
-              <div className="dt-rules-row"><span>和</span><span>1 : 8</span></div>
+              <div className="dt-rules-row"><span>龍 / 虎</span><span>{zonePayouts.dragon ?? '1:1'}（和局{refundText}）</span></div>
+              <div className="dt-rules-row"><span>和</span><span>{zonePayouts.tie ?? '1:8'}</span></div>
             </div>
 
             <div className="dt-rules-section">
               <div className="dt-rules-section-title">大 / 小（副注）</div>
-              <div className="dt-rules-row"><span>大（8–K）</span><span>1 : 1</span></div>
-              <div className="dt-rules-row"><span>小（A–6）</span><span>1 : 1</span></div>
-              <div className="dt-rules-note">7 點＝退注</div>
+              <div className="dt-rules-row"><span>大（8–K）</span><span>{zonePayouts.dragon_big ?? '1:1'}</span></div>
+              <div className="dt-rules-row"><span>小（A–6）</span><span>{zonePayouts.dragon_small ?? '1:1'}</span></div>
+              <div className="dt-rules-note">{sevenText}</div>
             </div>
 
             <div className="dt-rules-section">
               <div className="dt-rules-section-title">單 / 雙（副注）</div>
-              <div className="dt-rules-row"><span>單數點</span><span>1 : 1</span></div>
-              <div className="dt-rules-row"><span>雙數點</span><span>1 : 1</span></div>
-              <div className="dt-rules-note">7 點＝退注</div>
+              <div className="dt-rules-row"><span>單數點</span><span>{zonePayouts.dragon_odd ?? '1:1'}</span></div>
+              <div className="dt-rules-row"><span>雙數點</span><span>{zonePayouts.dragon_even ?? '1:1'}</span></div>
+              <div className="dt-rules-note">{sevenText}</div>
             </div>
 
             <div className="dt-rules-section">
               <div className="dt-rules-section-title">花色（副注）</div>
-              <div className="dt-rules-row"><span>♠ ♥ ♣ ♦ 任一</span><span>1 : 3</span></div>
+              <div className="dt-rules-row"><span>♠ ♥ ♣ ♦ 任一</span><span>{zonePayouts.dragon_spade ?? '1:3'}</span></div>
             </div>
 
             <div className="dt-rules-section">
@@ -619,10 +648,19 @@ export default function DragonTigerPage({ auth }) {
   const [showTigerWin,   setShowTigerWin]   = useState(false)
   const [dtBgmMuted,     setDtBgmMuted]     = useState(false)
   const dtBgmRef = useRef(null)
+  const [zonePayouts,    setZonePayouts]    = useState(DEFAULT_ZONE_PAYOUTS)
+  const [dtConfig,       setDtConfig]       = useState({})
 
   useEffect(() => {
     if (!location.state) navigate('/', { replace: true })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/dt-config`)
+      .then(r => r.json())
+      .then(d => { setZonePayouts(cfgToPayouts(d.config)); setDtConfig(d.config) })
+      .catch(() => {})
+  }, [])
 
   // Intercept browser / mobile back button
   const roomIdRef = useRef(null)
@@ -667,6 +705,7 @@ export default function DragonTigerPage({ auth }) {
         setHasMoreDb(data.hasMore)
         setRoundHistory(data.rounds.map(r => ({
           _key:       `db-${r.dbId}`,
+          roundId:    r.roundId,
           result:     r.result,
           dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
           tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
@@ -693,6 +732,7 @@ export default function DragonTigerPage({ auth }) {
           .filter(r => !seen.has(`db-${r.dbId}`))
           .map(r => ({
             _key:       `db-${r.dbId}`,
+            roundId:    r.roundId,
             result:     r.result,
             dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
             tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
@@ -1093,7 +1133,7 @@ export default function DragonTigerPage({ auth }) {
                 small={isSuitZone(zone)}
               />
               <span className={`dt-zone-payout${isSuitZone(zone) ? ' is-small' : ''}${['dragon','tiger','tie'].includes(zone) ? ' is-top' : ''}`}>
-                {ZONE_PAYOUTS[zone]}
+                {zonePayouts[zone]}
               </span>
             </button>
           ))}
@@ -1182,7 +1222,7 @@ export default function DragonTigerPage({ auth }) {
 
 
       {/* Rules modal */}
-      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
+      {showRules && <RulesModal onClose={() => setShowRules(false)} zonePayouts={zonePayouts} dtConfig={dtConfig} />}
 
       {/* History modal */}
       {showHistory && <HistoryModal history={roundHistory} onClose={() => setShowHistory(false)} />}

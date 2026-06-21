@@ -70,6 +70,10 @@ export const adminApi = {
   getGames:       ()            => req('/games'),
   updateGame:     (slug, body)  => req(`/games/${slug}`, { method: 'PATCH', body }),
 
+  getDtConfig:        ()              => req('/dt-config'),
+  saveDtConfig:       (config, note)  => req('/dt-config', { method: 'PUT', body: { config, note } }),
+  getDtConfigHistory: ()              => req('/dt-config/history'),
+
   getRooms:       ()            => req('/rooms'),
   closeRoom:      (id)          => req(`/rooms/${id}`,                { method: 'DELETE' }),
   kickPlayer:     (roomId, pid) => req(`/rooms/${roomId}/kick/${pid}`, { method: 'POST' }),

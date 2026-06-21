@@ -246,3 +246,11 @@ select.admin-input { cursor: pointer; }
   gap: 1rem;
 }
 .admin-login-title { font-size: 1.5rem; color: var(--gold); text-align: center; margin-bottom: 0.5rem; }
+
+.admin-detail-block    { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.78rem; }
+.admin-detail-result   { color: #e2ce87; font-weight: 600; }
+.admin-detail-cards    { color: rgba(244,238,223,0.6); font-weight: 400; }
+.admin-detail-bets     { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.admin-detail-bet-tag  { background: rgba(255,255,255,0.06); border-radius: 4px; padding: 0.1rem 0.4rem; color: rgba(244,238,223,0.75); }
+.admin-detail-payout   { color: rgba(244,238,223,0.4); font-size: 0.72rem; }
+.admin-detail-empty    { color: rgba(244,238,223,0.25); font-size: 0.75rem; }

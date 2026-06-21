@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import AllGamesSection from '../components/AllGamesSection'
 import GameSection from '../components/GameSection'
 import AuthPromptModal from '../components/AuthPromptModal'
-import EnterGameModal from '../components/EnterGameModal'
 import CheckInModal from '../components/CheckInModal'
 import GuestBanner from '../components/GuestBanner'
 import BottomNav from '../components/BottomNav'
@@ -24,26 +23,19 @@ import {
 } from '../data/lobbyData'
 import { useFavorites } from '../hooks/useFavorites'
 import { useGames } from '../hooks/useGames'
-import { getConfig } from '../services/gamesApi'
 import { API_BASE_URL } from '../services/apiClient'
 
-function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnterLobby, play, pause, supportUnread, onSupportRead }) {
+function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnterLobby, play, pause, supportUnread, onSupportRead }) {
   const navigate = useNavigate()
   const [selectedGame, setSelectedGame] = useState(null)
   const [isCheckInOpen, setIsCheckInOpen] = useState(false)
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false)
   const [authPromptContext, setAuthPromptContext] = useState('default')
-  const [isEnterGameOpen, setIsEnterGameOpen] = useState(false)
-  const [pendingGame, setPendingGame] = useState(null)
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false)
   const [isMyDrawerOpen, setIsMyDrawerOpen] = useState(false)
   const [isEventDrawerOpen, setIsEventDrawerOpen] = useState(false)
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
   const { games, featuredGames, isLoadingGames } = useGames()
-  const [minBuyIn, setMinBuyIn] = useState(() => {
-    const cached = localStorage.getItem('cfg_min_buy_in')
-    return cached ? parseInt(cached, 10) : 3000
-  })
   const [showFloatTop, setShowFloatTop] = useState(false)
   const [marqueeText, setMarqueeText] = useState('')
 
@@ -55,15 +47,6 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
         if (items.length > 0) setMarqueeText(items.map(a => a.content).join('　　◆　　'))
       })
       .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    getConfig().then(cfg => {
-      if (cfg.minBuyIn) {
-        setMinBuyIn(cfg.minBuyIn)
-        localStorage.setItem('cfg_min_buy_in', String(cfg.minBuyIn))
-      }
-    }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -90,9 +73,33 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
     onRequireLogin: () => openAuthPrompt('favorite'),
   })
 
+  const [balanceReady, setBalanceReady] = useState(false)
+
   useEffect(() => {
-    if (auth.isAuthenticated) auth.refreshUser()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!auth.isAuthenticated || !isActive) {
+      if (!isActive) setBalanceReady(false)
+      return
+    }
+
+    setBalanceReady(false)
+
+    auth.refreshUser().then(user => {
+      if (user && user.balance > 0) {
+        setBalanceReady(true)
+      } else {
+        // 0 returned — may be a race with game cashout DB update; retry once
+        setTimeout(() => auth.refreshUser().then(() => setBalanceReady(true)), 800)
+      }
+    })
+
+    const id = setInterval(() => auth.refreshUser(), 10_000)
+    const onVisible = () => { if (document.visibilityState === 'visible') auth.refreshUser() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [auth.isAuthenticated, isActive]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePlayGame = (game) => {
     if (!game?.route) return
@@ -102,8 +109,12 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
       navigate(game.route, { state: { gameSlug: game.slug } })
       return
     }
-    setPendingGame(game)
-    setIsEnterGameOpen(true)
+    if (!auth.isAuthenticated) {
+      openAuthPrompt('game')
+      return
+    }
+    pause('lobbyBgm')
+    navigate(game.route, { state: { buyIn: auth.user?.balance ?? 0, gameSlug: game.slug } })
   }
 
   const profile = {
@@ -148,7 +159,7 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
           <ProfileCard
             profile={profile}
             isAuthenticated={auth.isAuthenticated}
-            isRefreshingBalance={auth.isRefreshingBalance}
+            isRefreshingBalance={!balanceReady || auth.isRefreshingBalance}
             supportUnread={supportUnread}
             onSupportRead={onSupportRead}
             onAccountAction={() => {
@@ -253,27 +264,6 @@ function LobbyPage({ auth, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnte
         onGoLogin={() => {
           setIsAuthPromptOpen(false)
           onGoLogin?.()
-        }}
-      />
-
-      <EnterGameModal
-        game={pendingGame}
-        auth={auth}
-        minBuyIn={minBuyIn}
-        isOpen={isEnterGameOpen}
-        onClose={() => { setIsEnterGameOpen(false); setPendingGame(null) }}
-        onGoLogin={() => {
-          setIsEnterGameOpen(false)
-          setPendingGame(null)
-          onGoLogin?.()
-        }}
-        onConfirm={(buyIn) => {
-          setIsEnterGameOpen(false)
-          const game = pendingGame
-          setPendingGame(null)
-          if (!game?.route) return
-          pause('lobbyBgm')
-          navigate(game.route, { state: { buyIn, gameSlug: game.slug } })
         }}
       />
 
