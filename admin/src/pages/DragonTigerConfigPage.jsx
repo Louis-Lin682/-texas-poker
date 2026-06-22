@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
-  Button, Card, Form, Input, InputNumber, Select,
-  Space, Table, Typography, message,
+  App, Button, Card, Form, Input, InputNumber, Select,
+  Space, Table, Typography,
 } from 'antd'
 import { adminApi } from '../services/adminApi'
 
@@ -31,6 +31,7 @@ const HIST_COLS = [
 ]
 
 export default function DragonTigerConfigPage() {
+  const { message } = App.useApp()
   const [form]      = Form.useForm()
   const [loading,  setLoading]  = useState(false)
   const [saving,   setSaving]   = useState(false)

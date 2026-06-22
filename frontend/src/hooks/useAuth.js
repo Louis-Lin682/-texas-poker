@@ -49,9 +49,9 @@ export function useAuth() {
     return () => { cancelled = true }
   }, [token])
 
-  const refreshUser = useCallback(async () => {
+  const refreshUser = useCallback(async ({ silent = false } = {}) => {
     if (!token) return null
-    setIsRefreshingBalance(true)
+    if (!silent) setIsRefreshingBalance(true)
     try {
       const nextUser = await getMe(token)
       setUser(nextUser)
@@ -59,7 +59,7 @@ export function useAuth() {
     } catch {
       return null
     } finally {
-      setIsRefreshingBalance(false)
+      if (!silent) setIsRefreshingBalance(false)
     }
   }, [token])
 

@@ -1,0 +1,16 @@
+{
+  "name": "thunder-joker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start":       "node --no-warnings server.js",
+    "start:admin": "node --no-warnings admin-server.js",
+    "init:admin":  "node --no-warnings scripts/init-admin.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv":   "^17.4.2",
+    "pg":       "^8.21.0"
+  }
+}

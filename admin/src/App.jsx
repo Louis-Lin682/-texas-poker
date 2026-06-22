@@ -17,6 +17,7 @@ import ReportsPage from './pages/ReportsPage'
 import GamesPage from './pages/GamesPage'
 import RoomsPage from './pages/RoomsPage'
 import DragonTigerConfigPage from './pages/DragonTigerConfigPage'
+import ThunderJokerConfigPage from './pages/ThunderJokerConfigPage'
 
 function RequireAuth({ children }) {
   const { admin, loading } = useAdminAuth()
@@ -37,6 +38,7 @@ function AppRoutes() {
         <Route path="/reports"     element={<ReportsPage />} />
         <Route path="/games"       element={<GamesPage />} />
         <Route path="/games/dragon-tiger/config" element={<DragonTigerConfigPage />} />
+        <Route path="/games/thunder-joker/config" element={<ThunderJokerConfigPage />} />
         <Route path="/rooms"       element={<RoomsPage />} />
         <Route path="/events"      element={<EventsPage />} />
         <Route path="/news"          element={<AdminNewsPage />} />

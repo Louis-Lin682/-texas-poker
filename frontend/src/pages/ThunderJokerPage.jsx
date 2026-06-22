@@ -77,7 +77,15 @@ function calcPathLength(pts) {
 }
 
 
-const BET_OPTIONS  = [10, 20, 50, 100, 200, 500]
+// Standard steps between min_bet and max_bet; min_bet itself is always prepended.
+const BET_STEPS     = [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
+const DEFAULT_MIN   = 10
+const DEFAULT_MAX   = 1000
+
+function buildBetOptions(minBet, maxBet) {
+  const above = BET_STEPS.filter(b => b > minBet && b <= maxBet)
+  return [minBet, ...above]
+}
 const SPIN_BASE    = 1000
 const REEL_STAGGER = 150   // ms between reels
 const FS_MULTS     = [2, 3]
@@ -115,13 +123,12 @@ function fsCountEase(p) {
   return 0.60 + ((p - 0.75) / 0.25) * 0.40
 }
 
-function winLevel(win, bet) {
-  // DEV MODE: lowered thresholds for testing animations
+function winLevel(win, bet, thresholds) {
   const r = win / bet
-  if (r >= 50)  return 'super'
-  if (r >= 15)  return 'epic'
-  if (r >= 5)   return 'mega'
-  if (r >= 1)   return 'big'
+  if (r >= thresholds.super) return 'super'
+  if (r >= thresholds.epic)  return 'epic'
+  if (r >= thresholds.mega)  return 'mega'
+  if (r >= thresholds.big)   return 'big'
   return null
 }
 
@@ -205,7 +212,10 @@ export default function ThunderJokerPage({ auth }) {
   const [spinning,       setSpinning]       = useState(false)
   const [balance,        setBalance]        = useState(() => buyIn ?? auth?.user?.balance ?? 10000)
   const [displayBalance, setDisplayBalance] = useState(() => buyIn ?? auth?.user?.balance ?? 10000)
-  const [bet,          setBet]          = useState(BET_OPTIONS[0])
+  const [betOptions,      setBetOptions]      = useState(() => buildBetOptions(DEFAULT_MIN, DEFAULT_MAX))
+  const [bet,             setBet]             = useState(DEFAULT_MIN)
+  const [winThresholds,   setWinThresholds]   = useState({ big: 2, mega: 10, epic: 50, super: 200 })
+  const winThresholdsRef = useRef({ big: 2, mega: 10, epic: 50, super: 200 })
   const [lastWin,      setLastWin]      = useState(0)
   const [displayWin,   setDisplayWin]   = useState(0)
   const [winHits,      setWinHits]      = useState([])
@@ -248,7 +258,7 @@ export default function ThunderJokerPage({ auth }) {
   }, [auth?.user?.suspended_at])
 
   const lockRef      = useRef(false)
-  const betRef       = useRef(BET_OPTIONS[0])
+  const betRef       = useRef(DEFAULT_MIN)
   const balRef       = useRef(buyIn ?? auth?.user?.balance ?? 10000)
   // When buy-in mode is active, track the server balance at entry so we can compute session delta.
   // Never fall back to buyIn — if auth isn't ready yet, start null and the effect below will fill it in.
@@ -311,6 +321,24 @@ export default function ThunderJokerPage({ auth }) {
 
   // Restore free spin session after page navigation
   const sessionRestoredRef = useRef(false)
+  useEffect(() => {
+    apiRequest('/slots/config')
+      .then(cfg => {
+        const opts = buildBetOptions(cfg.min_bet ?? DEFAULT_MIN, cfg.max_bet ?? DEFAULT_MAX)
+        setBetOptions(opts)
+        setBet(opts[0])
+        const t = {
+          big:   cfg.win_level_big   ?? 2,
+          mega:  cfg.win_level_mega  ?? 10,
+          epic:  cfg.win_level_epic  ?? 50,
+          super: cfg.win_level_super ?? 200,
+        }
+        setWinThresholds(t)
+        winThresholdsRef.current = t
+      })
+      .catch(() => {})
+  }, [])
+
   useEffect(() => {
     if (sessionRestoredRef.current) return
     const token = auth?.token
@@ -459,7 +487,7 @@ export default function ThunderJokerPage({ auth }) {
           snd.stopLoop('shot')
           setFsFlash(true)
           setScreenShake(true)
-          const lv = winLevel(totalWon, betRef.current)
+          const lv = winLevel(totalWon, betRef.current, winThresholdsRef.current)
           if (lv) { setFsWinBadge(lv); snd.play(lv + '-win') }
           const tb = setTimeout(() => { setFsFlash(false); setScreenShake(false) }, 500)
           tmRefs.current.push(tb)
@@ -727,7 +755,7 @@ export default function ThunderJokerPage({ auth }) {
       if (winTotal > 0) {
         setLastWin(winTotal)
         setWinHits(hits)                // paylines draw immediately
-        bigWinLv = winLevel(winTotal, curBet)
+        bigWinLv = winLevel(winTotal, curBet, winThresholdsRef.current)
         // During free spins, all per-spin wins play win-small; fsEndSequence handles the total reveal
         if (!bigWinLv || isFree) {
           snd.play('win-small')
@@ -1049,11 +1077,11 @@ export default function ThunderJokerPage({ auth }) {
 
   const handleBetDown = () => {
     if (spinning) return
-    const i = BET_OPTIONS.indexOf(bet); if (i > 0) setBet(BET_OPTIONS[i - 1])
+    const i = betOptions.indexOf(bet); if (i > 0) setBet(betOptions[i - 1])
   }
   const handleBetUp = () => {
     if (spinning) return
-    const i = BET_OPTIONS.indexOf(bet); if (i < BET_OPTIONS.length - 1) setBet(BET_OPTIONS[i + 1])
+    const i = betOptions.indexOf(bet); if (i < betOptions.length - 1) setBet(betOptions[i + 1])
   }
 
   const bgSrc = scene === 'bonus'     ? '/slot-imgs/Scene/feature_bonus.png'
@@ -1063,7 +1091,7 @@ export default function ThunderJokerPage({ auth }) {
   const canSpin = !spinning && (inFreeSpins || balance >= bet)
 
   useEffect(() => {
-    if (buyIn != null && !spinning && !inFreeSpins && balance < BET_OPTIONS[0])
+    if (buyIn != null && !spinning && !inFreeSpins && balance < betOptions[0])
       setShowBrokeModal(true)
   }, [balance, spinning, inFreeSpins, buyIn])
 
@@ -1443,7 +1471,7 @@ export default function ThunderJokerPage({ auth }) {
           <button
             type="button"
             className="tj-ctrl-btn"
-            onClick={() => { if (!spinning) setBet(BET_OPTIONS[BET_OPTIONS.length - 1]) }}
+            onClick={() => { if (!spinning) setBet(betOptions[betOptions.length - 1]) }}
             disabled={spinning}
           >
             <img src="/slot-imgs/max.png" alt="max" />

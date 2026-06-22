@@ -74,6 +74,11 @@ export const adminApi = {
   saveDtConfig:       (config, note)  => req('/dt-config', { method: 'PUT', body: { config, note } }),
   getDtConfigHistory: ()              => req('/dt-config/history'),
 
+  getSlotConfig:        ()              => req('/slot-config'),
+  saveSlotConfig:       (config, note)  => req('/slot-config', { method: 'PUT', body: { config, note } }),
+  getSlotConfigHistory: ()              => req('/slot-config/history'),
+  getSlotRtp:           ()              => req('/slot-rtp'),
+
   getRooms:       ()            => req('/rooms'),
   closeRoom:      (id)          => req(`/rooms/${id}`,                { method: 'DELETE' }),
   kickPlayer:     (roomId, pid) => req(`/rooms/${roomId}/kick/${pid}`, { method: 'POST' }),

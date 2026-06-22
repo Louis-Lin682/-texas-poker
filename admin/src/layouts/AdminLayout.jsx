@@ -44,8 +44,9 @@ export default function AdminLayout() {
     { key: '/members',  icon: <TeamOutlined />,            label: <Link to="/members">會員管理</Link> },
     { key: '/games',    icon: <ControlOutlined />,          label: <Link to="/games">遊戲管理</Link>,
       children: [
-        { key: '/games',                       label: <Link to="/games">遊戲開關</Link> },
-        { key: '/games/dragon-tiger/config',   label: <Link to="/games/dragon-tiger/config">龍虎賠率</Link> },
+        { key: '/games/list',                  label: <Link to="/games">遊戲開關</Link> },
+        { key: '/games/dragon-tiger/config',  label: <Link to="/games/dragon-tiger/config">龍虎賠率</Link> },
+        { key: '/games/thunder-joker/config', label: <Link to="/games/thunder-joker/config">老虎機設定</Link> },
       ],
     },
     { key: '/rooms',    icon: <AppstoreOutlined />,         label: <Link to="/rooms">房間管理</Link> },

@@ -9,6 +9,8 @@ import { WebSocketServer } from 'ws'
 import pool, { initDb, query } from './db.js'
 import { RoomManager, HOUSE_USERNAME } from './game/RoomManager.js'
 import { loadConfig as loadDtConfig, saveConfig as saveDtConfig, getConfig as getDtConfig } from './game/dragonTigerConfig.js'
+import { loadConfig as loadSlotConfig, saveConfig as saveSlotConfig, getConfig as getSlotConfig } from './game/thunderJokerConfig.js'
+import { ThunderJokerGame } from './game/ThunderJokerGame.js'
 import { BotManager } from './game/BotManager.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -36,6 +38,8 @@ const CONFIG = {
 
 // ── Slot machine (Thunder Joker) ──────────────────────────────────────────────
 
+const thunderJoker = new ThunderJokerGame({ getConfig: getSlotConfig })
+
 const slotSessions = new Map() // userId → { freeSpinsLeft, jokerMult }  (write-through cache)
 
 async function loadSlotSession(userId, dbClient) {
@@ -44,8 +48,10 @@ async function loadSlotSession(userId, dbClient) {
     'SELECT free_spins_left, joker_mult FROM slot_sessions WHERE user_id = $1',
     [userId]
   )
+  const cfg = getSlotConfig()
+  const jMax = cfg['joker.max'] ?? 10
   const session = rows.length > 0
-    ? { freeSpinsLeft: rows[0].free_spins_left, jokerMult: Math.min(rows[0].joker_mult, 10) }
+    ? { freeSpinsLeft: rows[0].free_spins_left, jokerMult: Math.min(rows[0].joker_mult, jMax) }
     : { freeSpinsLeft: 0, jokerMult: 1 }
   slotSessions.set(userId, session)
   return session
@@ -61,77 +67,6 @@ async function saveSlotSession(userId, session, dbClient) {
            updated_at      = NOW()`,
     [userId, session.freeSpinsLeft, session.jokerMult]
   )
-}
-
-const SLOT_POOL = [
-  ...Array(3).fill('10'), ...Array(3).fill('J'), ...Array(3).fill('Q'),
-  ...Array(3).fill('K'), ...Array(3).fill('A'), ...Array(3).fill('clownhat-blue'),
-  ...Array(3).fill('clownhat-golden'), ...Array(3).fill('clownhat-purple'), ...Array(3).fill('clownhat-red'),
-  ...Array(8).fill('bell'), ...Array(15).fill('joker'),
-  ...Array(8).fill('wild'), ...Array(2).fill('scatter'),
-]
-
-const SLOT_V = {
-  wild:              [0,0,150,750,3500],
-  joker:             [0,0,100,600,2000],
-  bell:              [0,0,22,75,300],
-  'clownhat-red':    [0,0,12,40,150],
-  'clownhat-purple': [0,0,8,22,90],
-  'clownhat-blue':   [0,0,6,15,60],
-  'clownhat-golden': [0,0,4,12,45],
-  A:                 [0,0,3,8,30],
-  K:                 [0,0,2,6,22],
-  Q:                 [0,0,2,5,18],
-  J:                 [0,0,1,4,15],
-  '10':              [0,0,1,2,10],
-  scatter:           [0,0,0,0,0],
-}
-
-const SLOT_PAYLINES = [
-  [0,0,0,0,0],[1,1,1,1,1],[2,2,2,2,2],[3,3,3,3,3],[4,4,4,4,4],
-  [0,1,2,3,4],[4,3,2,1,0],
-  [0,1,2,1,0],[0,2,4,2,0],[2,3,4,3,2],
-  [4,3,2,3,4],[4,2,0,2,4],[2,1,0,1,2],
-  [0,2,0,2,0],[4,2,4,2,4],
-]
-
-const SLOT_BASE_MULTS  = [2, 2, 3]
-const SLOT_FS_MULTS    = [2, 3]
-const SLOT_JOKER_MULTS = [1, 1, 2, 3, 5]
-
-function slotRnd(pool) { return pool[randomInt(pool.length)] }
-
-function slotGenGrid() {
-  return Array.from({ length: 5 }, () =>
-    Array.from({ length: 5 }, () => slotRnd(SLOT_POOL))
-  )
-}
-
-function slotCalcWins(grid, bet) {
-  let total = 0
-  const hits = []
-  for (let li = 0; li < SLOT_PAYLINES.length; li++) {
-    const syms = SLOT_PAYLINES[li].map((row, reel) => grid[reel][row])
-    const key  = syms.find(s => s !== 'wild' && s !== 'scatter') ?? 'wild'
-    let cnt = 0
-    for (const s of syms) {
-      if (s === key || s === 'wild') cnt++
-      else break
-    }
-    if (cnt >= 3) {
-      const mult = (SLOT_V[key] ?? [])[cnt - 1] ?? 0
-      if (mult > 0) { const w = mult * bet; total += w; hits.push({ li, key, cnt, w }) }
-    }
-  }
-  let scatters = 0
-  for (let r = 0; r < 5; r++)
-    for (let row = 0; row < 5; row++)
-      if (grid[r][row] === 'scatter') scatters++
-  return { total, hits, scatters }
-}
-
-function slotJokerImgKey(mult) {
-  return Math.min(Math.max(Math.round(mult), 1), 10)
 }
 
 function getCheckInReward(cycleDay) {
@@ -694,13 +629,27 @@ const server = http.createServer(async (request, response) => {
       return
     }
 
+    if (request.method === 'GET' && pathname === '/slots/config') {
+      const cfg = getSlotConfig()
+      sendJson(response, 200, {
+        min_bet:        cfg['min_bet'],
+        max_bet:        cfg['max_bet'],
+        win_level_big:  cfg['win_level.big'],
+        win_level_mega: cfg['win_level.mega'],
+        win_level_epic: cfg['win_level.epic'],
+        win_level_super: cfg['win_level.super'],
+      }, effectiveCors)
+      return
+    }
+
     if (request.method === 'POST' && pathname === '/slots/spin') {
       const user = await getSessionUser(request)
       if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }); return }
 
       const body = await getRequestBody(request)
       const bet  = Number(body.bet)
-      if (!Number.isFinite(bet) || bet <= 0) {
+      const cfg  = getSlotConfig()
+      if (!Number.isFinite(bet) || bet <= 0 || bet < cfg['min_bet'] || bet > cfg['max_bet']) {
         sendJson(response, 400, { message: 'Invalid bet.' }); return
       }
 
@@ -720,42 +669,10 @@ const server = http.createServer(async (request, response) => {
           sendJson(response, 400, { message: '餘額不足。' }); return
         }
 
-        // Generate grid and calc wins
-        const grid = slotGenGrid()
-        const { total, hits, scatters } = slotCalcWins(grid, bet)
-
-        // Lightning cell
-        let lightningCell = null
-        if (!isFree && randomInt(100) < 5 || isFree && randomInt(100) < 14) {
-          const mults = isFree ? SLOT_FS_MULTS : SLOT_BASE_MULTS
-          lightningCell = { reel: randomInt(5), row: randomInt(5), mult: slotRnd(mults) }
-        }
-
-        // Joker accumulation (free spins only)
-        let jokerMultGained = 0
-        let jokerImgKey     = null
-        if (isFree) {
-          let jokerCount = 0
-          for (let r = 0; r < 5; r++)
-            for (let row = 0; row < 5; row++)
-              if (grid[r][row] === 'joker') jokerCount++
-          if (jokerCount > 0) {
-            for (let i = 0; i < jokerCount; i++) {
-              const m = slotRnd(SLOT_JOKER_MULTS)
-              if (jokerMultGained === 0) jokerMultGained = m
-              session.jokerMult = Math.min(session.jokerMult + m, 10)
-            }
-            jokerImgKey = slotJokerImgKey(jokerMultGained)
-          }
-        }
-
-        // Apply multipliers to win — only one applies per spin to avoid stacking
-        let winTotal = total
-        if (lightningCell && winTotal > 0) {
-          winTotal = Math.floor(winTotal * lightningCell.mult)
-        } else if (isFree && session.jokerMult > 1 && winTotal > 0) {
-          winTotal = Math.floor(winTotal * session.jokerMult)
-        }
+        const result = thunderJoker.spin({ bet, isFree, session })
+        const { grid, hits, total, winTotal, scatters, lightningCell,
+                jokerMultGained, jokerImgKey, freeSpinsGranted } = result
+        const newSession = result.session
 
         const newBalance = balBefore - (isFree ? 0 : bet) + winTotal
 
@@ -763,7 +680,6 @@ const server = http.createServer(async (request, response) => {
           'UPDATE users SET balance = $1 WHERE id = $2', [newBalance, user.id]
         )
 
-        // Ledger
         const netAmount = isFree ? winTotal : winTotal - bet
         if (netAmount !== 0) {
           await client.query(
@@ -772,29 +688,15 @@ const server = http.createServer(async (request, response) => {
           )
         }
 
-        // Update session state and persist to DB within the same transaction
-        let freeSpinsGranted = 0
-        if (isFree) {
-          session.freeSpinsLeft = Math.max(0, session.freeSpinsLeft - 1)
-          if (scatters >= 3 && session.freeSpinsLeft < 30) {
-            const extra = scatters === 3 ? 4 : scatters === 4 ? 6 : 8
-            session.freeSpinsLeft = Math.min(session.freeSpinsLeft + extra, 30)
-            freeSpinsGranted = extra
-          }
-          if (session.freeSpinsLeft === 0) session.jokerMult = 1
-        } else if (scatters >= 3) {
-          freeSpinsGranted = scatters === 3 ? 6 : scatters === 4 ? 9 : 12
-          session.freeSpinsLeft = freeSpinsGranted
-          session.jokerMult = 1
-        }
-        await saveSlotSession(user.id, session, client)
+        await saveSlotSession(user.id, newSession, client)
+        slotSessions.set(user.id, newSession)
 
         await client.query('COMMIT')
 
         sendJson(response, 200, {
           grid, hits, total, winTotal, newBalance, scatters,
-          freeSpinsGranted, freeSpinsLeft: session.freeSpinsLeft,
-          jokerMult: session.jokerMult, jokerMultGained, jokerImgKey,
+          freeSpinsGranted, freeSpinsLeft: newSession.freeSpinsLeft,
+          jokerMult: newSession.jokerMult, jokerMultGained, jokerImgKey,
           lightningCell,
         })
       } catch (err) {
@@ -1696,6 +1598,41 @@ const server = http.createServer(async (request, response) => {
         sendJson(response, 200, { history: rows }, effectiveCors); return
       }
 
+      if (pathname === '/admin/slot-config' && request.method === 'GET') {
+        sendJson(response, 200, { config: getSlotConfig() }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/slot-config' && request.method === 'PUT') {
+        const { config, note } = await getRequestBody(request)
+        const versionId = await saveSlotConfig(config, admin.username, note ?? '')
+        sendJson(response, 200, { versionId, config: getSlotConfig() }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/slot-config/history' && request.method === 'GET') {
+        const { rows } = await query(
+          `SELECT id, version, config, changed_by, note, created_at
+           FROM game_config_versions WHERE game = 'thunder-joker'
+           ORDER BY version DESC LIMIT 50`
+        )
+        sendJson(response, 200, { history: rows }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/slot-rtp' && request.method === 'GET') {
+        const { rows } = await query(
+          `SELECT
+             COALESCE(SUM(bet), 0)                     AS total_bet,
+             COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) AS total_payout,
+             COUNT(*)                                   AS spins
+           FROM ledger WHERE game = 'thunder-joker' AND type IN ('win','loss')`
+        )
+        const r = rows[0]
+        const totalBet    = Number(r.total_bet)
+        const totalPayout = Number(r.total_payout)
+        const actualRtp   = totalBet > 0 ? (totalPayout / totalBet * 100).toFixed(2) : null
+        sendJson(response, 200, { totalBet, totalPayout, spins: Number(r.spins), actualRtp }, effectiveCors)
+        return
+      }
+
       sendJson(response, 404, { message: 'Admin route not found.' }, effectiveCors); return
     }
 
@@ -1920,6 +1857,7 @@ async function initDbWithRetry(attemptsLeft = 10) {
   try {
     await initDb()
     await loadDtConfig()
+    await loadSlotConfig()
   } catch (err) {
     if (attemptsLeft > 0) {
       console.log(`DB not ready yet, retrying in 3s… (${attemptsLeft} left)`)

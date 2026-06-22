@@ -88,12 +88,12 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
         setBalanceReady(true)
       } else {
         // 0 returned — may be a race with game cashout DB update; retry once
-        setTimeout(() => auth.refreshUser().then(() => setBalanceReady(true)), 800)
+        setTimeout(() => auth.refreshUser({ silent: true }).then(() => setBalanceReady(true)), 800)
       }
     })
 
-    const id = setInterval(() => auth.refreshUser(), 10_000)
-    const onVisible = () => { if (document.visibilityState === 'visible') auth.refreshUser() }
+    const id = setInterval(() => auth.refreshUser({ silent: true }), 10_000)
+    const onVisible = () => { if (document.visibilityState === 'visible') auth.refreshUser({ silent: true }) }
     document.addEventListener('visibilitychange', onVisible)
     return () => {
       clearInterval(id)

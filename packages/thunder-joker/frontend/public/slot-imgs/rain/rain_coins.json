@@ -1,0 +1,108 @@
+{"frames": {
+
+"0.png":
+{
+	"frame": {"x":0,"y":0,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"1.png":
+{
+	"frame": {"x":160,"y":0,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"2.png":
+{
+	"frame": {"x":320,"y":0,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"3.png":
+{
+	"frame": {"x":480,"y":0,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"4.png":
+{
+	"frame": {"x":640,"y":0,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"5.png":
+{
+	"frame": {"x":800,"y":0,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"6.png":
+{
+	"frame": {"x":0,"y":130,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"7.png":
+{
+	"frame": {"x":160,"y":130,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"8.png":
+{
+	"frame": {"x":320,"y":130,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"9.png":
+{
+	"frame": {"x":480,"y":130,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"10.png":
+{
+	"frame": {"x":640,"y":130,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+},
+"11.png":
+{
+	"frame": {"x":800,"y":130,"w":160,"h":130},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":160,"h":130},
+	"sourceSize": {"w":160,"h":130}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.1",
+	"image": "rain_coins.png",
+	"format": "RGBA8888",
+	"size": {"w":1024,"h":512},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:323612c8ccf785568472970faec9d033:6cdc9d076a19e40a4ecd6b7871828924:0b6b61e0240ea7dce451e469d17b7950$"
+}
+}
