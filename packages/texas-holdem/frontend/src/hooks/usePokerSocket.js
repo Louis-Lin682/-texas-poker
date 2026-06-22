@@ -1,0 +1,169 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+const TOKEN_KEY = 'th_auth_token'
+const ROOM_KEY  = 'th_poker_room'
+
+function getWsUrl() {
+  const env = import.meta.env.VITE_WS_URL
+  if (env) return env
+  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  const host  = import.meta.env.VITE_API_URL
+    ? new URL(import.meta.env.VITE_API_URL).host
+    : window.location.host
+  return `${proto}://${host}`
+}
+
+export function usePokerSocket({ minBuyIn = 2000 } = {}) {
+  const wsRef       = useRef(null)
+  const minBuyInRef = useRef(minBuyIn)
+  useEffect(() => { minBuyInRef.current = minBuyIn }, [minBuyIn])
+
+  const [status,         setStatus]         = useState('idle')
+  const [rooms,          setRooms]          = useState([])
+  const [roomId,         setRoomId]         = useState(null)
+  const [myId,           setMyId]           = useState(null)
+  const [gameState,      setGameState]      = useState(null)
+  const [winInfo,        setWinInfo]        = useState(null)
+  const [lastAction,     setLastAction]     = useState(null)
+  const [error,          setError]          = useState(null)
+  const [cashoutBalance, setCashoutBalance] = useState(null)
+  const [wasKicked,      setWasKicked]      = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (!token) { setStatus('no_auth'); return }
+
+    let destroyed  = false
+    let retryTimer = null
+
+    function connect() {
+      if (destroyed) return
+      setStatus('connecting')
+      const ws = new WebSocket(`${getWsUrl()}?token=${token}`)
+
+      ws.onopen = () => {
+        if (destroyed) { ws.close(); return }
+        wsRef.current = ws
+        setStatus('connected')
+        setError(null)
+        try {
+          const saved = sessionStorage.getItem(ROOM_KEY)
+          if (saved) {
+            const { roomId: id, buyIn } = JSON.parse(saved)
+            ws.send(JSON.stringify({ type: 'join_room', roomId: id, buyIn: buyIn ?? minBuyInRef.current }))
+          }
+        } catch {
+          sessionStorage.removeItem(ROOM_KEY)
+        }
+      }
+
+      ws.onclose = () => {
+        if (destroyed) return
+        wsRef.current = null
+        setStatus('connecting')
+        retryTimer = setTimeout(connect, 3000)
+      }
+
+      ws.onerror = () => ws.close()
+
+      ws.onmessage = ({ data }) => {
+        if (destroyed) return
+        let msg
+        try { msg = JSON.parse(data) } catch { return }
+
+        switch (msg.type) {
+          case 'room_list':
+            setRooms(msg.rooms ?? [])
+            break
+          case 'room_joined':
+            setRoomId(msg.roomId)
+            if (msg.myId)  setMyId(msg.myId)
+            if (msg.state) setGameState(msg.state)
+            break
+          case 'state_update':
+            setGameState(msg.state)
+            if (msg.myId) setMyId(msg.myId)
+            break
+          case 'hole_cards':
+            setGameState(prev => prev ? { ...prev, myHoleCards: msg.cards } : prev)
+            break
+          case 'showdown':
+            setWinInfo({ winners: msg.winners, pot: msg.pot, folded: false, players: msg.players ?? [] })
+            setTimeout(() => setWinInfo(null), 5500)
+            break
+          case 'hand_result':
+            setWinInfo({ winners: msg.winners, pot: msg.pot, folded: true })
+            setTimeout(() => setWinInfo(null), 4500)
+            break
+          case 'player_action':
+            setLastAction({ playerId: msg.playerId, username: msg.username, action: msg.action, amount: msg.amount })
+            setTimeout(() => setLastAction(null), 2500)
+            break
+          case 'balance_update':
+            setCashoutBalance(msg.balance)
+            break
+          case 'kicked':
+            sessionStorage.removeItem(ROOM_KEY)
+            setRoomId(null); setMyId(null); setGameState(null)
+            setWasKicked(true)
+            break
+          case 'error':
+            setError(msg.message)
+            setTimeout(() => setError(null), 3500)
+            if (msg.message.includes('遊戲進行中') || msg.message === '房間不存在') {
+              sessionStorage.removeItem(ROOM_KEY)
+              setRoomId(null); setMyId(null); setGameState(null)
+            }
+            break
+        }
+      }
+    }
+
+    connect()
+    return () => {
+      destroyed = true
+      clearTimeout(retryTimer)
+      wsRef.current?.close()
+      wsRef.current = null
+    }
+  }, [])
+
+  const send = useCallback((msg) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(msg))
+    }
+  }, [])
+
+  const refreshRooms = useCallback(() => send({ type: 'list_rooms' }), [send])
+
+  const createRoom = useCallback((opts = {}) => send({
+    type: 'create_room', smallBlind: 10, bigBlind: 20, maxPlayers: 6,
+    buyIn: minBuyInRef.current, ...opts,
+  }), [send])
+
+  const joinRoom = useCallback((id, buyIn) => {
+    const actualBuyIn = buyIn ?? minBuyInRef.current
+    sessionStorage.setItem(ROOM_KEY, JSON.stringify({ roomId: id, buyIn: actualBuyIn }))
+    send({ type: 'join_room', roomId: id, buyIn: actualBuyIn })
+  }, [send])
+
+  const leaveRoom = useCallback(() => {
+    sessionStorage.removeItem(ROOM_KEY)
+    send({ type: 'leave_room' })
+    setRoomId(null)
+    setMyId(null)
+    setGameState(null)
+  }, [send])
+
+  const setReady = useCallback(() => send({ type: 'set_ready' }), [send])
+  const unready  = useCallback(() => send({ type: 'unready' }),   [send])
+  const doAction = useCallback((action, amount = 0) => {
+    send({ type: 'action', action, amount })
+  }, [send])
+
+  return {
+    status, rooms, roomId, myId, gameState, winInfo, lastAction,
+    error, cashoutBalance, wasKicked,
+    refreshRooms, createRoom, joinRoom, leaveRoom, setReady, unready, doAction,
+  }
+}
