@@ -1028,7 +1028,7 @@ button.is-pressing {
 }
 
 .all-games-grid {
-  display: flex;
+  display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-content: start;
   gap: 10px;
@@ -2581,8 +2581,8 @@ button.is-pressing {
     inset 0 -20px 36px rgba(0, 0, 0, .50),
     inset 0 2px 6px rgba(255, 255, 255, 0.70),
     inset 0 0 0 1px rgba(255, 255, 255, 0.18);
-  width: 27.2vw;
-  height: 27.2vw;
+  /* width: 27.2vw;
+  height: 27.2vw; */
 }
 
 /* 玻璃水滴高光 */
@@ -4581,7 +4581,7 @@ button.is-pressing {
   transition: transform 80ms ease, box-shadow 80ms ease;
   user-select: none;
   position: relative;
-  border-radius: 7vw;
+  border-radius: 3vw;
   overflow: hidden;
   border: 1px solid rgba(73, 132, 255, 0.35);
   box-shadow:
@@ -12092,19 +12092,20 @@ button.is-pressing {
   display: grid;
   grid-template-columns: 33% 1fr;
   gap: 8px;
-  margin: auto;
+  margin: 0 20px;
+  width: 100%;
 }
 
 .hot-section .hot-card-big {
-  aspect-ratio: unset;
-  height: 100%;
+  aspect-ratio: 1 / 2;
+  height: auto;
   min-height: 0;
 }
 
 .hot-card-small-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: auto auto;
   gap: 8px;
 }
 
