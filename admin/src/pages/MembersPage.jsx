@@ -1,5 +1,5 @@
 import { SearchOutlined } from '@ant-design/icons'
-import { App, Button, Input, Popconfirm, Space, Table, Tag, Typography } from 'antd'
+import { App, Button, Input, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi } from '../services/adminApi'
@@ -13,12 +13,13 @@ export default function MembersPage() {
   const [total,   setTotal]   = useState(0)
   const [page,    setPage]    = useState(1)
   const [search,  setSearch]  = useState('')
+  const [status,  setStatus]  = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function load(p = page, s = search) {
+  async function load(p = page, s = search, st = status) {
     setLoading(true)
     try {
-      const res = await adminApi.getMembers({ page: p, limit: 20, search: s })
+      const res = await adminApi.getMembers({ page: p, limit: 20, search: s, status: st })
       setData(res.members)
       setTotal(res.total)
     } catch { } finally {
@@ -26,12 +27,18 @@ export default function MembersPage() {
     }
   }
 
-  useEffect(() => { load(1, '') }, [])
+  useEffect(() => { load(1, '', '') }, [])
 
   function onSearch(val) {
     setSearch(val)
     setPage(1)
-    load(1, val)
+    load(1, val, status)
+  }
+
+  function onStatusChange(val) {
+    setStatus(val)
+    setPage(1)
+    load(1, search, val)
   }
 
   async function toggleSuspend(record) {
@@ -56,10 +63,13 @@ export default function MembersPage() {
       ),
     },
     {
-      title: '狀態', dataIndex: 'suspended_at', key: 'status', width: 80,
-      render: v => v
-        ? <Tag color="red">停權</Tag>
-        : <Tag color="green">正常</Tag>,
+      title: '狀態', key: 'status', width: 120,
+      render: (_, r) => (
+        <Space size={4}>
+          {r.is_guest && <Tag color="gold">訪客</Tag>}
+          {r.suspended_at ? <Tag color="red">停權</Tag> : <Tag color="green">正常</Tag>}
+        </Space>
+      ),
     },
     {
       title: '籌碼餘額', dataIndex: 'balance', key: 'balance',
@@ -98,13 +108,27 @@ export default function MembersPage() {
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ color: '#e8e8e8', margin: 0 }}>會員管理</Title>
-        <Input.Search
-          placeholder="搜尋用戶名"
-          allowClear
-          enterButton={<SearchOutlined />}
-          style={{ width: 240 }}
-          onSearch={onSearch}
-        />
+        <Space>
+          <Select
+            value={status}
+            onChange={onStatusChange}
+            style={{ width: 120 }}
+            options={[
+              { value: '',         label: '全部' },
+              { value: 'member',   label: '正式會員' },
+              { value: 'guest',    label: '訪客' },
+              { value: 'active',   label: '正常' },
+              { value: 'suspended',label: '停權' },
+            ]}
+          />
+          <Input.Search
+            placeholder="搜尋用戶名"
+            allowClear
+            enterButton={<SearchOutlined />}
+            style={{ width: 240 }}
+            onSearch={onSearch}
+          />
+        </Space>
       </div>
 
       <Table

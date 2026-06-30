@@ -22,7 +22,7 @@ function MenuRow({ label, onClick, danger = false }) {
   )
 }
 
-function MyDrawer({ isOpen, onClose, profile, onLogout }) {
+function MyDrawer({ isOpen, onClose, profile, isAuthenticated, isGuest, onGuestLogin, onGoLogin, onLogout }) {
   const [shouldRender, setShouldRender] = useState(isOpen)
   const [isClosing, setIsClosing] = useState(false)
   const navigate = useNavigate()
@@ -87,53 +87,80 @@ function MyDrawer({ isOpen, onClose, profile, onLogout }) {
         </div>
 
         <div className="my-drawer-scroll">
-          <section className="my-profile-card">
-            <div className="my-profile-topline">
-              <div className="my-profile-avatar-wrap">
-                <div className="my-profile-avatar">
-                  <img src="/phantom-footer-logo.png" alt="" />
+          {/* ── 未登入 ── */}
+          {!isAuthenticated && (
+            <div className="my-guest-cta">
+              <img src="/phantom-footer-logo.png" alt="" className="my-guest-logo" />
+              <p className="my-guest-hint">登入或以訪客身份繼續</p>
+              <button type="button" className="my-guest-btn-login" onClick={onGoLogin}>
+                登入 / 註冊
+              </button>
+              <button type="button" className="my-guest-btn-guest" onClick={onGuestLogin}>
+                訪客模式（5,000 籌碼）
+              </button>
+            </div>
+          )}
+
+          {/* ── 已登入（訪客或正式） ── */}
+          {isAuthenticated && (
+            <>
+              <section className="my-profile-card">
+                {isGuest && (
+                  <div className="my-guest-badge">訪客</div>
+                )}
+                <div className="my-profile-topline">
+                  <div className="my-profile-avatar-wrap">
+                    <div className="my-profile-avatar">
+                      <img src="/phantom-footer-logo.png" alt="" />
+                    </div>
+                    {!isGuest && <div className="my-profile-vip">{profile.vip}</div>}
+                  </div>
+
+                  <div className="my-profile-copy">
+                    <p>{isGuest ? '訪客帳號' : '玩家帳號'}</p>
+                    <strong>{profile.account}</strong>
+                    <span>{uidText}</span>
+                  </div>
                 </div>
 
-                <div className="my-profile-vip">{profile.vip}</div>
-              </div>
+                <div className="my-profile-balance">
+                  <span>目前點數</span>
+                  <strong>{profile.balance}</strong>
+                </div>
 
-              <div className="my-profile-copy">
-                <p>玩家帳號</p>
-                <strong>{profile.account}</strong>
-                <span>{uidText}</span>
-              </div>
-            </div>
+                {isGuest && (
+                  <button type="button" className="my-upgrade-btn" onClick={() => { onClose(); navigate('/auth', { state: { mode: 'register' } }) }}>
+                    升級為正式帳號
+                  </button>
+                )}
+              </section>
 
-            <div className="my-profile-balance">
-              <span>目前點數</span>
-              <strong>{profile.balance}</strong>
-            </div>
-          </section>
+              <section className="my-drawer-section">
+                <div className="my-section-heading">
+                  <h3>常用服務</h3>
+                </div>
 
-          <section className="my-drawer-section">
-            <div className="my-section-heading">
-              <h3>常用服務</h3>
-            </div>
+                <div className="my-action-grid">
+                  {!isGuest && <ActionTile label="儲值" onClick={() => goTo('/deposit')} />}
+                  {!isGuest && <ActionTile label="任務中心" onClick={() => goTo('/quest')} />}
+                  <ActionTile label="最新消息" onClick={() => goTo('/news')} />
+                  <ActionTile label="帳務明細" onClick={() => goTo('/ledger')} />
+                </div>
+              </section>
 
-            <div className="my-action-grid">
-              <ActionTile label="儲值" onClick={() => goTo('/deposit')} />
-              <ActionTile label="任務中心" onClick={() => goTo('/quest')} />
-              <ActionTile label="最新消息" onClick={() => goTo('/news')} />
-              <ActionTile label="帳務明細" onClick={() => goTo('/ledger')} />
-            </div>
-          </section>
+              <section className="my-drawer-section">
+                <div className="my-section-heading">
+                  <h3>帳號與支援</h3>
+                </div>
 
-          <section className="my-drawer-section">
-            <div className="my-section-heading">
-              <h3>帳號與支援</h3>
-            </div>
-
-            <div className="my-menu-list">
-              <MenuRow label="設定" onClick={() => goTo('/settings')} />
-              <MenuRow label="客服" onClick={() => goTo('/support')} />
-              <MenuRow label="登出" danger onClick={onLogout} />
-            </div>
-          </section>
+                <div className="my-menu-list">
+                  <MenuRow label="設定" onClick={() => goTo('/settings')} />
+                  <MenuRow label="客服" onClick={() => goTo('/support')} />
+                  <MenuRow label="登出" danger onClick={onLogout} />
+                </div>
+              </section>
+            </>
+          )}
         </div>
       </section>
     </div>

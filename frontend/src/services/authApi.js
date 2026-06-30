@@ -21,3 +21,7 @@ export function register(payload) {
     body: JSON.stringify(payload),
   })
 }
+
+export function guestLogin() {
+  return apiRequest('/auth/guest', { method: 'POST' })
+}

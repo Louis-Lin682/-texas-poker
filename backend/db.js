@@ -73,7 +73,10 @@ export async function initDb() {
     ALTER TABLE ledger ADD COLUMN IF NOT EXISTS bet    INTEGER;
     ALTER TABLE ledger ADD COLUMN IF NOT EXISTS detail JSONB;
     ALTER TABLE users  ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
-    CREATE INDEX IF NOT EXISTS idx_ledger_user ON ledger (user_id, created_at DESC);
+    ALTER TABLE users  ADD COLUMN IF NOT EXISTS is_guest     BOOLEAN NOT NULL DEFAULT false;
+    ALTER TABLE users  ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+    CREATE INDEX IF NOT EXISTS idx_ledger_user   ON ledger (user_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_users_guest   ON users  (is_guest, last_seen_at);
 
     CREATE TABLE IF NOT EXISTS slot_sessions (
       user_id        UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -88,8 +91,10 @@ export async function initDb() {
       id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       username     TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
+      role         TEXT NOT NULL DEFAULT 'super_admin',
       created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE admins ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'super_admin';
 
     CREATE TABLE IF NOT EXISTS admin_sessions (
       token      UUID PRIMARY KEY,

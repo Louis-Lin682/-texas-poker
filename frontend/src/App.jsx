@@ -100,7 +100,7 @@ function App() {
   const openLobbyPage = () => navigate('/')
 
   const enterMain = () => {
-    if (auth.isAuthenticated) { openLobbyPage(); return }
+    if (auth.isAuthenticated && !auth.user?.is_guest) { openLobbyPage(); return }
     openAuthPage()
   }
 

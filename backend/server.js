@@ -77,10 +77,11 @@ function getCheckInReward(cycleDay) {
 
 function toPublicUser(user) {
   return {
-    id: user.id,
-    username: user.username,
-    balance: user.balance,
+    id:           user.id,
+    username:     user.username,
+    balance:      user.balance,
     suspended_at: user.suspended_at ?? null,
+    is_guest:     user.is_guest    ?? false,
   }
 }
 
@@ -122,7 +123,11 @@ async function getSessionUser(request) {
      WHERE s.token = $1`,
     [token],
   )
-  return rows[0] ?? null
+  const user = rows[0] ?? null
+  if (user?.is_guest) {
+    query('UPDATE users SET last_seen_at = NOW() WHERE id = $1', [user.id]).catch(() => {})
+  }
+  return user
 }
 
 async function getAdminFromToken(request) {
@@ -240,7 +245,7 @@ const server = http.createServer(async (request, response) => {
       const password = String(body.password || '')
 
       const { rows } = await query(
-        'SELECT * FROM users WHERE LOWER(username) = LOWER($1)',
+        'SELECT * FROM users WHERE LOWER(username) = LOWER($1) AND is_bot = false AND is_guest = false',
         [username],
       )
       const user = rows[0]
@@ -257,6 +262,28 @@ const server = http.createServer(async (request, response) => {
       )
 
       sendJson(response, 200, { token, user: toPublicUser(user) })
+      return
+    }
+
+    if (request.method === 'POST' && pathname === '/auth/guest') {
+      for (let i = 0; i < 5; i++) {
+        const username = `guest_${randomUUID().replace(/-/g, '').slice(0, 8)}`
+        try {
+          const { rows } = await query(
+            `INSERT INTO users (username, password_hash, balance, is_guest)
+             VALUES ($1, 'GUEST_RESERVED', 5000, true)
+             RETURNING *`,
+            [username],
+          )
+          const token = randomUUID()
+          await query('INSERT INTO sessions (token, user_id) VALUES ($1, $2)', [token, rows[0].id])
+          sendJson(response, 201, { token, user: toPublicUser(rows[0]) })
+          return
+        } catch (e) {
+          if (e.code !== '23505') throw e
+        }
+      }
+      sendJson(response, 500, { message: '建立訪客帳號失敗，請重試。' })
       return
     }
 
@@ -986,7 +1013,7 @@ const server = http.createServer(async (request, response) => {
       }
       const token = randomUUID()
       await query('INSERT INTO admin_sessions (token, admin_id) VALUES ($1, $2)', [token, admin.id])
-      sendJson(response, 200, { token, admin: { id: admin.id, username: admin.username } }, effectiveCors)
+      sendJson(response, 200, { token, admin: { id: admin.id, username: admin.username, role: admin.role } }, effectiveCors)
       return
     }
 
@@ -999,12 +1026,15 @@ const server = http.createServer(async (request, response) => {
     if (pathname === '/admin/auth/me' && request.method === 'GET') {
       const admin = await getAdminFromToken(request)
       if (!admin) { sendJson(response, 401, { message: 'Unauthorized' }, effectiveCors); return }
-      sendJson(response, 200, { admin: { id: admin.id, username: admin.username } }, effectiveCors); return
+      sendJson(response, 200, { admin: { id: admin.id, username: admin.username, role: admin.role } }, effectiveCors); return
     }
 
     if (pathname.startsWith('/admin/')) {
       const admin = await getAdminFromToken(request)
       if (!admin) { sendJson(response, 401, { message: 'Unauthorized' }, effectiveCors); return }
+      if (admin.role === 'demo' && request.method !== 'GET') {
+        sendJson(response, 403, { message: '示範帳號僅供查看，無法執行此操作' }, effectiveCors); return
+      }
 
       // ── 會員列表 ──
       if (pathname === '/admin/members' && request.method === 'GET') {
@@ -1018,8 +1048,10 @@ const server = http.createServer(async (request, response) => {
         if (search) { vals.push(`%${search}%`); where += ` AND username ILIKE $${vals.length}` }
         if (status === 'suspended') where += ' AND suspended_at IS NOT NULL'
         if (status === 'active')    where += ' AND suspended_at IS NULL'
+        if (status === 'guest')  where += ' AND is_guest = true'
+        if (status === 'member') where += ' AND is_guest = false'
         const { rows: members } = await query(
-          `SELECT id, username, balance, suspended_at, created_at FROM users ${where} ORDER BY created_at DESC LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
+          `SELECT id, username, balance, suspended_at, created_at, is_guest FROM users ${where} ORDER BY created_at DESC LIMIT $${vals.length+1} OFFSET $${vals.length+2}`,
           [...vals, limit, offset]
         )
         const { rows: cnt } = await query(`SELECT COUNT(*) FROM users ${where}`, vals)
@@ -1034,7 +1066,7 @@ const server = http.createServer(async (request, response) => {
 
         if (request.method === 'GET') {
           const { rows } = await query(
-            'SELECT id, username, balance, suspended_at, created_at FROM users WHERE id = $1 AND is_bot = false',
+            'SELECT id, username, balance, suspended_at, created_at, is_guest FROM users WHERE id = $1 AND is_bot = false',
             [memberId]
           )
           if (!rows[0]) { sendJson(response, 404, { message: 'Not found' }, effectiveCors); return }
@@ -1843,6 +1875,22 @@ server.on('upgrade', async (request, socket, head) => {
   }
 })
 
+// ── Guest cleanup ─────────────────────────────────────────────────────────────
+
+async function cleanupStaleGuests() {
+  try {
+    const { rowCount } = await query(
+      `DELETE FROM users WHERE is_guest = true AND last_seen_at < NOW() - INTERVAL '90 days'`
+    )
+    if (rowCount > 0) console.log(`[cleanup] removed ${rowCount} stale guest account(s)`)
+  } catch (err) {
+    console.error('[cleanup] guest cleanup failed:', err.message)
+  }
+}
+
+// Run once at boot, then every 24 hours
+setInterval(cleanupStaleGuests, 24 * 60 * 60 * 1000)
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 let dbReady = false
@@ -1869,6 +1917,7 @@ async function initDbWithRetry(attemptsLeft = 10) {
 }
 
 initDbWithRetry()
+  .then(() => cleanupStaleGuests())
   .then(() => botManager.seedBots())
   .then(() => roomManager.ensureHouseAccount())
   .then(async () => {
@@ -1877,6 +1926,12 @@ initDbWithRetry()
       const hash = await bcrypt.hash('aaa123', 12)
       await query('INSERT INTO admins (username, password_hash) VALUES ($1, $2)', ['admin', hash])
       console.log('Admin seeded: admin / aaa123')
+    }
+    const { rows: existingDemo } = await query('SELECT 1 FROM admins WHERE username = $1', ['demo'])
+    if (existingDemo.length === 0) {
+      const hash = await bcrypt.hash('demo1234', 12)
+      await query('INSERT INTO admins (username, password_hash, role) VALUES ($1, $2, $3)', ['demo', hash, 'demo'])
+      console.log('Demo admin seeded: demo / demo1234')
     }
   })
   .then(async () => {

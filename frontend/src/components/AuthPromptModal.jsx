@@ -17,7 +17,7 @@ const CONTENT = {
   },
 }
 
-function AuthPromptModal({ isOpen, onClose, onGoLogin, context = 'default' }) {
+function AuthPromptModal({ isOpen, onClose, onGoLogin, onGuestLogin, context = 'default' }) {
   if (!isOpen) return null
 
   const { title, body } = CONTENT[context] ?? CONTENT.default
@@ -37,8 +37,8 @@ function AuthPromptModal({ isOpen, onClose, onGoLogin, context = 'default' }) {
           <p>{body}</p>
         </div>
         <div className="auth-modal-actions">
-          <button type="button" className="auth-modal-btn-dismiss" onClick={onClose}>
-            我知道了
+          <button type="button" className="auth-modal-btn-dismiss" onClick={onGuestLogin ?? onClose}>
+            訪客模式
           </button>
           <button type="button" className="auth-modal-btn-login" onClick={onGoLogin}>
             去登入

@@ -622,18 +622,33 @@ function GameTablePage({ auth }) {
       )}
 
       {/* ── Rebuy modal ── */}
-      {showRebuyModal && (
-        <div className="pt-modal-overlay">
-          <div className="pt-modal">
-            <p className="pt-modal-title">籌碼已用盡</p>
-            <p className="pt-modal-body">是否補充籌碼繼續遊戲？</p>
-            <div className="pt-modal-btns">
-              <button type="button" className="pt-modal-cancel" onClick={() => handleRebuy(null)}>離開遊戲</button>
-              <button type="button" className="pt-modal-confirm" onClick={() => handleRebuy(minBuyIn)}>補充 {new Intl.NumberFormat('en-US').format(minBuyIn)} 籌碼</button>
+      {showRebuyModal && (() => {
+        const isGuest = auth?.user?.is_guest ?? false
+        return (
+          <div className="pt-modal-overlay">
+            <div className="pt-modal">
+              <p className="pt-modal-title">籌碼已用盡</p>
+              {isGuest ? (
+                <>
+                  <p className="pt-modal-body">訪客籌碼已歸零，升級帳號後可儲值繼續遊戲。</p>
+                  <div className="pt-modal-btns">
+                    <button type="button" className="pt-modal-cancel" onClick={() => handleRebuy(null)}>離開遊戲</button>
+                    <button type="button" className="pt-modal-confirm" onClick={() => { handleRebuy(null); navigate('/auth', { state: { mode: 'register' } }) }}>升級帳號</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="pt-modal-body">是否補充籌碼繼續遊戲？</p>
+                  <div className="pt-modal-btns">
+                    <button type="button" className="pt-modal-cancel" onClick={() => handleRebuy(null)}>離開遊戲</button>
+                    <button type="button" className="pt-modal-confirm" onClick={() => handleRebuy(minBuyIn)}>補充 {new Intl.NumberFormat('en-US').format(minBuyIn)} 籌碼</button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Overlays before header — mirrors ThunderJoker pattern so pt-header z-index:10 always paints above on iOS */}
       {(status === 'idle' || status === 'connecting') && (

@@ -4,13 +4,14 @@ import {
   BarChartOutlined,
   CustomerServiceOutlined,
   ControlOutlined,
+  EyeOutlined,
   LogoutOutlined,
   TeamOutlined,
   TrophyOutlined,
   NotificationOutlined,
   SoundOutlined,
 } from '@ant-design/icons'
-import { Badge, Layout, Menu, Typography, theme } from 'antd'
+import { Alert, Badge, Layout, Menu, Tag, Typography, theme } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAdminAuth } from '../context/AdminAuthContext'
@@ -123,9 +124,12 @@ export default function AdminLayout() {
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
           borderBottom: '1px solid #1e1e2e', height: 56, flexShrink: 0,
         }}>
-          <Text style={{ color: '#aaa', marginRight: 16, fontSize: 13 }}>
+          <Text style={{ color: '#aaa', marginRight: 8, fontSize: 13 }}>
             {admin?.username}
           </Text>
+          {admin?.role === 'demo' && (
+            <Tag icon={<EyeOutlined />} color="orange" style={{ marginRight: 16 }}>示範帳號</Tag>
+          )}
           <LogoutOutlined
             style={{ color: '#888', cursor: 'pointer', fontSize: 16 }}
             onClick={handleLogout}
@@ -140,6 +144,15 @@ export default function AdminLayout() {
           overflow: 'auto',
           minHeight: 0,
         }}>
+          {admin?.role === 'demo' && (
+            <Alert
+              type="warning"
+              showIcon
+              message="示範帳號（唯讀）— 此帳號僅供查看，所有編輯、刪除、新增操作均已停用。"
+              style={{ marginBottom: 16 }}
+              banner
+            />
+          )}
           <Outlet />
         </Content>
       </Layout>

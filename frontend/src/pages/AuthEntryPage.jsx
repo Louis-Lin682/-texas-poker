@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import AuthFormModal from '../components/AuthFormModal'
 import AngelFly from '../components/AngelFly'
 
 function AuthEntryPage({ onBack, onAuthSuccess }) {
-  const [authMode, setAuthMode] = useState('')
+  const location = useLocation()
+  const [authMode, setAuthMode] = useState(location.state?.mode ?? '')
 
   return (
     <div className="auth-entry-shell">

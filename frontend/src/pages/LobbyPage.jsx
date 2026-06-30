@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AllGamesSection from '../components/AllGamesSection'
 import GameSection from '../components/GameSection'
@@ -24,6 +24,7 @@ import {
 import { useFavorites } from '../hooks/useFavorites'
 import { useGames } from '../hooks/useGames'
 import { API_BASE_URL } from '../services/apiClient'
+import { guestLogin } from '../services/authApi'
 
 function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnteredLobby, onEnterLobby, play, pause, supportUnread, onSupportRead }) {
   const navigate = useNavigate()
@@ -35,6 +36,7 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
   const [isMyDrawerOpen, setIsMyDrawerOpen] = useState(false)
   const [isEventDrawerOpen, setIsEventDrawerOpen] = useState(false)
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
+  const [isGuestBrokeOpen,   setIsGuestBrokeOpen]   = useState(false)
   const { games, featuredGames, isLoadingGames } = useGames()
   const [showFloatTop, setShowFloatTop] = useState(false)
   const [marqueeText, setMarqueeText] = useState('')
@@ -62,10 +64,25 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
       window.removeEventListener('scroll', check)
     }
   }, [])
-  const openAuthPrompt = (context = 'default') => {
+  const afterGuestRef = useRef(null)
+
+  const openAuthPrompt = (context = 'default', afterGuest = null) => {
+    afterGuestRef.current = afterGuest
     setAuthPromptContext(context)
     setIsAuthPromptOpen(true)
   }
+
+  const handleGuestLogin = useCallback(async () => {
+    try {
+      const { token } = await guestLogin()
+      auth.setToken(token)
+      setIsAuthPromptOpen(false)
+      afterGuestRef.current?.()
+      afterGuestRef.current = null
+    } catch (err) {
+      console.error('[guest login]', err)
+    }
+  }, [auth])
 
   const { favoriteIds, toggleFavorite } = useFavorites({
     isAuthenticated: auth.isAuthenticated,
@@ -113,6 +130,10 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
       openAuthPrompt('game')
       return
     }
+    if (auth.user?.is_guest && (auth.user?.balance ?? 0) === 0) {
+      setIsGuestBrokeOpen(true)
+      return
+    }
     pause('lobbyBgm')
     navigate(game.route, { state: { buyIn: auth.user?.balance ?? 0, gameSlug: game.slug } })
   }
@@ -128,7 +149,7 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
     item.type === 'image'
       ? {
           ...item,
-          label: auth.isAuthenticated ? '遊戲大廳' : '登入 / 註冊',
+          label: (auth.isAuthenticated && !auth.user?.is_guest) ? '遊戲大廳' : '登入 / 註冊',
         }
       : item,
   )
@@ -207,11 +228,6 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
           }}
         onCenterClick={onCenterLogoClick}
         onRightClick={() => {
-          if (!auth.isAuthenticated) {
-            openAuthPrompt('member')
-            return
-          }
-
           setIsFavoritesOpen(false)
           setIsEventDrawerOpen(false)
           setIsMyDrawerOpen((current) => !current)
@@ -235,6 +251,10 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
         isOpen={isMyDrawerOpen}
         onClose={() => setIsMyDrawerOpen(false)}
         profile={profile}
+        isAuthenticated={auth.isAuthenticated}
+        isGuest={auth.user?.is_guest ?? false}
+        onGuestLogin={handleGuestLogin}
+        onGoLogin={() => { setIsMyDrawerOpen(false); onGoLogin?.() }}
         onLogout={() => {
           setIsMyDrawerOpen(false)
           setIsLogoutConfirmOpen(true)
@@ -265,7 +285,24 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
           setIsAuthPromptOpen(false)
           onGoLogin?.()
         }}
+        onGuestLogin={handleGuestLogin}
       />
+
+      {isGuestBrokeOpen && (
+        <div className="auth-modal-backdrop" role="presentation" onClick={() => setIsGuestBrokeOpen(false)}>
+          <div className="auth-modal" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+            <img className="auth-modal-angel" src="/notice-angel.png" alt="" aria-hidden="true" />
+            <div className="auth-modal-content">
+              <h3>訪客籌碼已用盡</h3>
+              <p>升級為正式帳號後即可儲值繼續遊戲</p>
+            </div>
+            <div className="auth-modal-actions">
+              <button type="button" className="auth-modal-btn-dismiss" onClick={() => setIsGuestBrokeOpen(false)}>繼續瀏覽</button>
+              <button type="button" className="auth-modal-btn-login" onClick={() => { setIsGuestBrokeOpen(false); navigate('/auth', { state: { mode: 'register' } }) }}>升級帳號</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <LogoutConfirmModal
         isOpen={isLogoutConfirmOpen}
