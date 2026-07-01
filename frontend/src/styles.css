@@ -2659,6 +2659,7 @@ button.is-pressing {
   overflow: hidden;
   aspect-ratio: 1;
   height: auto;
+  border-radius: 33px;
   border: 1px solid rgba(220, 240, 255, 0.60);
   box-shadow:
     0 4px 18px rgba(83, 163, 255, 0.28),
@@ -4658,14 +4659,14 @@ button.is-pressing {
   animation: logoutModalIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* ??? Game tile interactions ??????????????????????????????? */
+/*  Game tile interactions  */
 
 .game-tile {
   cursor: pointer;
   transition: transform 80ms ease, box-shadow 80ms ease;
   user-select: none;
   position: relative;
-  border-radius: 3vw;
+  border-radius: 33px;
   overflow: hidden;
   border: 1px solid rgba(73, 132, 255, 0.35);
   box-shadow:
