@@ -78,12 +78,12 @@ function getCheckInReward(cycleDay) {
 const _AVATAR_DIR = process.env.AVATAR_DIR
   ?? path.join(path.dirname(fileURLToPath(import.meta.url)), 'public', 'player')
 const _AVATAR_FALLBACK = [
-  '/notice-angel.png',
-  '/player/player-avatar-01.png',
-  '/player/player-avatar-02.png',
-  '/player/player-avatar-03.png',
-  '/player/player-avatar-04.png',
-  '/player/player-avatar-05.png',
+  '/notice-angel.webp',
+  '/player/player-avatar-01.webp',
+  '/player/player-avatar-02.webp',
+  '/player/player-avatar-03.webp',
+  '/player/player-avatar-04.webp',
+  '/player/player-avatar-05.webp',
 ]
 function getAllowedAvatars() {
   try {

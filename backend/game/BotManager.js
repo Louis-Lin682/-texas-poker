@@ -8,11 +8,11 @@ const THINK_MIN = 350
 const THINK_MAX = 800
 
 const BOT_AVATARS = [
-  '/player/player-avatar-01.png',
-  '/player/player-avatar-02.png',
-  '/player/player-avatar-03.png',
-  '/player/player-avatar-04.png',
-  '/player/player-avatar-05.png',
+  '/player/player-avatar-01.webp',
+  '/player/player-avatar-02.webp',
+  '/player/player-avatar-03.webp',
+  '/player/player-avatar-04.webp',
+  '/player/player-avatar-05.webp',
 ]
 
 const BOT_DEFS = [
