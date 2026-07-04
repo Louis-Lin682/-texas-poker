@@ -68,7 +68,7 @@ function CheckInModal({ isOpen, onClose, token, isAuthenticated, onBalanceUpdate
                   {isDone && (
                     <img
                       className="ci-stamp"
-                      src="/stamp.png"
+                      src="/stamp.webp"
                       alt=""
                       style={{ '--stamp-delay': `${(day - 1) * 80}ms` }}
                     />

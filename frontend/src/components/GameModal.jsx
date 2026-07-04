@@ -29,7 +29,7 @@ function GameModal({ game, onClose, isFavorite, onToggleFavorite, onPlay }) {
           aria-label="關閉"
           onClick={onClose}
         >
-          <img src="/closeBtn.png" alt="關閉" />
+          <img src="/closeBtn.webp" alt="關閉" />
         </button>
 
         <div className="game-modal-canvas">
@@ -86,11 +86,11 @@ function GameModal({ game, onClose, isFavorite, onToggleFavorite, onPlay }) {
 
             {isPlayable ? (
               <button type="button" className="game-modal-play-button" onClick={onPlay}>
-                <img src="/entry-game.png" alt="立即進入" />
+                <img src="/entry-game.webp" alt="立即進入" />
               </button>
             ) : (
               <button type="button" className="game-modal-close-button" onClick={onClose}>
-                <img src="/close.png" alt="關閉" />
+                <img src="/close.webp" alt="關閉" />
               </button>
             )}
           </div>

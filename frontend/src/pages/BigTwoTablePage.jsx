@@ -44,10 +44,10 @@ function BtBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
 
 // ── Lobby ─────────────────────────────────────────────────────────────────────
 const BET_UNIT_PRESETS = [
-  { label: '低限', betUnit: 10,  img: '/texas-holdem/room-green-felt-button.png',   cardImg: '/texas-holdem/room-card-green-felt.png'   },
-  { label: '中限', betUnit: 50,  img: '/texas-holdem/room-golden-hall-button.png',  cardImg: '/texas-holdem/room-card-golden-hall.png'  },
-  { label: '高限', betUnit: 100, img: '/texas-holdem/room-royal-hall-button.png',   cardImg: '/texas-holdem/room-card-royal-hall.png'   },
-  { label: '豪華', betUnit: 500, img: '/texas-holdem/room-supreme-hall-button.png', cardImg: '/texas-holdem/room-card-supreme-hall.png' },
+  { label: '低限', betUnit: 10,  img: '/texas-holdem/room-green-felt-button.webp',   cardImg: '/texas-holdem/room-card-green-felt.webp'   },
+  { label: '中限', betUnit: 50,  img: '/texas-holdem/room-golden-hall-button.webp',  cardImg: '/texas-holdem/room-card-golden-hall.webp'  },
+  { label: '高限', betUnit: 100, img: '/texas-holdem/room-royal-hall-button.webp',   cardImg: '/texas-holdem/room-card-royal-hall.webp'   },
+  { label: '豪華', betUnit: 500, img: '/texas-holdem/room-supreme-hall-button.webp', cardImg: '/texas-holdem/room-card-supreme-hall.webp' },
 ]
 
 function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }) {
@@ -70,7 +70,7 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
         <span className="pt-lobby-title">選擇房間</span>
         <div className="pt-lobby-head-actions">
           <button type="button" className={`pt-lobby-refresh${spinning ? ' is-spinning' : ''}`} onClick={handleRefresh} title="重新整理">
-            <img src="/reload.png" alt="重整" />
+            <img src="/reload.webp" alt="重整" />
           </button>
           <button type="button" className="pt-lobby-create"
             onClick={() => onCreateRoom({ buyIn, betUnit: selectedPreset.betUnit })}
@@ -148,7 +148,7 @@ function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom 
   return (
     <div className="pt-wait">
       <div className="pt-wait-plaque">
-        <img src="/waiting-player-plaque.png" alt="" className="pt-wait-plaque-img" />
+        <img src="/waiting-player-plaque.webp" alt="" className="pt-wait-plaque-img" />
         <div className="pt-wait-plaque-body">
           <div className="pt-wait-plaque-count">
             <span className="pt-wait-plaque-num">{players.length}/{maxPlayers}</span>
@@ -171,7 +171,7 @@ function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom 
               <span className={`pt-wait-status${p.ready ? ' is-ready' : ''}`}>{p.ready ? '已準備' : '未準備'}</span>
             </div>
             <div className="pt-wait-chips-wrap">
-              <img src="/chip-gold.png" className="pt-wait-chip-img" alt="" />
+              <img src="/chip-gold.webp" className="pt-wait-chip-img" alt="" />
               <span className="pt-wait-chips">{fmt(p.balance)}</span>
             </div>
           </div>
@@ -197,7 +197,7 @@ function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom 
         )}
         <button type="button" className="pt-wait-ready-btn"
           onClick={me?.ready ? onUnready : onReady} disabled={lockedIn}>
-          <img src="/ready-button.png" alt="" className="pt-wait-ready-img" />
+          <img src="/ready-button.webp" alt="" className="pt-wait-ready-img" />
           <span className="pt-wait-ready-text">{me?.ready ? '✓ 已準備好' : '我準備好了'}</span>
         </button>
         <button type="button" className="pt-wait-leave-btn" onClick={onLeaveRoom}>
@@ -589,11 +589,11 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
       <div className="bt-bottom">
 
         <div className="bt-action-bar">
-          <BtBtn src="/big-two/hint.png" alt="提示"
+          <BtBtn src="/big-two/hint.webp" alt="提示"
             disabled={!isMyTurn} onClick={handleHint} />
-          <BtBtn src="/big-two/stop.png" alt="不出"
+          <BtBtn src="/big-two/stop.webp" alt="不出"
             disabled={!isMyTurn || !canPass} onClick={onPass} />
-          <BtBtn src="/big-two/playing-cards.png" alt="出牌"
+          <BtBtn src="/big-two/playing-cards.webp" alt="出牌"
             disabled={!isMyTurn || selected.length === 0} onClick={handlePlay}
             amount={selected.length > 0 ? `(${selected.length})` : null}
             amountStyle={{ right: '25%', top: '25%', transform: 'none' }} />
@@ -839,18 +839,18 @@ function BigTwoTablePage({ auth }) {
       <div className="pt-header-con">
         <header className="pt-header">
           <button type="button" className="pt-back" onClick={handleBack}>
-            <img src="/arrow.png" alt="返回" />
+            <img src="/arrow.webp" alt="返回" />
           </button>
           <div className="pt-header-info">
             {roomId
               ? <span className="pt-room-label">房間 #{roomId}</span>
-              : <img src="/big-two/big-two.png" alt="大老二" className="pt-room-label-img" />
+              : <img src="/big-two/big-two.webp" alt="大老二" className="pt-room-label-img" />
             }
             {roomId && <span className="pt-blinds">底分 {betUnit}</span>}
           </div>
           {isPlaying && <span className="pt-phase-badge">{BT_PHASE[phase]}</span>}
           <button type="button" className="pt-mute-btn" onClick={toggleGameMute} title={isGameMuted ? '開啟音樂' : '關閉音樂'}>
-            <img src={isGameMuted ? '/enable-sound.png' : '/volume.png'} alt="" />
+            <img src={isGameMuted ? '/enable-sound.webp' : '/volume.webp'} alt="" />
           </button>
         </header>
       </div>

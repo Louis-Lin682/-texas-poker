@@ -127,7 +127,7 @@ button.is-pressing {
     linear-gradient(180deg, rgba(7, 7, 10, 0.56), rgba(10, 10, 12, 0.76)),
     radial-gradient(circle at top, rgba(44, 46, 135, 0.1), transparent 20%),
     radial-gradient(circle at bottom, rgba(226, 206, 135, 0.06), transparent 24%),
-    url('/BG.png'); */
+    url('/BG.webp'); */
   background-position:
     center,
     center top,
@@ -3109,7 +3109,7 @@ button.is-pressing {
 .promo-card-wrap {
   position: relative;
   min-height: 145px;
-  background-image: url('/promos/checkin-promo.png');
+  background-image: url('/promos/checkin-promo.webp');
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
@@ -3591,7 +3591,7 @@ button.is-pressing {
   padding: 24px 12px;
   background:
     linear-gradient(180deg, rgba(8, 8, 10, 0.64), rgba(10, 10, 12, 0.78)),
-    url('/BG.png') center top / cover no-repeat;
+    url('/BG.webp') center top / cover no-repeat;
 }
 
 .intro-phone {
@@ -3615,7 +3615,7 @@ button.is-pressing {
   inset: 0;
   background:
     linear-gradient(180deg, rgba(7, 4, 12, 0.58), rgba(7, 4, 12, 0.9)),
-    url('/BG.png') center 18% / 135% no-repeat;
+    url('/BG.webp') center 18% / 135% no-repeat;
   opacity: 0.48;
 }
 
@@ -3675,7 +3675,7 @@ button.is-pressing {
   border-radius: 50%;
   background:
     radial-gradient(circle at center, rgba(255, 212, 116, 0.12), rgba(255, 212, 116, 0) 58%),
-    url('/BG.png') 58% 31% / 205% no-repeat;
+    url('/BG.webp') 58% 31% / 205% no-repeat;
   filter: saturate(1.02) contrast(1.04);
   box-shadow: 0 0 26px rgba(255, 207, 102, 0.08);
 }
@@ -3820,7 +3820,7 @@ button.is-pressing {
   position: relative;
   width: min(88vw, 340px);
   aspect-ratio: 4 / 3;
-  background: url('/AuthPromptModal.png') center / 100% 100% no-repeat;
+  background: url('/AuthPromptModal.webp') center / 100% 100% no-repeat;
   border-radius: 18px;
   overflow: visible;
 }
@@ -3975,7 +3975,7 @@ button.is-pressing {
   padding: 24px 28px 20px;
   border-radius: 14px;
   border: none;
-  background: url('/enter-game-modal.png') center / 100% 100% no-repeat;
+  background: url('/enter-game-modal.webp') center / 100% 100% no-repeat;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4192,7 +4192,7 @@ button.is-pressing {
   position: relative;
   width: min(88vw, 300px);
   aspect-ratio: 1 / 1;
-  background: url('/backModal.png') center / 100% 100% no-repeat;
+  background: url('/backModal.webp') center / 100% 100% no-repeat;
   border-radius: 18px;
   overflow: visible;
 }
@@ -4278,7 +4278,7 @@ button.is-pressing {
 }
 
 .auth-entry-bg {
-  background: url('/auth-bg.png') center top / cover no-repeat;
+  background: url('/auth-bg.webp') center top / cover no-repeat;
   transform: scale(1.02);
 }
 
@@ -4337,7 +4337,7 @@ button.is-pressing {
   width: var(--af-size, 350px);
   height: var(--af-size, 350px);
   margin: 0 auto 8px;
-  background-image: url('/logo_fly/angel_fly.png');
+  background-image: url('/logo_fly/angel_fly.webp');
   background-size: calc(var(--af-size, 350px) * 4) calc(var(--af-size, 350px) * 2);
   background-repeat: no-repeat;
   background-position: 0 0;
@@ -4413,7 +4413,7 @@ button.is-pressing {
   position: relative;
   aspect-ratio: 1 / 1;
   border: none;
-  background: url('/MemberLogin.png') center / 100% 100% no-repeat;
+  background: url('/MemberLogin.webp') center / 100% 100% no-repeat;
 }
 .auth-form-modal[data-mode="login"] {
   width: min(88vw, 315px);
@@ -4421,7 +4421,7 @@ button.is-pressing {
 
 .auth-form-modal[data-mode="register"] {
   width: min(88vw, 340px);
-  background: url('/CreateAccount.png') top center / cover no-repeat;
+  background: url('/CreateAccount.webp') top center / cover no-repeat;
 }
 
 .auth-form-header {
@@ -4813,7 +4813,7 @@ button.is-pressing {
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: url('/entry-modal.png') center / 100% 100% no-repeat;
+  background: url('/entry-modal.webp') center / 100% 100% no-repeat;
   pointer-events: none;
 }
 
@@ -6813,7 +6813,7 @@ button.is-pressing {
   width: 100%;
   max-width: 455px;
   aspect-ratio: 760 / 975;
-  background: url('/checkin-frame.png') no-repeat center / 100% 100%;
+  background: url('/checkin-frame.webp') no-repeat center / 100% 100%;
   border: none;
   border-radius: 0;
   overflow: visible;
@@ -7076,7 +7076,7 @@ button.is-pressing {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  background: url('/poker-table.png');
+  background: url('/poker-table.webp');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -8924,12 +8924,12 @@ button.is-pressing {
 }
 /* Texas Hold'em ??black/gold card back */
 .pt-page .pcard-back {
-  background: url('/texas-holdem/card-blackgold.png') center / 100% 100% no-repeat;
+  background: url('/texas-holdem/card-blackgold.webp') center / 100% 100% no-repeat;
   border: none;
 }
 /* Big Two ??purple/gold card back */
 .bt-game .pcard-back {
-  background: url('/big-two/card-purplegold.png') center / 100% 100% no-repeat;
+  background: url('/big-two/card-purplegold.webp') center / 100% 100% no-repeat;
   border: none;
 }
 
@@ -9069,7 +9069,7 @@ button.is-pressing {
   position: relative;
   margin: 4px 6px 0;
   min-height: 0;
-  background: url('/poker-table.png');
+  background: url('/poker-table.webp');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -9187,7 +9187,7 @@ button.is-pressing {
   position: absolute;
   bottom: 0;
   width: 14px; height: 20px;
-  background: url('/big-two/card-purplegold.png') center / 100% 100% no-repeat;
+  background: url('/big-two/card-purplegold.webp') center / 100% 100% no-repeat;
   border: none;
   border-radius: 2px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.4);
@@ -9339,7 +9339,7 @@ button.is-pressing {
   position: absolute;
   width: 38px; height: 56px;
   border-radius: 4px;
-  background: url('/big-two/card-purplegold.png') center / 100% 100% no-repeat;
+  background: url('/big-two/card-purplegold.webp') center / 100% 100% no-repeat;
   border: none;
   box-shadow: 0 2px 6px rgba(0,0,0,0.5);
   pointer-events: none;
@@ -11693,7 +11693,7 @@ button.is-pressing {
   justify-content: center;
   align-items: center;
   gap: 6px;
-  background-image: url('/DragonTiger/chips.png');
+  background-image: url('/DragonTiger/chips.webp');
   background-size: cover;
   background-position: center;
   padding: 10px 12px 8px;
@@ -12953,7 +12953,7 @@ div.settings-slider::after {
 
   .pt-top-container,
   .bt-arena {
-    background-image: url('/poker-table-pc.png');
+    background-image: url('/poker-table-pc.webp');
   }
 
   .pt-mobile-layout { display: none !important; }

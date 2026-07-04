@@ -182,7 +182,7 @@ export const CoinLayer = forwardRef(function CoinLayer(_, ref) {
     canvas.width  = parent?.offsetWidth  || canvas.offsetWidth  || 390
     canvas.height = parent?.offsetHeight || canvas.offsetHeight || 700
 
-    ;[['rain', '/slot-imgs/rain/rain_coins.png'], ['burst', '/slot-imgs/burst/burst_coins.png']].forEach(([k, src]) => {
+    ;[['rain', '/slot-imgs/rain/rain_coins.webp'], ['burst', '/slot-imgs/burst/burst_coins.webp']].forEach(([k, src]) => {
       if (IMGS[k]) return
       const img = new Image()
       img.src = src

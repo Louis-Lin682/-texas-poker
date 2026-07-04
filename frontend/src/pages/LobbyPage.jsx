@@ -198,7 +198,7 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
           onClick={handleTopClick}
           aria-label="回頂部"
         >
-          <img src="/top.png" alt="" />
+          <img src="/top.webp" alt="" />
         </button>
       )} */}
       <div className="phone-frame phone-frame-lobby">
@@ -332,7 +332,7 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
       {isGuestBrokeOpen && (
         <div className="auth-modal-backdrop" role="presentation" onClick={() => setIsGuestBrokeOpen(false)}>
           <div className="auth-modal" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
-            <img className="auth-modal-angel" src="/notice-angel.png" alt="" aria-hidden="true" />
+            <img className="auth-modal-angel" src="/notice-angel.webp" alt="" aria-hidden="true" />
             <div className="auth-modal-content">
               <h3>訪客籌碼已用盡</h3>
               <p>升級為正式帳號後即可儲值繼續遊戲</p>

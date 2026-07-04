@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const SLIDES = [
-  { src: '/banner/hero-banner.png', to: '/deposit' },
-  { src: '/banner/checkin-banner.png', action: 'checkin' },
+  { src: '/banner/hero-banner.webp', to: '/deposit' },
+  { src: '/banner/checkin-banner.webp', action: 'checkin' },
 ]
 
 const AUTO_MS = 4000
@@ -83,11 +83,11 @@ function BannerCarousel({ onCheckin }) {
       <div className={`banner-hero-content${heroActive ? ' banner-hero-visible' : ''}`}>
         <div className="hero-copy">
           <h1>
-            <img key={`text-${animKey}`} className="hero-banner-text" src="/banner/hero-banner-text.png" alt="" />
-            <img key={`span-${animKey}`} className="hero-banner-span" src="/banner/hero-banner-span.png" alt="" />
+            <img key={`text-${animKey}`} className="hero-banner-text" src="/banner/hero-banner-text.webp" alt="" />
+            <img key={`span-${animKey}`} className="hero-banner-span" src="/banner/hero-banner-span.webp" alt="" />
           </h1>
           <button type="button" className="cta-button">
-            <img src="/banner/hero-banner-btn.png" alt="" />
+            <img src="/banner/hero-banner-btn.webp" alt="" />
           </button>
         </div>
       </div>

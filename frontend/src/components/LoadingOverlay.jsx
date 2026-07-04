@@ -61,7 +61,7 @@ export default function LoadingOverlay() {
         flexShrink: 0,
       }}>
         <img
-          src="/logo_fly/angel_fly.png"
+          src="/logo_fly/angel_fly.webp"
           alt=""
           draggable={false}
           style={{

@@ -87,7 +87,7 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
   return (
     <section className="content-panel">
       <div className="hot-banner-title">
-        <img src="/allGameTags.png" alt="全部遊戲" />
+        <img src="/allGameTags.webp" alt="全部遊戲" />
       </div>
 
       {isLoading && (

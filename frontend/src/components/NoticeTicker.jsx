@@ -43,7 +43,7 @@ function NoticeTicker({ text }) {
   return (
     <div className="notice-wrap">
       <div className="top-notice">
-        <img className="noticeLoudspeaker" src="/Loudspeaker.png" alt="Loudspeaker" />
+        <img className="noticeLoudspeaker" src="/Loudspeaker.webp" alt="Loudspeaker" />
         <div className="notice-marquee">
           {text && (
             <div key={text} ref={trackRef} className="notice-track">

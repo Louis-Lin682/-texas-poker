@@ -13,11 +13,11 @@ const TABS = [
 ]
 
 const TIER_IMG = [
-  '/Achievement/Achievement1.png',
-  '/Achievement/Achievement2.png',
-  '/Achievement/Achievement3.png',
-  '/Achievement/Achievement4.png',
-  '/Achievement/Achievement5.png',
+  '/Achievement/Achievement1.webp',
+  '/Achievement/Achievement2.webp',
+  '/Achievement/Achievement3.webp',
+  '/Achievement/Achievement4.webp',
+  '/Achievement/Achievement5.webp',
 ]
 
 function pct(current, target) {
@@ -72,7 +72,7 @@ function QuestItem({ quest, type, onClaim, claiming }) {
       </div>
       <div className="quest-item-footer">
         <div className="quest-reward">
-          <img src="/chip-blackgold.png" alt="" className="quest-reward-chip" />
+          <img src="/chip-blackgold.webp" alt="" className="quest-reward-chip" />
           <span>+{fmt(quest.reward)} 籌碼</span>
         </div>
         {quest.claimed ? (
@@ -113,7 +113,7 @@ function AchievementGroup({ group, onClaim, claiming }) {
           >
             <img
               className="ach-tier-icon"
-              src={t.locked ? '/Achievement/lock.png' : (TIER_IMG[i] ?? TIER_IMG[TIER_IMG.length - 1])}
+              src={t.locked ? '/Achievement/lock.webp' : (TIER_IMG[i] ?? TIER_IMG[TIER_IMG.length - 1])}
               alt=""
             />
             <span className="ach-tier-target">{fmt(t.target)}</span>

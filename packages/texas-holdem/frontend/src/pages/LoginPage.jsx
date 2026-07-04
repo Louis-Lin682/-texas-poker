@@ -26,7 +26,7 @@ export default function LoginPage({ onLogin }) {
   return (
     <div className="login-page">
       <div className="login-card">
-        <img src="/texas-holdem/texas-holdem.png" alt="德州撲克" className="login-logo" />
+        <img src="/texas-holdem/texas-holdem.webp" alt="德州撲克" className="login-logo" />
         <h1 className="login-title">德州撲克</h1>
         <div className="login-tabs">
           <button className={`login-tab${tab === 'login'    ? ' active' : ''}`} onClick={() => setTab('login')}>登入</button>

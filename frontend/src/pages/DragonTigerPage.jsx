@@ -7,17 +7,17 @@ import { API_BASE_URL } from '../services/apiClient'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
 
 function _mkImg(src) { const i = new Image(); i.src = src; return i }
-const _dragonFlyImg   = _mkImg('/DragonTiger/fly_dargon/dargon_fly.png')
-const _dragonFlyImgPc = _mkImg('/DragonTiger/pc-dargon-fly/gold-dragon-video-sequence-16frames-noglow-2x-sheet.png')
-const _tigerWalkImg  = _mkImg('/DragonTiger/tiger_walk/tiger_walk.png')
-const _tigerHandImg  = _mkImg('/DragonTiger/win/tiger_hand.png')
+const _dragonFlyImg   = _mkImg('/DragonTiger/fly_dargon/dargon_fly.webp')
+const _dragonFlyImgPc = _mkImg('/DragonTiger/pc-dargon-fly/gold-dragon-video-sequence-16frames-noglow-2x-sheet.webp')
+const _tigerWalkImg  = _mkImg('/DragonTiger/tiger_walk/tiger_walk.webp')
+const _tigerHandImg  = _mkImg('/DragonTiger/win/tiger_hand.webp')
 
 const CHIPS = [
-  { value: 20,   img: '/chip-red.png',       label: '20' },
-  { value: 50,   img: '/chip-blue.png',      label: '50' },
-  { value: 100,  img: '/chip-green.png',     label: '100' },
-  { value: 500,  img: '/chip-purple.png',    label: '500' },
-  { value: 1000, img: '/chip-blackgold.png', label: '1K' },
+  { value: 20,   img: '/chip-red.webp',       label: '20' },
+  { value: 50,   img: '/chip-blue.webp',      label: '50' },
+  { value: 100,  img: '/chip-green.webp',     label: '100' },
+  { value: 500,  img: '/chip-purple.webp',    label: '500' },
+  { value: 1000, img: '/chip-blackgold.webp', label: '1K' },
 ]
 
 const ZONE_KEYS = [
@@ -311,7 +311,7 @@ function PlayingCard({ card, faceDown, delay = 0, cardClass = '' }) {
       <div className={`dt-card ${flipped ? 'is-flipped' : ''} ${cardClass}`}>
         <div className="dt-card-inner">
           <div className="dt-card-back">
-            <img src="/texas-holdem/card-blackgold.png" alt="" draggable={false} />
+            <img src="/texas-holdem/card-blackgold.webp" alt="" draggable={false} />
           </div>
           <div className={`dt-card-front ${isRed ? 'is-red' : ''}`}>
             {card && (
@@ -365,7 +365,7 @@ function ZoneBetDisplay({ placements, totalBet, myBet, small }) {
   )
 }
 
-const _dragonHandImg = _mkImg('/DragonTiger/pc-dargon-fly/dargon-hand.png')
+const _dragonHandImg = _mkImg('/DragonTiger/pc-dargon-fly/dargon-hand.webp')
 
 function DragonWinAnim({ onDone }) {
   const canvasRef = useRef(null)
@@ -421,7 +421,7 @@ function DragonWinAnim({ onDone }) {
     <div className="dt-dragon-win-overlay">
       {phase === 'fly'
         ? <canvas ref={canvasRef} className="dt-dragon-canvas" />
-        : <img src="/DragonTiger/pc-dargon-fly/dargon-hand.png" alt="" className="dt-tiger-final" draggable={false} />
+        : <img src="/DragonTiger/pc-dargon-fly/dargon-hand.webp" alt="" className="dt-tiger-final" draggable={false} />
       }
     </div>
   )
@@ -481,7 +481,7 @@ function TigerWinAnim({ onDone }) {
     <div className="dt-tiger-win-overlay">
       {phase === 'walk'
         ? <div className="dt-tiger-zoom-wrapper"><canvas ref={canvasRef} className="dt-tiger-canvas" /></div>
-        : <img src="/DragonTiger/win/tiger_hand.png" alt="" className="dt-tiger-final" draggable={false} />
+        : <img src="/DragonTiger/win/tiger_hand.webp" alt="" className="dt-tiger-final" draggable={false} />
       }
     </div>
   )
@@ -499,7 +499,7 @@ function HistoryModal({ history, onClose }) {
   return (
     <div className="dt-rules-overlay" onClick={onClose}>
       <div className="dt-history-modal" onClick={e => e.stopPropagation()}>
-        <img src="/DragonTiger/Accounting-outline.png" alt="" className="dt-history-bg" draggable={false} />
+        <img src="/DragonTiger/Accounting-outline.webp" alt="" className="dt-history-bg" draggable={false} />
         <div className="dt-history-inner">
           <button type="button" className="dt-history-close" onClick={onClose}></button>
           {todayHistory.length === 0 ? (
@@ -561,9 +561,9 @@ function RulesModal({ onClose, zonePayouts = {}, dtConfig = {} }) {
   return (
     <div className="dt-rules-overlay" onClick={onClose}>
       <div className="dt-rules-scroll" onClick={e => e.stopPropagation()}>
-        <img src="/DragonTiger/scrollTop.png.png" alt="" className="dt-scroll-top" draggable={false} />
+        <img src="/DragonTiger/scrollTop.png.webp" alt="" className="dt-scroll-top" draggable={false} />
         <div className="dt-scroll-body">
-          <img src="/DragonTiger/scrollBody.png" alt="" className="dt-scroll-body-bg" draggable={false} />
+          <img src="/DragonTiger/scrollBody.webp" alt="" className="dt-scroll-body-bg" draggable={false} />
           <div className="dt-scroll-content">
             <h3 className="dt-rules-title">龍虎鬥 遊戲規則</h3>
 
@@ -601,7 +601,7 @@ function RulesModal({ onClose, zonePayouts = {}, dtConfig = {} }) {
             </div>
           </div>
         </div>
-        <img src="/DragonTiger/scrollBottom.png.png" alt="" className="dt-scroll-bottom" draggable={false} />
+        <img src="/DragonTiger/scrollBottom.png.webp" alt="" className="dt-scroll-bottom" draggable={false} />
       </div>
     </div>
   )
@@ -632,10 +632,10 @@ function ResultOverlay({ result, myPayout, myTotalBet }) {
   const won    = net > 0
   const isTie  = result === 'tie'
 
-  const resultImg  = result === 'dragon' ? '/DragonTiger/game/dragon.png'
-    : result === 'tiger'  ? '/DragonTiger/game/tiger.png'
-    : '/DragonTiger/game/he.png'
-  const outcomeImg = isTie ? '/DragonTiger/game/ju.png' : '/DragonTiger/game/sheng.png'
+  const resultImg  = result === 'dragon' ? '/DragonTiger/game/dragon.webp'
+    : result === 'tiger'  ? '/DragonTiger/game/tiger.webp'
+    : '/DragonTiger/game/he.webp'
+  const outcomeImg = isTie ? '/DragonTiger/game/ju.webp' : '/DragonTiger/game/sheng.webp'
 
   let netClass = 'is-tie'
   let netText  = '本局損益：0'
@@ -1104,7 +1104,7 @@ export default function DragonTigerPage({ auth }) {
       {/* Header */}
       <div className="dt-header">
         <button type="button" className="dt-back-btn" onClick={handleLeave}>
-          <img src="/arrow.png" alt="back" className="dt-back-arrow" draggable={false} />
+          <img src="/arrow.webp" alt="back" className="dt-back-arrow" draggable={false} />
         </button>
         <div className="dt-header-center">
           <div className="dt-status-frame">
@@ -1151,7 +1151,7 @@ export default function DragonTigerPage({ auth }) {
       {/* Table area */}
       <div className="dt-table">
         <img
-          src={isPC ? '/DragonTiger/DragonTiger-PcBg.png' : '/DragonTiger/DragonTigerBg.png'}
+          src={isPC ? '/DragonTiger/DragonTiger-PcBg.webp' : '/DragonTiger/DragonTigerBg.webp'}
           alt=""
           className="dt-table-bg"
           draggable={false}
@@ -1159,7 +1159,7 @@ export default function DragonTigerPage({ auth }) {
 
         {/* BGM toggle */}
         <button type="button" className="dt-bgm-btn" onClick={toggleDtBgm} data-no-global-click="true">
-          <img src={dtBgmMuted ? '/enable-sound.png' : '/volume.png'} alt="bgm" draggable={false} />
+          <img src={dtBgmMuted ? '/enable-sound.webp' : '/volume.webp'} alt="bgm" draggable={false} />
         </button>
 
         {/* Rule button */}
@@ -1169,17 +1169,17 @@ export default function DragonTigerPage({ auth }) {
 
         {/* Ledger button */}
         <button type="button" className="dt-ledger-btn" onClick={() => setShowHistory(true)} data-no-global-click="true">
-          <img src="/DragonTiger/accounting.png" alt="帳務" draggable={false} />
+          <img src="/DragonTiger/accounting.webp" alt="帳務" draggable={false} />
         </button>
 
         {/* Cards */}
         <div className="dt-cards-area" style={isPC ? { top: '8%', gap: 40 } : undefined}>
-          <img src="/DragonTiger/DragonIcon.png" alt="龍" className="dt-card-label dt-label-dragon" draggable={false} />
+          <img src="/DragonTiger/DragonIcon.webp" alt="龍" className="dt-card-label dt-label-dragon" draggable={false} />
           <div className="dt-cards-row" style={isPC ? { gap: 40 } : undefined}>
             <PlayingCard card={dragonCard} faceDown={faceDown} delay={0}   cardClass={isPC ? 'dt-card-pc' : ''} />
             <PlayingCard card={tigerCard}  faceDown={faceDown} delay={600} cardClass={isPC ? 'dt-card-pc' : ''} />
           </div>
-          <img src="/DragonTiger/TigerIcon.png" alt="虎" className="dt-card-label dt-label-tiger" draggable={false} />
+          <img src="/DragonTiger/TigerIcon.webp" alt="虎" className="dt-card-label dt-label-tiger" draggable={false} />
         </div>
 
         {/* Bet zones — absolutely positioned over background */}
@@ -1211,10 +1211,10 @@ export default function DragonTigerPage({ auth }) {
         {myTotalBet > 0 && isBetting && (
           <div className="dt-rail-actions">
             <button type="button" className="dt-rail-undo" onClick={handleUndoBet} data-no-global-click="true">
-              <img src="/DragonTiger/undo.png" alt="撤銷" draggable={false} />
+              <img src="/DragonTiger/undo.webp" alt="撤銷" draggable={false} />
             </button>
             <button type="button" className="dt-rail-clear" onClick={handleCancelBets} data-no-global-click="true">
-              <img src="/DragonTiger/clear.png" alt="全清" draggable={false} />
+              <img src="/DragonTiger/clear.webp" alt="全清" draggable={false} />
             </button>
           </div>
         )}

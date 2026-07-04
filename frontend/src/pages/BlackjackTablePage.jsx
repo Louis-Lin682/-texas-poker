@@ -52,10 +52,10 @@ function dealVisCount(K, posIdx, slots) {
 }
 
 function chipImgForBet(amount) {
-  if (amount >= 1000) return '/chip-blackgold.png'
-  if (amount >= 500)  return '/chip-purple.png'
-  if (amount >= 100)  return '/chip-gold.png'
-  return '/chip-red.png'
+  if (amount >= 1000) return '/chip-blackgold.webp'
+  if (amount >= 500)  return '/chip-purple.webp'
+  if (amount >= 100)  return '/chip-gold.webp'
+  return '/chip-red.webp'
 }
 
 // ── Stacked hand: cards overlap showing only each card's corner ──
@@ -100,20 +100,20 @@ function getSeats(players, myId) {
 }
 
 const CHIP_DEFS = [
-  { value: 50,    img: '/chip-red.png' },
-  { value: 100,   img: '/chip-gold.png' },
-  { value: 500,   img: '/chip-purple.png' },
-  { value: 1000,  img: '/chip-blackgold.png' },
-  { value: 5000,  img: '/chip-red.png' },
-  { value: 10000, img: '/chip-gold.png' },
+  { value: 50,    img: '/chip-red.webp' },
+  { value: 100,   img: '/chip-gold.webp' },
+  { value: 500,   img: '/chip-purple.webp' },
+  { value: 1000,  img: '/chip-blackgold.webp' },
+  { value: 5000,  img: '/chip-red.webp' },
+  { value: 10000, img: '/chip-gold.webp' },
 ]
 
 // buyIn is the minimum balance required (and chips taken from account) for this tier.
 const MAX_BET_PRESETS = [
-  { label: '低限', maxBet: 500,   buyIn: 1500,  img: '/texas-holdem/room-green-felt-button.png',   cardImg: '/texas-holdem/room-card-green-felt.png'   },
-  { label: '中限', maxBet: 1000,  buyIn: 3000,  img: '/texas-holdem/room-golden-hall-button.png',  cardImg: '/texas-holdem/room-card-golden-hall.png'  },
-  { label: '高限', maxBet: 5000,  buyIn: 10000, img: '/texas-holdem/room-royal-hall-button.png',   cardImg: '/texas-holdem/room-card-royal-hall.png'   },
-  { label: '豪華', maxBet: 10000, buyIn: 30000, img: '/texas-holdem/room-supreme-hall-button.png', cardImg: '/texas-holdem/room-card-supreme-hall.png' },
+  { label: '低限', maxBet: 500,   buyIn: 1500,  img: '/texas-holdem/room-green-felt-button.webp',   cardImg: '/texas-holdem/room-card-green-felt.webp'   },
+  { label: '中限', maxBet: 1000,  buyIn: 3000,  img: '/texas-holdem/room-golden-hall-button.webp',  cardImg: '/texas-holdem/room-card-golden-hall.webp'  },
+  { label: '高限', maxBet: 5000,  buyIn: 10000, img: '/texas-holdem/room-royal-hall-button.webp',   cardImg: '/texas-holdem/room-card-royal-hall.webp'   },
+  { label: '豪華', maxBet: 10000, buyIn: 30000, img: '/texas-holdem/room-supreme-hall-button.webp', cardImg: '/texas-holdem/room-card-supreme-hall.webp' },
 ]
 
 // ── Image action button (blackjack UI) ────────────────────
@@ -221,7 +221,7 @@ function DealerSeat({ dealer, dealVisible = Infinity, cardSize = 'xs' }) {
         <span className="pt-badge pt-badge-d">D</span>
       </div>
       <div className="pt-avatar" style={{ padding: 0, overflow: 'hidden', background: 'none', border: 'none' }}>
-        <img src="/dealer-badge.png" alt="莊家" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+        <img src="/dealer-badge.webp" alt="莊家" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
       </div>
       <span className="pt-name">莊家</span>
       <div className="pt-opp-cards">
@@ -322,7 +322,7 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBal
         <span className="pt-lobby-title">選擇房間</span>
         <div className="pt-lobby-head-actions">
           <button type="button" className={`pt-lobby-refresh${isSpinning ? ' is-spinning' : ''}`} onClick={handleRefresh} title="重新整理">
-            <img src="/reload.png" alt="重整" />
+            <img src="/reload.webp" alt="重整" />
           </button>
           <button type="button" className="pt-lobby-create"
             onClick={() => onCreateRoom({ maxBet: selectedPreset.maxBet, buyIn: minBuyIn })}
@@ -390,7 +390,7 @@ function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom 
   return (
     <div className="pt-wait">
       <div className="pt-wait-plaque">
-        <img src="/waiting-player-plaque.png" alt="" className="pt-wait-plaque-img" />
+        <img src="/waiting-player-plaque.webp" alt="" className="pt-wait-plaque-img" />
         <div className="pt-wait-plaque-body">
           <div className="pt-wait-plaque-count">
             <span className="pt-wait-plaque-num">{players.length}/{maxPlayers}</span>
@@ -413,7 +413,7 @@ function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom 
               <span className={`pt-wait-status${p.ready ? ' is-ready' : ''}`}>{p.ready ? '已準備' : '未準備'}</span>
             </div>
             <div className="pt-wait-chips-wrap">
-              <img src="/chip-gold.png" className="pt-wait-chip-img" alt="" />
+              <img src="/chip-gold.webp" className="pt-wait-chip-img" alt="" />
               <span className="pt-wait-chips">{fmt(p.balance)}</span>
             </div>
           </div>
@@ -429,7 +429,7 @@ function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom 
         )}
         <button type="button" className="pt-wait-ready-btn"
           onClick={me?.ready ? onUnready : onReady} disabled={lockedIn}>
-          <img src="/ready-button.png" alt="" className="pt-wait-ready-img" />
+          <img src="/ready-button.webp" alt="" className="pt-wait-ready-img" />
           <span className="pt-wait-ready-text">{me?.ready ? '✓ 已準備好' : '我準備好了'}</span>
         </button>
         <button type="button" className="pt-wait-leave-btn" onClick={onLeaveRoom}>
@@ -794,19 +794,19 @@ export default function BlackjackTablePage({ auth }) {
       <div className="pt-header-con">
         <header className="pt-header">
           <button type="button" className="pt-back" onClick={handleBack}>
-            <img src="/arrow.png" alt="返回" />
+            <img src="/arrow.webp" alt="返回" />
           </button>
           <div className="pt-header-info">
             {roomId
               ? <span className="pt-room-label">房間 #{roomId}</span>
-              : <img src="/blackjack/blackjack.png" alt="21點" className="pt-room-label-img" />
+              : <img src="/blackjack/blackjack.webp" alt="21點" className="pt-room-label-img" />
             }
             {roomId && <span className="pt-blinds">最低下注 {gameState?.minBet ?? 50}</span>}
           </div>
           {isPlaying && <span className="pt-phase-badge">{PHASE_LABEL[phase]}</span>}
           <button type="button" className="pt-mute-btn" onClick={toggleGameMute}
             title={isGameMuted ? '開啟音樂' : '關閉音樂'}>
-            <img src={isGameMuted ? '/enable-sound.png' : '/volume.png'} alt="" />
+            <img src={isGameMuted ? '/enable-sound.webp' : '/volume.webp'} alt="" />
           </button>
         </header>
       </div>
@@ -1071,10 +1071,10 @@ export default function BlackjackTablePage({ auth }) {
                   <span style={{ fontSize: 12, color: '#aaa', flexShrink: 0 }}>
                     下注: <span style={{ color: '#f0c96b', fontWeight: 700 }}>{fmtNum(betAmount)}</span>
                   </span>
-                  <BjBtn src="/blackjack/Clear.png" alt="清除" onClick={() => setBetAmount(0)} />
+                  <BjBtn src="/blackjack/Clear.webp" alt="清除" onClick={() => setBetAmount(0)} />
                   {lastBetRef.current > 0 && betAmount === 0 && (
                     <BjBtn
-                      src="/blackjack/repeat.png" alt="重複"
+                      src="/blackjack/repeat.webp" alt="重複"
                       amount={lastBetRef.current}
                       amountStyle={{ right: '20%', top: '35%', transform: 'none' }}
                       onClick={() => {
@@ -1084,7 +1084,7 @@ export default function BlackjackTablePage({ auth }) {
                     />
                   )}
                   <BjBtn
-                    src="/blackjack/Betting.png" alt="確認下注"
+                    src="/blackjack/Betting.webp" alt="確認下注"
                     disabled={betAmount < (gameState?.minBet ?? 50)}
                     onClick={confirmBet}
                     imgStyle={{ maxWidth: 'none' }}
@@ -1103,16 +1103,16 @@ export default function BlackjackTablePage({ auth }) {
                   return (
                     <div style={{ display: 'flex', gap: 6, width: '100%', padding: '0 8px' }}>
                       {canInsurance && (
-                        <BjBtn src="/blackjack/Insurance.png" alt="買保險"
+                        <BjBtn src="/blackjack/Insurance.webp" alt="買保險"
                           amount={Math.floor((myCurrentHand?.bet ?? 0) / 2)}
                           amountStyle={{ right: '15%', top: '25%', transform: 'none' }}
                           style={btnS} imgStyle={imgS}
                           onClick={() => doAction('insurance')} />
                       )}
-                      <BjBtn src="/blackjack/stop.png" alt="停牌" style={btnS} imgStyle={imgS} onClick={() => { play('bj_stand'); doAction('stand') }} />
-                      <BjBtn src="/blackjack/hold.png" alt="要牌" style={btnS} imgStyle={imgS} onClick={() => { play('bj_hit'); doAction('hit') }} />
-                      <BjBtn src="/blackjack/double.png" alt="加倍" style={btnS} imgStyle={imgS} disabled={!canDouble} onClick={() => { play('bj_double'); doAction('double') }} />
-                      <BjBtn src="/blackjack/Split.png" alt="分牌" style={btnS} imgStyle={imgS} disabled={!canSplit} onClick={() => { play('bj_split'); doAction('split') }} />
+                      <BjBtn src="/blackjack/stop.webp" alt="停牌" style={btnS} imgStyle={imgS} onClick={() => { play('bj_stand'); doAction('stand') }} />
+                      <BjBtn src="/blackjack/hold.webp" alt="要牌" style={btnS} imgStyle={imgS} onClick={() => { play('bj_hit'); doAction('hit') }} />
+                      <BjBtn src="/blackjack/double.webp" alt="加倍" style={btnS} imgStyle={imgS} disabled={!canDouble} onClick={() => { play('bj_double'); doAction('double') }} />
+                      <BjBtn src="/blackjack/Split.webp" alt="分牌" style={btnS} imgStyle={imgS} disabled={!canSplit} onClick={() => { play('bj_split'); doAction('split') }} />
                     </div>
                   )
                 })()}
@@ -1227,9 +1227,9 @@ export default function BlackjackTablePage({ auth }) {
                     ))}
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <BjBtn src="/blackjack/Clear.png" alt="清除" onClick={() => setBetAmount(0)} imgStyle={{ height: 47 }} />
+                    <BjBtn src="/blackjack/Clear.webp" alt="清除" onClick={() => setBetAmount(0)} imgStyle={{ height: 47 }} />
                     {lastBetRef.current > 0 && betAmount === 0
-                      ? <BjBtn src="/blackjack/repeat.png" alt="重複" amount={lastBetRef.current}
+                      ? <BjBtn src="/blackjack/repeat.webp" alt="重複" amount={lastBetRef.current}
                           amountStyle={{ right: '20%', top: '35%', transform: 'none' }}
                           imgStyle={{ height: 64 }}
                           onClick={() => {
@@ -1238,7 +1238,7 @@ export default function BlackjackTablePage({ auth }) {
                           }} />
                       : <span style={{ fontSize: 14, color: '#f0c96b', fontWeight: 700, minWidth: 40, textAlign: 'center' }}>下注: {fmtNum(betAmount)}</span>
                     }
-                    <BjBtn src="/blackjack/Betting.png" alt="確認下注"
+                    <BjBtn src="/blackjack/Betting.webp" alt="確認下注"
                       disabled={betAmount < (gameState?.minBet ?? 50)}
                       onClick={confirmBet} imgStyle={{ height: 64, maxWidth: 'none' }} />
                   </div>
@@ -1251,16 +1251,16 @@ export default function BlackjackTablePage({ auth }) {
                     const s = { width: btnW, height: 'auto', maxWidth: 'none' }
                     return (<>
                       {canInsurance && (
-                        <BjBtn src="/blackjack/Insurance.png" alt="買保險"
+                        <BjBtn src="/blackjack/Insurance.webp" alt="買保險"
                           amount={Math.floor((myCurrentHand?.bet ?? 0) / 2)}
                           amountStyle={{ right: '15%', top: '25%', transform: 'none' }}
                           imgStyle={s}
                           onClick={() => doAction('insurance')} />
                       )}
-                      <BjBtn src="/blackjack/stop.png" alt="停牌" imgStyle={s} onClick={() => { play('bj_stand'); doAction('stand') }} />
-                      <BjBtn src="/blackjack/hold.png" alt="要牌" imgStyle={s} onClick={() => { play('bj_hit'); doAction('hit') }} />
-                      <BjBtn src="/blackjack/double.png" alt="加倍" imgStyle={s} disabled={!canDouble} onClick={() => { play('bj_double'); doAction('double') }} />
-                      <BjBtn src="/blackjack/Split.png" alt="分牌" imgStyle={s} disabled={!canSplit} onClick={() => { play('bj_split'); doAction('split') }} />
+                      <BjBtn src="/blackjack/stop.webp" alt="停牌" imgStyle={s} onClick={() => { play('bj_stand'); doAction('stand') }} />
+                      <BjBtn src="/blackjack/hold.webp" alt="要牌" imgStyle={s} onClick={() => { play('bj_hit'); doAction('hit') }} />
+                      <BjBtn src="/blackjack/double.webp" alt="加倍" imgStyle={s} disabled={!canDouble} onClick={() => { play('bj_double'); doAction('double') }} />
+                      <BjBtn src="/blackjack/Split.webp" alt="分牌" imgStyle={s} disabled={!canSplit} onClick={() => { play('bj_split'); doAction('split') }} />
                     </>)
                   })()}
                 </div>

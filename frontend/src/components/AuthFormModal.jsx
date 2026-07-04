@@ -121,7 +121,7 @@ function AuthFormModal({ mode, isOpen, onClose, onAuthSuccess }) {
           <button type="submit" className="auth-form-submit" disabled={isSubmitting}>
             {isSubmitting
               ? '處理中...'
-              : <img src={isRegister ? '/register.png' : '/login.png'} alt={isRegister ? '完成註冊' : '立即登入'} />}
+              : <img src={isRegister ? '/register.webp' : '/login.webp'} alt={isRegister ? '完成註冊' : '立即登入'} />}
           </button>
         </form>
       </div>

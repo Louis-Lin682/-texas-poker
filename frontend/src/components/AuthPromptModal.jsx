@@ -31,7 +31,7 @@ function AuthPromptModal({ isOpen, onClose, onGoLogin, onGuestLogin, context = '
         aria-labelledby="auth-modal-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <img className="auth-modal-angel" src="/notice-angel.png" alt="" aria-hidden="true" />
+        <img className="auth-modal-angel" src="/notice-angel.webp" alt="" aria-hidden="true" />
         <div className="auth-modal-content">
           <h3 id="auth-modal-title">{title}</h3>
           <p>{body}</p>

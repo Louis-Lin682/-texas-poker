@@ -6,7 +6,7 @@ import { usePokerSocket } from '../hooks/usePokerSocket'
 import { useGameStatus } from '../hooks/useGameStatus'
 import { useAudio, muteHowl } from '../hooks/useAudio'
 
-const CHIP_IMGS = ['/chip-red.png', '/chip-gold.png', '/chip-purple.png', '/chip-blackgold.png']
+const CHIP_IMGS = ['/chip-red.webp', '/chip-gold.webp', '/chip-purple.webp', '/chip-blackgold.webp']
 const TURN_TIME  = 30
 
 function PtBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
@@ -141,7 +141,7 @@ function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, se
 
       {player.roundBet > 0 && (
         <div className="pt-bet-chip">
-          <img src="/chip-gold.png" className="pt-bet-chip-img" alt="" />
+          <img src="/chip-gold.webp" className="pt-bet-chip-img" alt="" />
           <span className="pt-bet-chip-val">{fmt(player.roundBet)}</span>
         </div>
       )}
@@ -208,10 +208,10 @@ const STATUS_MSG = {
 
 // ── Lobby ─────────────────────────────────────────────────────────────────────
 const BLIND_PRESETS = [
-  { label: '低限',  img: '/texas-holdem/room-green-felt-button.png',   smallBlind: 10,  bigBlind: 20  },
-  { label: '中限',  img: '/texas-holdem/room-golden-hall-button.png',  smallBlind: 25,  bigBlind: 50  },
-  { label: '高限',  img: '/texas-holdem/room-royal-hall-button.png',   smallBlind: 50,  bigBlind: 100 },
-  { label: '豪華',  img: '/texas-holdem/room-supreme-hall-button.png', smallBlind: 100, bigBlind: 200 },
+  { label: '低限',  img: '/texas-holdem/room-green-felt-button.webp',   smallBlind: 10,  bigBlind: 20  },
+  { label: '中限',  img: '/texas-holdem/room-golden-hall-button.webp',  smallBlind: 25,  bigBlind: 50  },
+  { label: '高限',  img: '/texas-holdem/room-royal-hall-button.webp',   smallBlind: 50,  bigBlind: 100 },
+  { label: '豪華',  img: '/texas-holdem/room-supreme-hall-button.webp', smallBlind: 100, bigBlind: 200 },
 ]
 function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }) {
   const isConnected = status === 'connected'
@@ -236,7 +236,7 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
         <span className="pt-lobby-title">選擇房間</span>
         <div className="pt-lobby-head-actions">
           <button type="button" className={`pt-lobby-refresh${isSpinning ? ' is-spinning' : ''}`} onClick={handleRefresh} title="重新整理">
-            <img src="/reload.png" alt="重整" />
+            <img src="/reload.webp" alt="重整" />
           </button>
           <button type="button" className="pt-lobby-create" onClick={() => onCreateRoom({ smallBlind: preset.smallBlind, bigBlind: preset.bigBlind })} disabled={!isConnected}>
             + 建立新房間
@@ -316,7 +316,7 @@ function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom 
     <div className="pt-wait">
       {/* 頂部牌匾 */}
       <div className="pt-wait-plaque">
-        <img src="/waiting-player-plaque.png" alt="" className="pt-wait-plaque-img" />
+        <img src="/waiting-player-plaque.webp" alt="" className="pt-wait-plaque-img" />
         <div className="pt-wait-plaque-body">
           <div className="pt-wait-plaque-count">
             <span className="pt-wait-plaque-num">{players.length}/{maxPlayers}</span>
@@ -340,7 +340,7 @@ function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom 
               <span className={`pt-wait-status${p.ready ? ' is-ready' : ''}`}>{p.ready ? '已準備' : '未準備'}</span>
             </div>
             <div className="pt-wait-chips-wrap">
-              <img src="/chip-gold.png" className="pt-wait-chip-img" alt="" />
+              <img src="/chip-gold.webp" className="pt-wait-chip-img" alt="" />
               <span className="pt-wait-chips">{fmt(p.balance)}</span>
             </div>
           </div>
@@ -355,7 +355,7 @@ function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom 
           </div>
         )}
         <button type="button" className="pt-wait-ready-btn" onClick={me?.ready ? onUnready : onReady}>
-          <img src="/ready-button.png" alt="" className="pt-wait-ready-img" />
+          <img src="/ready-button.webp" alt="" className="pt-wait-ready-img" />
           <span className="pt-wait-ready-text">{me?.ready ? '✓ 已準備好' : '我準備好了'}</span>
         </button>
         <button type="button" className="pt-wait-leave-btn" onClick={onLeaveRoom}>
@@ -679,18 +679,18 @@ function GameTablePage({ auth }) {
       <div className="pt-header-con">
         <header className="pt-header">
           <button type="button" className="pt-back" onClick={handleBack}>
-            <img src="/arrow.png" alt="返回" />
+            <img src="/arrow.webp" alt="返回" />
           </button>
           <div className="pt-header-info">
             {roomId
               ? <span className="pt-room-label">房間 #{roomId}</span>
-              : <img src="/texas-holdem/texas-holdem.png" alt="德州撲克" className="pt-room-label-img" />
+              : <img src="/texas-holdem/texas-holdem.webp" alt="德州撲克" className="pt-room-label-img" />
             }
             <span className="pt-blinds">盲注 {gameState?.smallBlind ?? 10} / {gameState?.bigBlind ?? 20}</span>
           </div>
           {isPlaying && <span className="pt-phase-badge">{PHASE_LABEL[phase]}</span>}
           <button type="button" className="pt-mute-btn" onClick={toggleGameMute} title={isGameMuted ? '開啟音樂' : '關閉音樂'}>
-            <img src={isGameMuted ? '/enable-sound.png' : '/volume.png'} alt="" />
+            <img src={isGameMuted ? '/enable-sound.webp' : '/volume.webp'} alt="" />
           </button>
         </header>
       </div>
@@ -753,9 +753,9 @@ function GameTablePage({ auth }) {
                 </div>
                 <div className="pt-pot">
                   <div className="pt-pot-chips">
-                    <img src="/chip-red.png" className="pt-pot-chip" alt="" />
-                    <img src="/chip-purple.png" className="pt-pot-chip" alt="" />
-                    <img src="/chip-blackgold.png" className="pt-pot-chip" alt="" />
+                    <img src="/chip-red.webp" className="pt-pot-chip" alt="" />
+                    <img src="/chip-purple.webp" className="pt-pot-chip" alt="" />
+                    <img src="/chip-blackgold.webp" className="pt-pot-chip" alt="" />
                   </div>
                   <span className="pt-pot-label">底池</span>
                   <span className="pt-pot-amount">{fmt(pot)}</span>
@@ -807,21 +807,21 @@ function GameTablePage({ auth }) {
               <span className="pt-raise-val">共 {fmt(toCall + raiseAmt)}</span>
             </div>
             <div className="pt-btn-row">
-              <PtBtn src="/texas-holdem/giveUp.png" alt="棄牌"
+              <PtBtn src="/texas-holdem/giveUp.webp" alt="棄牌"
                 disabled={!isMyTurn} onClick={() => doAction('fold')} />
               <PtBtn
-                src={toCall === 0 ? '/texas-holdem/Pass.png' : '/texas-holdem/follow.png'}
+                src={toCall === 0 ? '/texas-holdem/Pass.webp' : '/texas-holdem/follow.webp'}
                 alt={toCall === 0 ? '過牌' : '跟注'}
                 disabled={!isMyTurn}
                 onClick={() => doAction(toCall === 0 ? 'check' : 'call')}
                 amount={toCall > 0 ? fmt(toCall) : null}
                 amountStyle={{ right: '27%', top: '25%', transform: 'none' }}
               />
-              <PtBtn src="/texas-holdem/add.png" alt="加注"
+              <PtBtn src="/texas-holdem/add.webp" alt="加注"
                 disabled={!isMyTurn} onClick={() => doAction('raise', raiseAmt)}
                 amount={`+${fmt(raiseAmt)}`}
                 amountStyle={{ right: '27%', top: '25%', transform: 'none' }} />
-              <PtBtn src="/texas-holdem/all-in.png" alt="ALL IN"
+              <PtBtn src="/texas-holdem/all-in.webp" alt="ALL IN"
                 disabled={!isMyTurn} onClick={() => {
                   const chips = me?.balance ?? 0
                   chips <= toCall ? doAction('call') : doAction('raise', chips - toCall)
@@ -851,9 +851,9 @@ function GameTablePage({ auth }) {
                   </div>
                   <div className="pt-pot">
                     <div className="pt-pot-chips">
-                      <img src="/chip-red.png" className="pt-pot-chip" alt="" />
-                      <img src="/chip-purple.png" className="pt-pot-chip" alt="" />
-                      <img src="/chip-blackgold.png" className="pt-pot-chip" alt="" />
+                      <img src="/chip-red.webp" className="pt-pot-chip" alt="" />
+                      <img src="/chip-purple.webp" className="pt-pot-chip" alt="" />
+                      <img src="/chip-blackgold.webp" className="pt-pot-chip" alt="" />
                     </div>
                     <span className="pt-pot-label">底池</span>
                     <span className="pt-pot-amount">{fmt(pot)}</span>
@@ -872,7 +872,7 @@ function GameTablePage({ auth }) {
                   <div key={i} className="pc-bet-zone" style={{ ...style, transform: 'translate(-50%,-50%)' }}>
                     {player?.roundBet > 0 && (
                       <>
-                        <img src="/chip-gold.png" alt="" className="pc-bet-zone-chip" />
+                        <img src="/chip-gold.webp" alt="" className="pc-bet-zone-chip" />
                         <span className="pc-bet-zone-val">{fmt(player.roundBet)}</span>
                       </>
                     )}
@@ -897,16 +897,16 @@ function GameTablePage({ auth }) {
                     <span className="pt-raise-val">共 {fmt(toCall + raiseAmt)}</span>
                   </div>
                   <div className="pt-btn-row">
-                    <PtBtn src="/texas-holdem/giveUp.png" alt="棄牌" disabled={!isMyTurn} onClick={() => doAction('fold')} />
-                    <PtBtn src={toCall === 0 ? '/texas-holdem/Pass.png' : '/texas-holdem/follow.png'}
+                    <PtBtn src="/texas-holdem/giveUp.webp" alt="棄牌" disabled={!isMyTurn} onClick={() => doAction('fold')} />
+                    <PtBtn src={toCall === 0 ? '/texas-holdem/Pass.webp' : '/texas-holdem/follow.webp'}
                       alt={toCall === 0 ? '過牌' : '跟注'} disabled={!isMyTurn}
                       onClick={() => doAction(toCall === 0 ? 'check' : 'call')}
                       amount={toCall > 0 ? fmt(toCall) : null}
                       amountStyle={{ right: '25%', top: '30%', transform: 'none' }} />
-                    <PtBtn src="/texas-holdem/add.png" alt="加注" disabled={!isMyTurn}
+                    <PtBtn src="/texas-holdem/add.webp" alt="加注" disabled={!isMyTurn}
                       onClick={() => doAction('raise', raiseAmt)} amount={`+${fmt(raiseAmt)}`}
                       amountStyle={{ right: '25%', top: '30%', transform: 'none' }} />
-                    <PtBtn src="/texas-holdem/all-in.png" alt="ALL IN" disabled={!isMyTurn} onClick={() => {
+                    <PtBtn src="/texas-holdem/all-in.webp" alt="ALL IN" disabled={!isMyTurn} onClick={() => {
                       const chips = me?.balance ?? 0
                       chips <= toCall ? doAction('call') : doAction('raise', chips - toCall)
                     }} />

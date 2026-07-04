@@ -10,7 +10,7 @@ export const profile = {
 
 export const quickActions = [
   {
-    imageUrl: '/quick-actions/checkin.png',
+    imageUrl: '/quick-actions/checkin.webp',
     label: '簽到獎勵',
     meta: 'Bonus',
     accent: '#8f63ff',
@@ -18,7 +18,7 @@ export const quickActions = [
     action: 'checkin',
   },
   {
-    imageUrl: '/quick-actions/rank.png',
+    imageUrl: '/quick-actions/rank.webp',
     label: '排行榜',
     meta: 'Rank',
     accent: '#f0c96b',
@@ -26,7 +26,7 @@ export const quickActions = [
     route: '/rank',
   },
   {
-    imageUrl: '/quick-actions/event.png',
+    imageUrl: '/quick-actions/event.webp',
     label: '限時活動',
     meta: 'Event',
     accent: '#57d46f',
@@ -34,7 +34,7 @@ export const quickActions = [
     route: '/event',
   },
   {
-    imageUrl: '/quick-actions/quest.png',
+    imageUrl: '/quick-actions/quest.webp',
     label: '任務中心',
     meta: 'Quest',
     accent: '#ffb58a',
@@ -42,7 +42,7 @@ export const quickActions = [
     route: '/quest',
   },
   {
-    imageUrl: '/quick-actions/news.png',
+    imageUrl: '/quick-actions/news.webp',
     label: '最新消息',
     meta: 'News',
     accent: '#4fd0ff',
@@ -54,7 +54,7 @@ export const quickActions = [
 export const promoCards = []
 
 export const bottomNavItems = [
-  { label: '活動', active: false, type: 'icon', icon: '/quick-actions/event.png' },
-  { icon: '/phantom-footer-logo.png', label: '遊戲', active: true, type: 'image' },
+  { label: '活動', active: false, type: 'icon', icon: '/quick-actions/event.webp' },
+  { icon: '/phantom-footer-logo.webp', label: '遊戲', active: true, type: 'image' },
   { label: '我的', active: false, type: 'icon', iconType: 'profile' },
 ]

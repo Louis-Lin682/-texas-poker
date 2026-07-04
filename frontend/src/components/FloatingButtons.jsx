@@ -49,7 +49,7 @@ export default function FloatingButtons({ hidden = false }) {
         onClick={handleServiceClick}
         aria-label="客服"
       >
-        <img src="/service.png" alt="" />
+        <img src="/service.webp" alt="" />
       </button>
     </>
   )

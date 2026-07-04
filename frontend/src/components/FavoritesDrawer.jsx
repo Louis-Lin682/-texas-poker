@@ -81,7 +81,7 @@ function FavoritesDrawer({
           <div className="favorites-empty-state">
             <img
               className="favorites-empty-logo"
-              src="/phantom-footer-logo.png"
+              src="/phantom-footer-logo.webp"
               alt="Phantom Holdem logo"
             />
             <strong>還沒有收藏的遊戲</strong>

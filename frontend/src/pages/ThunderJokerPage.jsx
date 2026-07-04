@@ -11,7 +11,7 @@ import LeaveConfirmModal from '../components/LeaveConfirmModal'
 // ── Symbol definitions ──────────────────────────────────────────────────────
 const SYMS = {
   wild:       { src: '/slot-imgs/wild.png',       v: [0, 0, 150,  750, 3500], isWild: true    },
-  joker:      { src: '/slot-imgs/joker.png',       v: [0, 0, 100,  600, 2000], isJoker: true   },
+  joker:      { src: '/slot-imgs/joker.webp',       v: [0, 0, 100,  600, 2000], isJoker: true   },
   bell:       { src: '/slot-imgs/bell.png',         v: [0, 0,  22,   75,  300]                   },
   'clownhat-red':    { src: '/slot-imgs/clownhat-red.png',    v: [0, 0,  12,   40,  150]                   },
   'clownhat-purple': { src: '/slot-imgs/clownhat-purple.png', v: [0, 0,   8,   22,   90]                   },
@@ -1084,9 +1084,9 @@ export default function ThunderJokerPage({ auth }) {
     const i = betOptions.indexOf(bet); if (i < betOptions.length - 1) setBet(betOptions[i + 1])
   }
 
-  const bgSrc = scene === 'bonus'     ? '/slot-imgs/Scene/feature_bonus.png'
-    : scene === 'transition'          ? '/slot-imgs/Scene/transition.png'
-    : '/slot-imgs/Scene/basegame.png'
+  const bgSrc = scene === 'bonus'     ? '/slot-imgs/Scene/feature_bonus.webp'
+    : scene === 'transition'          ? '/slot-imgs/Scene/transition.webp'
+    : '/slot-imgs/Scene/basegame.webp'
 
   const canSpin = !spinning && (inFreeSpins || balance >= bet)
 
@@ -1285,18 +1285,18 @@ export default function ThunderJokerPage({ auth }) {
 
       {/* Header */}
       <header className="tj-header">
-        <img src="/arrow.png" alt="返回" className="tj-back" onClick={() => setShowLeaveConfirm(true)} />
-        <span className="tj-title"><img src="/slot-imgs/title.png" alt="返回" /></span>
+        <img src="/arrow.webp" alt="返回" className="tj-back" onClick={() => setShowLeaveConfirm(true)} />
+        <span className="tj-title"><img src="/slot-imgs/title.webp" alt="返回" /></span>
         <div className="tj-header-right">
           {inFreeSpins && (
             <div className="tj-fs-badge">
-              <img src="/slot-imgs/free-spins.png" alt="" />
+              <img src="/slot-imgs/free-spins.webp" alt="" />
               <span>{freeSpins} 次</span>
             </div>
           )}
           {inFreeSpins && jokerMult > 1 && (
             <div className="tj-joker-badge">
-              <img src={`/slot-imgs/jokerx${jokerImgKey(jokerMult)}.png`} alt="" />
+              <img src={`/slot-imgs/jokerx${jokerImgKey(jokerMult)}.webp`} alt="" />
               <span>×{jokerMult}</span>
             </div>
           )}
@@ -1306,7 +1306,7 @@ export default function ThunderJokerPage({ auth }) {
             </div>
           )}
           <button type="button" className="tj-mute-btn" onClick={() => setIsBgmMuted(m => !m)}>
-            <img src={isBgmMuted ? '/slot-imgs/mute.png' : '/slot-imgs/unmute.png'} alt="" />
+            <img src={isBgmMuted ? '/slot-imgs/mute.webp' : '/slot-imgs/unmute.png'} alt="" />
           </button>
         </div>
       </header>
@@ -1327,7 +1327,7 @@ export default function ThunderJokerPage({ auth }) {
                     {lightning?.reel === r && lightning?.row === row && (
                       <img
                         className="tj-lightning-badge"
-                        src={`/slot-imgs/lightningx${lightning.mult}.png`}
+                        src={`/slot-imgs/lightningx${lightning.mult}.webp`}
                         alt={`×${lightning.mult}`}
                       />
                     )}
@@ -1388,7 +1388,7 @@ export default function ThunderJokerPage({ auth }) {
           )}
 
           {/* Decorative joker frame overlay */}
-          <img className="tj-frame" src="/slot-imgs/joker_frame.png" alt="" aria-hidden="true" />
+          <img className="tj-frame" src="/slot-imgs/joker_frame.webp" alt="" aria-hidden="true" />
         </div>
 
         {/* Payline indicator dots (20) */}
@@ -1413,7 +1413,7 @@ export default function ThunderJokerPage({ auth }) {
       <div className="tj-bottom">
         {/* Multiplier bar */}
         <div className={`tj-mult-bar${displayMult > 1 ? ' is-active' : ''}`} ref={multBarRef}>
-          <span className="tj-mult-label"><img src="/slot-imgs/multiplier.png" alt="" /></span>
+          <span className="tj-mult-label"><img src="/slot-imgs/multiplier.webp" alt="" /></span>
           <img
             className="tj-mult-val"
             src={`/slot-imgs/lightningx${[2,3].includes(displayMult) ? displayMult : 1}.png`}
@@ -1422,20 +1422,20 @@ export default function ThunderJokerPage({ auth }) {
         </div>
         <div className="tj-stats">
           <div className="tj-stat">
-            <img className="tj-stat-bg" src="/slot-imgs/balance.png" alt="" aria-hidden="true" />
+            <img className="tj-stat-bg" src="/slot-imgs/balance.webp" alt="" aria-hidden="true" />
             <span className="tj-stat-val">{displayBalance.toLocaleString()}</span>
           </div>
           <div className="tj-stat">
-            <img className="tj-stat-bg" src="/slot-imgs/bet.png" alt="" aria-hidden="true" />
+            <img className="tj-stat-bg" src="/slot-imgs/bet.webp" alt="" aria-hidden="true" />
             <div className="tj-bet-ctrl">
-              {/* <img className="tj-bet-ctrl-bg" src="/slot-imgs/betting-amount.png" alt="" aria-hidden="true" /> */}
+              {/* <img className="tj-bet-ctrl-bg" src="/slot-imgs/betting-amount.webp" alt="" aria-hidden="true" /> */}
               <button type="button" onClick={handleBetDown} disabled={spinning}></button>
               <span className="tj-stat-val">{bet.toLocaleString()}</span>
               <button type="button" onClick={handleBetUp} disabled={spinning}></button>
             </div>
           </div>
           <div className="tj-stat">
-            <img className="tj-stat-bg" src="/slot-imgs/total_win.png" alt="" aria-hidden="true" />
+            <img className="tj-stat-bg" src="/slot-imgs/total_win.webp" alt="" aria-hidden="true" />
             <span className={`tj-stat-val${lastWin > 0 ? ' is-win' : ''}`}>
               {displayWin.toLocaleString()}
             </span>
@@ -1453,7 +1453,7 @@ export default function ThunderJokerPage({ auth }) {
             disabled={inFreeSpins}
             style={{ position: 'relative' }}
           >
-            <img src={isAuto ? '/slot-imgs/auto_on.png' : '/slot-imgs/auto_off.png'} alt="auto" />
+            <img src={isAuto ? '/slot-imgs/auto_on.webp' : '/slot-imgs/auto_off.webp'} alt="auto" />
             {autoCount !== null && (
               <span className={`tj-auto-badge${!isAuto ? ' is-paused' : ''}`}>{autoCount}</span>
             )}
@@ -1517,15 +1517,15 @@ export default function ThunderJokerPage({ auth }) {
           }}
         >
           {winOverlay === 'freespins' ? (
-            <img src="/slot-imgs/free-spins.png" alt="FREE SPINS" className="tj-overlay-freespins" />
+            <img src="/slot-imgs/free-spins.webp" alt="FREE SPINS" className="tj-overlay-freespins" />
           ) : (
             <>
               {(winPhase === 'badge' || winPhase === 'burst') && (
-                <img className="tj-overlay-badge" src={`/slot-imgs/${winOverlay}-win.png`} alt={winOverlay} />
+                <img className="tj-overlay-badge" src={`/slot-imgs/${winOverlay}-win.webp`} alt={winOverlay} />
               )}
               {(winPhase === 'rain' || winPhase === 'badge' || winPhase === 'burst') && (
                 <div className="tj-overlay-amt-wrap">
-                  <img src={`/slot-imgs/${winOverlay}-win-bonus.png`} className="tj-overlay-amt-bg" alt="" aria-hidden="true" />
+                  <img src={`/slot-imgs/${winOverlay}-win-bonus.webp`} className="tj-overlay-amt-bg" alt="" aria-hidden="true" />
                   <div className="tj-overlay-amt">{overlayDisplayWin.toLocaleString()}</div>
                 </div>
               )}
@@ -1555,13 +1555,13 @@ export default function ThunderJokerPage({ auth }) {
               {fsWinBadge && (
                 <img
                   className="tj-fs-end-win-badge"
-                  src={`/slot-imgs/${fsWinBadge}-win.png`}
+                  src={`/slot-imgs/${fsWinBadge}-win.webp`}
                   alt={fsWinBadge}
                 />
               )}
               <div className="tj-overlay-amt-wrap">
                 <img
-                  src={`/slot-imgs/${fsWinBadge ? `${fsWinBadge}-win-bonus` : 'free-spins-bonus'}.png`}
+                  src={`/slot-imgs/${fsWinBadge ? `${fsWinBadge}-win-bonus` : 'free-spins-bonus'}.webp`}
                   className="tj-overlay-amt-bg"
                   alt=""
                   aria-hidden="true"
@@ -1576,7 +1576,7 @@ export default function ThunderJokerPage({ auth }) {
       {/* 集鴻運: Joker multiplier flash */}
       {jokerFlash && (
         <div className="tj-joker-flash">
-          <img src={`/slot-imgs/jokerx${jokerFlash}.png`} alt={`×${jokerFlash}`} />
+          <img src={`/slot-imgs/jokerx${jokerFlash}.webp`} alt={`×${jokerFlash}`} />
         </div>
       )}
 
@@ -1585,7 +1585,7 @@ export default function ThunderJokerPage({ auth }) {
         <div className="tj-auto-menu-wrap">
           <button className="tj-auto-menu-backdrop" onClick={() => setShowAutoMenu(false)} aria-label="取消" />
           <div className="tj-auto-menu">
-            <img className="tj-auto-menu-bg" src="/slot-imgs/auto_bg.png" alt="" aria-hidden="true" />
+            <img className="tj-auto-menu-bg" src="/slot-imgs/auto_bg.webp" alt="" aria-hidden="true" />
             {[
               [10,   'auto10'],
               [20,   'auto20'],
@@ -1599,7 +1599,7 @@ export default function ThunderJokerPage({ auth }) {
                 className="tj-auto-chip"
                 onClick={() => startAuto(count)}
               >
-                <img src={`/slot-imgs/${img}.png`} alt={count ?? '∞'} />
+                <img src={`/slot-imgs/${img}.webp`} alt={count ?? '∞'} />
               </button>
             ))}
           </div>
@@ -1612,7 +1612,7 @@ export default function ThunderJokerPage({ auth }) {
           <button className="tj-panel-backdrop" onClick={() => setShowPaytable(false)} aria-label="關閉" />
           <div className="tj-panel">
             <button className="tj-panel-close" onClick={() => setShowPaytable(false)}>✕</button>
-            <img className="tj-panel-frame" src="/slot-imgs/Outer_frame.png" alt="" aria-hidden="true" />
+            <img className="tj-panel-frame" src="/slot-imgs/Outer_frame.webp" alt="" aria-hidden="true" />
             <div className="tj-panel-content">
               <div className="tj-panel-header">
                 <span className="tj-panel-title">賠率表</span>
@@ -1666,7 +1666,7 @@ export default function ThunderJokerPage({ auth }) {
           <button className="tj-panel-backdrop" onClick={() => setShowInfo(false)} aria-label="關閉" />
           <div className="tj-panel">
             <button className="tj-panel-close" onClick={() => setShowInfo(false)}>✕</button>
-            <img className="tj-panel-frame" src="/slot-imgs/Outer_frame.png" alt="" aria-hidden="true" />
+            <img className="tj-panel-frame" src="/slot-imgs/Outer_frame.webp" alt="" aria-hidden="true" />
             <div className="tj-panel-content">
               <div className="tj-panel-header">
                 <span className="tj-panel-title">遊戲說明</span>
@@ -1694,7 +1694,7 @@ export default function ThunderJokerPage({ auth }) {
                   </div>
                 </div>
                 <div className="tj-info-row">
-                  <img src="/slot-imgs/free-spins.png" alt="free spins" />
+                  <img src="/slot-imgs/free-spins.webp" alt="free spins" />
                   <div>
                     <strong>Free Spins</strong>
                     <p>免費旋轉不扣押注，贏分乘上加成倍率（×2～×10），Joker 乘倍器持續累積</p>
@@ -1773,7 +1773,7 @@ export default function ThunderJokerPage({ auth }) {
             '--dy': `${lightningFly.dy}px`,
           }}
         >
-          <img src={`/slot-imgs/lightningx${lightningFly.mult}.png`} alt="" />
+          <img src={`/slot-imgs/lightningx${lightningFly.mult}.webp`} alt="" />
         </div>
       )}
     </div>

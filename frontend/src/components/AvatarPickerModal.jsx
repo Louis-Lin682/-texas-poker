@@ -28,7 +28,7 @@ function AvatarPickerModal({ isOpen, currentAvatar, onSelect, onClose }) {
 
   if (!visible) return null
 
-  const active = currentAvatar ?? '/notice-angel.png'
+  const active = currentAvatar ?? '/notice-angel.webp'
 
   return (
     <div className="avatar-picker-overlay" onClick={onClose}>

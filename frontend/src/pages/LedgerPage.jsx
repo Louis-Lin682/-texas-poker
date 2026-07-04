@@ -352,7 +352,7 @@ function LedgerPage() {
       {/* ── 損益摘要 ── */}
       {!loading && !error && net !== null && (
         <div className="ledger-page-summary">
-          <img src="/ledger-icon.png" className="ledger-summary-icon" alt="" />
+          <img src="/ledger-icon.webp" className="ledger-summary-icon" alt="" />
           <div className="ledger-summary-right">
             {/* 累計損益 區 */}
             <div className="ledger-summary-net-block">

@@ -111,13 +111,13 @@ export default function SettingsPage() {
             <span className="settings-row-label">帳號綁定</span>
             <div className="settings-bind-icons">
               <button type="button" className="settings-bind-btn" disabled title="Apple（即將開放）">
-                <img src="/social/apple.png" alt="Apple" className="settings-bind-icon" />
+                <img src="/social/apple.webp" alt="Apple" className="settings-bind-icon" />
               </button>
               <button type="button" className="settings-bind-btn" disabled title="Facebook（即將開放）">
-                <img src="/social/facebook.png" alt="Facebook" className="settings-bind-icon" />
+                <img src="/social/facebook.webp" alt="Facebook" className="settings-bind-icon" />
               </button>
               <button type="button" className="settings-bind-btn" disabled title="LINE（即將開放）">
-                <img src="/social/line.png" alt="LINE" className="settings-bind-icon" />
+                <img src="/social/line.webp" alt="LINE" className="settings-bind-icon" />
               </button>
             </div>
           </div>

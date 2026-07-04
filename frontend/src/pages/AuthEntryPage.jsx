@@ -16,7 +16,7 @@ function AuthEntryPage({ onBack, onAuthSuccess }) {
         <div className="auth-entry-mask auth-entry-mask-soft" aria-hidden="true" />
 
         <button type="button" className="auth-entry-back" onClick={onBack}>
-          <img src="/retrun.png" alt="" />
+          <img src="/retrun.webp" alt="" />
         </button>
 
         <div className="auth-entry-content">
@@ -30,14 +30,14 @@ function AuthEntryPage({ onBack, onAuthSuccess }) {
               className="auth-entry-button auth-entry-button-primary"
               onClick={() => setAuthMode('login')}
             >
-              <img src="/login.png" alt="" />
+              <img src="/login.webp" alt="" />
             </button>
             <button
               type="button"
               className="auth-entry-button auth-entry-button-secondary"
               onClick={() => setAuthMode('register')}
             >
-              <img src="/register.png" alt="" />
+              <img src="/register.webp" alt="" />
             </button>
           </div>
         </div>

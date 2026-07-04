@@ -83,7 +83,7 @@ function EnterGameModal({ game, auth, minBuyIn = 2000, isOpen, onClose, onGoLogi
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <img className="enter-game-wings" src="/phantom-footer-logo.png" alt="" aria-hidden="true" />
+        <img className="enter-game-wings" src="/phantom-footer-logo.webp" alt="" aria-hidden="true" />
         <p className="auth-modal-kicker">Buy-in</p>
         <h3>帶多少籌碼入場？</h3>
 

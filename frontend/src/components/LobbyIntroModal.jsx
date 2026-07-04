@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import AngelFly from './AngelFly'
 
 const CRITICAL_IMGS = [
-  '/banner/hero-banner.png',
-  '/banner/checkin-banner.png',
-  '/phantom-footer-logo.png',
-  '/quick-actions/checkin.png',
-  '/quick-actions/event.png',
-  '/hot-badge.png',
+  '/banner/hero-banner.webp',
+  '/banner/checkin-banner.webp',
+  '/phantom-footer-logo.webp',
+  '/quick-actions/checkin.webp',
+  '/quick-actions/event.webp',
+  '/hot-badge.webp',
 ]
 
 const MAX_WAIT = 1800   // ms — never block longer than this
@@ -44,7 +44,7 @@ function LobbyIntroModal({ isOpen, onEnter }) {
   if (!ready) {
     return (
       <div className="auth-modal-backdrop lobby-intro-backdrop lobby-loading-screen" role="presentation" aria-label="載入中">
-        <img src="/phantom-footer-logo.png" className="lobby-loading-logo" alt="logo" />
+        <img src="/phantom-footer-logo.webp" className="lobby-loading-logo" alt="logo" />
         <div className="lobby-loading-dots">
           <span /><span /><span />
         </div>

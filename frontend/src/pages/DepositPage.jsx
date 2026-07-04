@@ -49,7 +49,7 @@ function DepositPage({ auth }) {
         <div className="deposit-balance-card">
           <span className="deposit-balance-label">當前餘額</span>
           <span className="deposit-balance-value">
-            <img src="/chip-blackgold.png" alt="" className="deposit-chip-icon" />
+            <img src="/chip-blackgold.webp" alt="" className="deposit-chip-icon" />
             {fmt(auth?.user?.balance ?? 0)}
           </span>
         </div>

@@ -90,7 +90,7 @@ function MyDrawer({ isOpen, onClose, profile, isAuthenticated, isGuest, onGuestL
           {/* ── 未登入 ── */}
           {!isAuthenticated && (
             <div className="my-guest-cta">
-              <img src="/phantom-footer-logo.png" alt="" className="my-guest-logo" />
+              <img src="/phantom-footer-logo.webp" alt="" className="my-guest-logo" />
               <p className="my-guest-hint">登入或以訪客身份繼續</p>
               <button type="button" className="my-guest-btn-login" onClick={onGoLogin}>
                 登入 / 註冊

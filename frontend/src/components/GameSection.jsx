@@ -10,7 +10,7 @@ function GameSection({ items, isLoading, favoriteIds, onToggleFavorite, onGameCl
   return (
     <section className="hot-section">
       <div className="hot-banner-title">
-          <img src="/PopularTags.png" alt="熱門遊戲" />
+          <img src="/PopularTags.webp" alt="熱門遊戲" />
         </div>
       {isLoading ? (
         <div className="hot-grid">
@@ -38,7 +38,7 @@ function GameSection({ items, isLoading, favoriteIds, onToggleFavorite, onGameCl
               <div className="game-art">
                 <img
                   className="game-image"
-                  src="/games/electronic/thunder-joker-straight.png"
+                  src="/games/electronic/thunder-joker-straight.webp"
                   alt={big.name}
                   loading="lazy"
                   onLoad={e => e.currentTarget.classList.add('img-loaded')}

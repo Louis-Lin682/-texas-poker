@@ -17,15 +17,15 @@ function HeroBanner() {
 
   return (
     <section className="hero-banner" ref={sectionRef}>
-      <img className="hero-image" src="/hero-banner.png" alt="Casino hero banner" />
+      <img className="hero-image" src="/hero-banner.webp" alt="Casino hero banner" />
 
       <div className="hero-copy">
         <h1>
-          <img key={animKey} className="hero-banner-text" src="/hero-banner-text.png" alt="hero-banner-text" />
-          <img key={`span-${animKey}`} className="hero-banner-span" src="/hero-banner-span.png" alt="hero-banner-span" />
+          <img key={animKey} className="hero-banner-text" src="/hero-banner-text.webp" alt="hero-banner-text" />
+          <img key={`span-${animKey}`} className="hero-banner-span" src="/hero-banner-span.webp" alt="hero-banner-span" />
         </h1>
         <button type="button" className="cta-button">
-          <img className="hero-banner-span" src="/hero-banner-btn.png" alt="hero-banner-btn" />
+          <img className="hero-banner-span" src="/hero-banner-btn.webp" alt="hero-banner-btn" />
         </button>
       </div>
     </section>

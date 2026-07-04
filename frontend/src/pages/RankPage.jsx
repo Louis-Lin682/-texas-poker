@@ -101,7 +101,7 @@ function RankPage() {
             {/* 1st */}
             <div className="rk-ps rk-ps-1">
               <div className="rk-crown-wrap">
-                <img className="rk-crown-img" src="/crown.png" alt="" />
+                <img className="rk-crown-img" src="/crown.webp" alt="" />
               </div>
               <PodiumAvatar name={first.username} rank={1} />
               <span className="rk-ps-name rk-ps-name-1">{first.username}</span>
