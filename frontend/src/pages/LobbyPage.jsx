@@ -187,11 +187,9 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
         onAvatarClick={() => setIsAvatarPickerOpen(true)}
       />
 
-      {!auth.isAuthenticated && (
-        <div className="pc-angel-float" aria-hidden="true">
-          <div className="angel-fly" style={{ '--af-size': '250px', margin: 0 }} />
-        </div>
-      )}
+      <div className="pc-angel-float" aria-hidden="true">
+        <div className="angel-fly" style={{ '--af-size': '250px', margin: 0 }} />
+      </div>
 
       {/* {showFloatTop && (
         <button
