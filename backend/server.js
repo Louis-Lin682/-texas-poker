@@ -88,7 +88,7 @@ const _AVATAR_FALLBACK = [
 function getAllowedAvatars() {
   try {
     const files = readdirSync(_AVATAR_DIR).filter(f => /\.(png|jpe?g|webp)$/i.test(f))
-    return new Set(['/notice-angel.png', ...files.map(f => `/player/${f}`)])
+    return new Set(['/notice-angel.webp', ...files.map(f => `/player/${f}`)])
   } catch {
     return new Set(_AVATAR_FALLBACK)
   }
@@ -101,7 +101,7 @@ function toPublicUser(user) {
     balance:      user.balance,
     suspended_at: user.suspended_at ?? null,
     is_guest:     user.is_guest    ?? false,
-    avatar:       user.avatar      ?? '/notice-angel.png',
+    avatar:       user.avatar      ?? '/notice-angel.webp',
   }
 }
 

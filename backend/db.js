@@ -247,6 +247,7 @@ export async function initDb() {
       ('dragon-tiger',  'open', ''),
       ('thunder-joker', 'open', '')
     ON CONFLICT (slug) DO NOTHING;
+    UPDATE game_configs SET image_url = REPLACE(image_url, '.png', '.webp') WHERE image_url LIKE '%.png';
 
   `)
 }

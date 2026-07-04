@@ -129,7 +129,7 @@ export class RoomManager {
   // ── Client / connection management ───────────────────────
 
   registerClient(ws, { userId, username, avatar }) {
-    this.clients.set(ws, { userId, username, avatar: avatar ?? '/notice-angel.png', roomId: null })
+    this.clients.set(ws, { userId, username, avatar: avatar ?? '/notice-angel.webp', roomId: null })
   }
 
   unregisterClient(ws) {
