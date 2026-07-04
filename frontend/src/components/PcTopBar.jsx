@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import GuestBanner from './GuestBanner'
 
 function PcTopBar({
   profile,
@@ -76,13 +77,7 @@ function PcTopBar({
             </button>
           </>
         ) : (
-          <button
-            type="button"
-            className="pc-top-login-btn"
-            onClick={onGoLogin}
-          >
-            登入 / 註冊
-          </button>
+          <GuestBanner onGoLogin={onGoLogin} />
         )}
       </div>
     </header>

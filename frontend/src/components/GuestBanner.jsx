@@ -9,7 +9,7 @@ function GuestBanner({ onGoLogin }) {
       </div>
 
       <button type="button" className="guest-login-button" onClick={onGoLogin}>
-        登入
+        登入 / 註冊
       </button>
     </section>
   )

@@ -9,7 +9,7 @@ const FILTERS = [
   { id: 'poker',      label: '撲克' },
 ]
 
-const INITIAL_VISIBLE_COUNT = 12
+const INITIAL_VISIBLE_COUNT = 999
 
 function PreviewOverlay() {
   return (

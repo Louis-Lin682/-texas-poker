@@ -19,10 +19,12 @@ function LogoutConfirmModal({ isOpen, onClose, onConfirm }) {
 
         <div className="logout-modal-actions">
           <button type="button" className="logout-modal-btn logout-modal-btn--cancel" onClick={onClose}>
-            先不要
+            <img src="/auth-button-left.png" alt="" />
+            <span>先不要</span>
           </button>
           <button type="button" className="logout-modal-btn logout-modal-btn--confirm" onClick={onConfirm}>
-            確認登出
+            <img src="/auth-button-right.png" alt="" />
+            <span>確認登出</span>
           </button>
         </div>
       </div>
