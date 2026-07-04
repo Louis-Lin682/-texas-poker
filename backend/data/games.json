@@ -8,7 +8,7 @@
     "status": "playable",
     "badge": "NEW",
     "route": "/thunder-joker",
-    "imageUrl": "/games/electronic/thunder-joker.png",
+    "imageUrl": "/games/electronic/thunder-joker.webp",
     "desc": "閃電小丑降臨！旋轉滾輪集齊 Scatter 解鎖免費遊戲，閃電乘數讓獎金暴增！"
   },
   {
@@ -20,7 +20,7 @@
     "status": "playable",
     "badge": "LIVE",
     "route": "/table",
-    "imageUrl": "/games/poker/texas-holdem-cover.png"
+    "imageUrl": "/games/poker/texas-holdem-cover.webp"
   },
   {
     "id": 101,
@@ -31,7 +31,7 @@
     "status": "playable",
     "badge": "HOT",
     "route": "/big-two",
-    "imageUrl": "/games/poker/big-two.png"
+    "imageUrl": "/games/poker/big-two.webp"
   },
   {
     "id": 102,
@@ -42,7 +42,7 @@
     "status": "playable",
     "badge": "HOT",
     "route": "/blackjack",
-    "imageUrl": "/games/poker/blackjack.png"
+    "imageUrl": "/games/poker/blackjack.webp"
   },
   {
     "id": 112,
@@ -53,7 +53,7 @@
     "status": "playable",
     "badge": "NEW",
     "route": "/dragon-tiger",
-    "imageUrl": "/games/poker/Dragon-Tiger.png"
+    "imageUrl": "/games/poker/Dragon-Tiger.webp"
   },
   {
     "id": 103,
@@ -63,7 +63,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/poker/omaha.png"
+    "imageUrl": "/games/poker/omaha.webp"
   },
   {
     "id": 104,
@@ -73,7 +73,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/poker/short-deck.png"
+    "imageUrl": "/games/poker/short-deck.webp"
   },
   {
     "id": 105,
@@ -83,7 +83,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/poker/seven-card-stud.png"
+    "imageUrl": "/games/poker/seven-card-stud.webp"
   },
   {
     "id": 106,
@@ -93,7 +93,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/poker/five-card-draw.png"
+    "imageUrl": "/games/poker/five-card-draw.webp"
   },
   {
     "id": 107,
@@ -103,7 +103,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/poker/three-card-poker.png"
+    "imageUrl": "/games/poker/three-card-poker.webp"
   },
   {
     "id": 108,
@@ -113,7 +113,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/poker/caribbean-stud.png"
+    "imageUrl": "/games/poker/caribbean-stud.webp"
   },
   {
     "id": 109,
@@ -123,7 +123,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/poker/pai-gow-poker.png"
+    "imageUrl": "/games/poker/pai-gow-poker.webp"
   },
   {
     "id": 110,
@@ -133,7 +133,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/poker/crazy-pineapple.png"
+    "imageUrl": "/games/poker/crazy-pineapple.webp"
   },
   {
     "id": 111,
@@ -143,7 +143,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/poker/omaha-hi-lo.png"
+    "imageUrl": "/games/poker/omaha-hi-lo.webp"
   },
   {
     "id": 14,
@@ -153,7 +153,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/14.png"
+    "imageUrl": "/games/electronic/14.webp"
   },
   {
     "id": 15,
@@ -163,7 +163,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/15.png"
+    "imageUrl": "/games/electronic/15.webp"
   },
   {
     "id": 16,
@@ -173,7 +173,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/16.png"
+    "imageUrl": "/games/electronic/16.webp"
   },
   {
     "id": 17,
@@ -183,7 +183,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/17.png"
+    "imageUrl": "/games/electronic/17.webp"
   },
   {
     "id": 24,
@@ -193,7 +193,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/24.png"
+    "imageUrl": "/games/electronic/24.webp"
   },
   {
     "id": 50,
@@ -203,7 +203,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/50.png"
+    "imageUrl": "/games/electronic/50.webp"
   },
   {
     "id": 51,
@@ -213,7 +213,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/51.png"
+    "imageUrl": "/games/electronic/51.webp"
   },
   {
     "id": 52,
@@ -223,7 +223,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/52.png"
+    "imageUrl": "/games/electronic/52.webp"
   },
   {
     "id": 59,
@@ -233,7 +233,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/59.png"
+    "imageUrl": "/games/electronic/59.webp"
   },
   {
     "id": 6,
@@ -243,7 +243,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/6.png"
+    "imageUrl": "/games/electronic/6.webp"
   },
   {
     "id": 63,
@@ -253,7 +253,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/63.png"
+    "imageUrl": "/games/electronic/63.webp"
   },
   {
     "id": 64,
@@ -263,7 +263,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/64.png"
+    "imageUrl": "/games/electronic/64.webp"
   },
   {
     "id": 65,
@@ -273,7 +273,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/65.png"
+    "imageUrl": "/games/electronic/65.webp"
   },
   {
     "id": 66,
@@ -283,7 +283,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/66.png"
+    "imageUrl": "/games/electronic/66.webp"
   },
   {
     "id": 68,
@@ -293,7 +293,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/68.png"
+    "imageUrl": "/games/electronic/68.webp"
   },
   {
     "id": 69,
@@ -303,7 +303,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/69.png"
+    "imageUrl": "/games/electronic/69.webp"
   },
   {
     "id": 7,
@@ -313,7 +313,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/7.png"
+    "imageUrl": "/games/electronic/7.webp"
   },
   {
     "id": 70,
@@ -323,7 +323,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/70.png"
+    "imageUrl": "/games/electronic/70.webp"
   },
   {
     "id": 72,
@@ -333,7 +333,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/72.png"
+    "imageUrl": "/games/electronic/72.webp"
   },
   {
     "id": 73,
@@ -343,7 +343,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/73.png"
+    "imageUrl": "/games/electronic/73.webp"
   },
   {
     "id": 8,
@@ -353,7 +353,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/8.png"
+    "imageUrl": "/games/electronic/8.webp"
   },
   {
     "id": 80,
@@ -363,7 +363,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/80.png"
+    "imageUrl": "/games/electronic/80.webp"
   },
   {
     "id": 82,
@@ -373,7 +373,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/82.png"
+    "imageUrl": "/games/electronic/82.webp"
   },
   {
     "id": 83,
@@ -383,7 +383,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/83.png"
+    "imageUrl": "/games/electronic/83.webp"
   },
   {
     "id": 85,
@@ -393,7 +393,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/85.png"
+    "imageUrl": "/games/electronic/85.webp"
   },
   {
     "id": 86,
@@ -403,7 +403,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/86.png"
+    "imageUrl": "/games/electronic/86.webp"
   },
   {
     "id": 88,
@@ -413,7 +413,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/88.png"
+    "imageUrl": "/games/electronic/88.webp"
   },
   {
     "id": 95,
@@ -423,7 +423,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/95.png"
+    "imageUrl": "/games/electronic/95.webp"
   },
   {
     "id": 96,
@@ -433,7 +433,7 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/96.png"
+    "imageUrl": "/games/electronic/96.webp"
   },
   {
     "id": 97,
@@ -443,7 +443,7 @@
     "featured": false,
     "status": "maintenance",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/97.png"
+    "imageUrl": "/games/electronic/97.webp"
   },
   {
     "id": 98,
@@ -453,6 +453,6 @@
     "featured": false,
     "status": "preview",
     "badge": "SOON",
-    "imageUrl": "/games/electronic/98.png"
+    "imageUrl": "/games/electronic/98.webp"
   }
 ]
