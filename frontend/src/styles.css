@@ -2850,6 +2850,7 @@ button.is-pressing {
   background:
     radial-gradient(circle at 50% 34%, rgba(246, 199, 90, 0.2), transparent 26%),
     linear-gradient(180deg, rgba(7, 7, 10, 0.5), rgba(7, 7, 10, 0.8) 42%, rgba(7, 7, 10, 0.94) 100%);
+  border-radius: 22px;  
 }
 
 .maintenance-overlay-image-wrap {
@@ -7080,6 +7081,29 @@ button.is-pressing {
   background-repeat: no-repeat;
   background-position: center;
   margin-bottom: 112px;
+}
+
+.settling-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 35, 0.92);
+  color: #e2ce87;
+  border: 1px solid rgba(226, 206, 135, 0.35);
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 9999;
+  pointer-events: none;
+  animation: toastFadeIn 0.2s ease;
+}
+
+@keyframes toastFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /*  POKER TABLE PAGE*/

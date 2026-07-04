@@ -94,6 +94,8 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
   })
 
   const [balanceReady, setBalanceReady] = useState(false)
+  const [settlingMsg, setSettlingMsg] = useState(false)
+  const settlingTimerRef = useRef(null)
 
   useEffect(() => {
     if (!auth.isAuthenticated || !isActive) {
@@ -131,6 +133,12 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
     }
     if (!auth.isAuthenticated) {
       openAuthPrompt('game')
+      return
+    }
+    if (auth.isAuthenticated && !balanceReady) {
+      clearTimeout(settlingTimerRef.current)
+      setSettlingMsg(true)
+      settlingTimerRef.current = setTimeout(() => setSettlingMsg(false), 3000)
       return
     }
     if (auth.user?.is_guest && (auth.user?.balance ?? 0) === 0) {
@@ -337,6 +345,10 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
             </div>
           </div>
         </div>
+      )}
+
+      {settlingMsg && (
+        <div className="settling-toast">籌碼結算中，請稍候再進入遊戲</div>
       )}
 
       <LogoutConfirmModal
