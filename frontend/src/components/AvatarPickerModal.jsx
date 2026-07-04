@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { API_BASE_URL } from '../services/apiClient'
 
 function AvatarPickerModal({ isOpen, currentAvatar, onSelect, onClose }) {
   const [avatars,  setAvatars]  = useState([])
@@ -19,7 +20,7 @@ function AvatarPickerModal({ isOpen, currentAvatar, onSelect, onClose }) {
 
   useEffect(() => {
     if (!isOpen) return
-    fetch('/api/avatars')
+    fetch(`${API_BASE_URL}/avatars`)
       .then(r => r.json())
       .then(data => setAvatars(data.avatars ?? []))
       .catch(() => {})
