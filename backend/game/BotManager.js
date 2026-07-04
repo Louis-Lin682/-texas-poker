@@ -7,6 +7,14 @@ import { query as dbQuery } from '../db.js'
 const THINK_MIN = 350
 const THINK_MAX = 800
 
+const BOT_AVATARS = [
+  '/player/player-avatar-01.png',
+  '/player/player-avatar-02.png',
+  '/player/player-avatar-03.png',
+  '/player/player-avatar-04.png',
+  '/player/player-avatar-05.png',
+]
+
 const BOT_DEFS = [
   { username: '阿明', balance: 10000 },
   { username: '小龍', balance: 10000 },
@@ -77,7 +85,8 @@ export class BotManager {
         if (list) list.splice(list.indexOf(t), 1)
 
         try {
-          game.addPlayer({ id: botId, username: botInfo.username, balance: buyIn })
+          const avatar = BOT_AVATARS[Math.floor(Math.random() * BOT_AVATARS.length)]
+          game.addPlayer({ id: botId, username: botInfo.username, balance: buyIn, avatar })
           // Re-assert roomId: _handleDragonTigerTurn may have cleared it while this
           // bot was still pending (not yet in game.players). Must be set before
           // syncBalances runs or it will skip this bot entirely (info.roomId !== game.roomId).

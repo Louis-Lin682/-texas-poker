@@ -66,7 +66,7 @@ export function usePokerSocket({ minBuyIn = 2000 } = {}) {
 
         switch (msg.type) {
           case 'room_list':
-            setRooms(msg.rooms.filter(r => r.gameType !== 'big-two'))
+            setRooms(msg.rooms.filter(r => r.gameType === 'texas-holdem'))
             break
           case 'room_joined':
             setRoomId(msg.roomId)

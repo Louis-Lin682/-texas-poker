@@ -75,6 +75,7 @@ export async function initDb() {
     ALTER TABLE users  ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
     ALTER TABLE users  ADD COLUMN IF NOT EXISTS is_guest     BOOLEAN NOT NULL DEFAULT false;
     ALTER TABLE users  ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+    ALTER TABLE users  ADD COLUMN IF NOT EXISTS avatar       TEXT;
     CREATE INDEX IF NOT EXISTS idx_ledger_user   ON ledger (user_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_users_guest   ON users  (is_guest, last_seen_at);
 

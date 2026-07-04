@@ -71,6 +71,7 @@ export class RoomManager {
     const isBigTwo      = options.gameType === 'big-two'
     const isBlackjack   = options.gameType === 'blackjack'
     const isDragonTiger = options.gameType === 'dragon-tiger'
+
     const game = isBigTwo
       ? new BigTwoGame({ roomId, ...options })
       : isBlackjack
@@ -82,8 +83,12 @@ export class RoomManager {
     game.onEvent = (event) => this._handleGameEvent(event)
 
     this.rooms.set(roomId, game)
-    // Dragon Tiger runs a continuous loop independent of player count
-    if (isDragonTiger) game.start()
+    if (isDragonTiger) {
+      dbQuery('SELECT COALESCE(MAX(round_id), 0) AS max_id FROM dt_round_history')
+        .then(({ rows }) => { game.roundId = Number(rows[0].max_id) })
+        .catch(() => {})
+        .finally(() => game.start())
+    }
     this._broadcastRoomList()
     return roomId
   }
@@ -123,24 +128,15 @@ export class RoomManager {
 
   // ── Client / connection management ───────────────────────
 
-  registerClient(ws, { userId, username }) {
-    this.clients.set(ws, { userId, username, roomId: null })
+  registerClient(ws, { userId, username, avatar }) {
+    this.clients.set(ws, { userId, username, avatar: avatar ?? '/notice-angel.png', roomId: null })
   }
 
   unregisterClient(ws) {
     const info = this.clients.get(ws)
     if (info?.roomId) {
       const game = this.rooms.get(info.roomId)
-      const needsGrace =
-        game?.gameSlug === 'dragon-tiger' ||
-        (game?.gameSlug === 'big-two'       && game?.phase === 'playing') ||
-        (game?.gameSlug === 'blackjack'     && game?.phase !== 'waiting') ||
-        (game?.gameSlug === 'texas-holdem'  && game?.phase !== 'waiting')
-      if (needsGrace) {
-        this._startGracePeriod(info.userId, info.roomId)
-      } else {
-        this._leaveRoom(ws, info)
-      }
+      this._leaveRoom(ws, info)
     }
     this.clients.delete(ws)
   }
@@ -264,30 +260,7 @@ export class RoomManager {
   async _joinRoom(ws, info, roomId, buyIn) {
     if (info.roomId) this._leaveRoom(ws, info)
 
-    // Grace-period reconnect (DT / Big Two playing / Blackjack / Texas in-progress)
-    const grace = this._graceTimers.get(info.userId)
-    if (grace) {
-      clearTimeout(grace.timer)
-      this._graceTimers.delete(info.userId)
-      if (grace.roomId === roomId) {
-        // Same room — restore session without DB deduction
-        const game = this.rooms.get(roomId)
-        if (game) {
-          info.roomId = roomId
-          this._send(ws, {
-            type:   'room_joined',
-            roomId,
-            myId:   info.userId,
-            state:  game.stateForPlayer(info.userId),
-          })
-          this._broadcastRoomList()
-          return
-        }
-      } else {
-        // Joining a different room — flush grace immediately
-        this._expireGrace(info.userId, grace.roomId)
-      }
-    }
+    // (Grace period removed — balance is returned immediately on disconnect)
 
     // Reject suspended users
     if (this.pool) {
@@ -309,7 +282,12 @@ export class RoomManager {
         'SELECT balance FROM users WHERE id = $1', [info.userId],
       )
       buyIn = Number(balRow?.balance ?? 0)
-      if (buyIn <= 0) return this._sendError(ws, '餘額不足，無法進場')
+      if (buyIn <= 0) {
+        const hasPending = [...this.rooms.values()].some(
+          g => g.players.some(p => p.id === info.userId && p._left)
+        )
+        throw new Error(hasPending ? '籌碼結算中，請稍後再試' : '餘額不足，無法加入房間')
+      }
       await dbQuery('UPDATE users SET balance = 0 WHERE id = $1', [info.userId])
     }
 
@@ -319,7 +297,7 @@ export class RoomManager {
       [info.userId, 'buy_in', -buyIn, roomId, game.gameSlug],
     ).catch(err => console.error('[ledger buy_in]', err))
 
-    game.addPlayer({ id: info.userId, username: info.username, balance: buyIn })
+    game.addPlayer({ id: info.userId, username: info.username, balance: buyIn, avatar: info.avatar })
     info.roomId = roomId
     this._auditChips(`join:human buyIn=${buyIn}`, roomId)
 
@@ -751,7 +729,9 @@ export class RoomManager {
     if (!actingId) return
 
     const isBot = this.botManager?.isBot(actingId) ?? false
-    const timeout = isBot ? 5_000 : 30_000
+    if (!isBot) return
+
+    const timeout = 5_000
 
     const t = setTimeout(() => {
       this._afkTimers.delete(roomId)

@@ -79,11 +79,11 @@ export class BlackjackGame {
 
   // ── Public API ────────────────────────────────────────────
 
-  addPlayer({ id, username, balance }) {
+  addPlayer({ id, username, balance, avatar }) {
     if (this.players.length >= this.maxPlayers) throw new Error('房間已滿')
     if (this.phase !== 'waiting') throw new Error('遊戲進行中，無法加入')
     this.players.push({
-      id, username, balance,
+      id, username, balance, avatar,
       ready: false,
       bet: 0, insuranceBet: 0, insuranceDecided: false,
       hands: [], currentHandIdx: 0,
@@ -162,6 +162,7 @@ export class BlackjackGame {
       resultDeadline: this.resultDeadline,
       startDeadline: this.startDeadline,
       actionDeadline: this.actionDeadline,
+      maxPlayers: this.maxPlayers,
       minBet: this.minBet,
       maxBet: this.maxBet,
       betUnit: this.betUnit,
@@ -605,6 +606,7 @@ export class BlackjackGame {
       id: p.id,
       username: p.username,
       balance: p.balance,
+      avatar: p.avatar,
       ready: p.ready,
       bet: p.bet,
       insuranceBet: p.insuranceBet,

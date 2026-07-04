@@ -43,81 +43,94 @@ function BtBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
 }
 
 // ── Lobby ─────────────────────────────────────────────────────────────────────
-const BET_UNITS = [10, 50, 100, 500]
+const BET_UNIT_PRESETS = [
+  { label: '低限', betUnit: 10,  img: '/texas-holdem/room-green-felt-button.png',   cardImg: '/texas-holdem/room-card-green-felt.png'   },
+  { label: '中限', betUnit: 50,  img: '/texas-holdem/room-golden-hall-button.png',  cardImg: '/texas-holdem/room-card-golden-hall.png'  },
+  { label: '高限', betUnit: 100, img: '/texas-holdem/room-royal-hall-button.png',   cardImg: '/texas-holdem/room-card-royal-hall.png'   },
+  { label: '豪華', betUnit: 500, img: '/texas-holdem/room-supreme-hall-button.png', cardImg: '/texas-holdem/room-card-supreme-hall.png' },
+]
+
 function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }) {
   const isConnected = status === 'connected'
   const [spinning, setSpinning] = useState(false)
-
-  const [betUnit, setBetUnit] = useState(BET_UNITS[0])
+  const [selectedIdx, setSelectedIdx] = useState(0)
 
   function handleRefresh() {
     if (spinning) return
-    setSpinning(true)
-    onRefresh()
+    setSpinning(true); onRefresh()
     setTimeout(() => setSpinning(false), 700)
   }
+
+  const selectedPreset = BET_UNIT_PRESETS[selectedIdx]
+  const filteredRooms = rooms.filter(r => (r.betUnit ?? 10) === selectedPreset.betUnit)
 
   return (
     <div className="pt-lobby">
       <div className="pt-lobby-head">
         <span className="pt-lobby-title">選擇房間</span>
-        <button type="button" className={`pt-lobby-refresh${spinning ? ' is-spinning' : ''}`} onClick={handleRefresh} title="重新整理">
-          <img src="/reload.png" alt="重整" />
-        </button>
-      </div>
-
-      <div className="pt-bet-unit-row">
-        <span className="pt-bet-unit-label">底分</span>
-        <div className="pt-bet-unit-btns">
-          {BET_UNITS.map(u => (
-            <button
-              key={u}
-              type="button"
-              className={`pt-bet-unit-btn${betUnit === u ? ' is-active' : ''}`}
-              onClick={() => setBetUnit(u)}
-            >
-              {u}
-            </button>
-          ))}
+        <div className="pt-lobby-head-actions">
+          <button type="button" className={`pt-lobby-refresh${spinning ? ' is-spinning' : ''}`} onClick={handleRefresh} title="重新整理">
+            <img src="/reload.png" alt="重整" />
+          </button>
+          <button type="button" className="pt-lobby-create"
+            onClick={() => onCreateRoom({ buyIn, betUnit: selectedPreset.betUnit })}
+            disabled={!isConnected}>
+            + 建立新房間
+          </button>
         </div>
       </div>
 
-      <button type="button" className="pt-lobby-create" onClick={() => onCreateRoom({ buyIn, betUnit })} disabled={!isConnected}>
-        + 建立新房間（底分 {betUnit}）
-      </button>
+      <div className="pt-bet-unit-btns">
+        {BET_UNIT_PRESETS.map((p, i) => (
+          <button key={i} type="button"
+            className={`pt-bet-unit-btn${selectedIdx === i ? ' is-active' : ''}`}
+            onClick={() => setSelectedIdx(i)}>
+            <img src={p.img} alt={p.label} />
+          </button>
+        ))}
+      </div>
 
       <div className="pt-room-list">
-        {rooms.length === 0 ? (
-          <div className="pt-room-empty">目前沒有大老二房間，來建立第一間吧！</div>
-        ) : rooms.map(r => (
-          <div key={r.id} className="pt-room-item">
-            <div className="pt-room-meta">
-              <span className="pt-room-id-tag">#{r.id}</span>
-              <span className="pt-room-blinds">單位 {r.betUnit ?? 10}</span>
-              <span className="pt-room-phase">{BT_PHASE[r.phase] ?? r.phase}</span>
+        {filteredRooms.length === 0 ? (
+          <div className="pt-room-empty">此廳暫無房間，來建立第一間吧！</div>
+        ) : filteredRooms.map(r => {
+          const preset = BET_UNIT_PRESETS.find(p => p.betUnit === (r.betUnit ?? 10)) ?? null
+          return (
+            <div key={r.id} className="pt-room-item">
+              {preset && (
+                <div className="pt-room-img-wrap">
+                  <img src={preset.img} alt={preset.label} />
+                </div>
+              )}
+              <div className="pt-room-info">
+                <div className="pt-room-left">
+                  <span className="pt-room-id-tag">#{r.id.slice(0, 6).toUpperCase()}</span>
+                  <span className="pt-room-blinds">底分 {r.betUnit ?? 10}</span>
+                  <span className="pt-room-players">{r.playerCount}/{r.maxPlayers} 玩家</span>
+                </div>
+                <div className="pt-room-right">
+                  <span className="pt-room-phase">{BT_PHASE[r.phase] ?? r.phase}</span>
+                  <button type="button" className="pt-room-join"
+                    onClick={() => onJoinRoom(r.id, buyIn)}
+                    disabled={!isConnected || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers}>
+                    加入
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="pt-room-bottom">
-              <span className="pt-room-players">{r.playerCount} / {r.maxPlayers} 玩家</span>
-              <button
-                type="button"
-                className="pt-room-join"
-                onClick={() => onJoinRoom(r.id, buyIn)}
-                disabled={!isConnected || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers}
-              >
-                加入
-              </button>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
 }
 
 // ── Waiting room ───────────────────────────────────────────────────────────────
-function WaitingView({ gameState, myId, onReady, onUnready, onLeaveRoom }) {
+function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom }) {
   const players = gameState?.players ?? []
   const me = players.find(p => p.id === myId)
+  const maxPlayers = gameState?.maxPlayers ?? 4
+  const betUnit = gameState?.betUnit
   const countdownEnd = gameState?.countdownEnd ?? null
   const [cdLeft, setCdLeft] = useState(0)
 
@@ -134,24 +147,38 @@ function WaitingView({ gameState, myId, onReady, onUnready, onLeaveRoom }) {
 
   return (
     <div className="pt-wait">
-      <div className="pt-wait-title">等待玩家</div>
+      <div className="pt-wait-plaque">
+        <img src="/waiting-player-plaque.png" alt="" className="pt-wait-plaque-img" />
+        <div className="pt-wait-plaque-body">
+          <div className="pt-wait-plaque-count">
+            <span className="pt-wait-plaque-num">{players.length}/{maxPlayers}</span>
+            <span className="pt-wait-plaque-unit">位玩家</span>
+          </div>
+          <div className="pt-wait-plaque-meta">
+            {roomId && <span className="pt-wait-plaque-room">#{roomId.slice(0, 6).toUpperCase()}</span>}
+            {betUnit && <span className="pt-wait-plaque-blinds">底分 {betUnit}</span>}
+          </div>
+        </div>
+      </div>
+
       <div className="pt-wait-players">
         {players.map(p => (
           <div key={p.id} className={`pt-wait-player${p.id === myId ? ' is-me' : ''}`}>
             <span className={`pt-wait-dot${p.ready ? ' is-ready' : ''}`} />
-            <span className="pt-wait-av">{p.username[0].toUpperCase()}</span>
-            <span className="pt-wait-name">{p.username}</span>
-            <span className="pt-wait-chips">{fmt(p.balance)}</span>
-            {p.ready && <span className="pt-wait-ready-tag">已準備</span>}
+            <div className="pt-wait-av"><img src={p.avatar} alt="" /></div>
+            <div className="pt-wait-info">
+              <span className="pt-wait-name">{p.username}</span>
+              <span className={`pt-wait-status${p.ready ? ' is-ready' : ''}`}>{p.ready ? '已準備' : '未準備'}</span>
+            </div>
+            <div className="pt-wait-chips-wrap">
+              <img src="/chip-gold.png" className="pt-wait-chip-img" alt="" />
+              <span className="pt-wait-chips">{fmt(p.balance)}</span>
+            </div>
           </div>
         ))}
       </div>
-      {isCountingDown ? (
-        <div className="pt-wait-countdown">
-          <span className="pt-wait-cd-num">{cdLeft}</span>
-          <span className="pt-wait-cd-label">秒後自動開始</span>
-        </div>
-      ) : (
+
+      {!isCountingDown && (
         <p className="pt-wait-hint">
           {players.length < 3
             ? `還需要 ${3 - players.length} 名玩家`
@@ -160,13 +187,23 @@ function WaitingView({ gameState, myId, onReady, onUnready, onLeaveRoom }) {
               : '等待所有人準備'}
         </p>
       )}
-      <button type="button"
-        className={`pt-wait-start${me?.ready ? ' is-ready' : ''}`}
-        onClick={me?.ready ? onUnready : onReady}
-        disabled={lockedIn}>
-        {me?.ready ? '✓ 已準備好' : '我準備好了'}
-      </button>
-      <button type="button" className="pt-wait-leave" onClick={onLeaveRoom}>離開房間</button>
+
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        {isCountingDown && (
+          <div className="pt-wait-countdown">
+            <span className="pt-wait-cd-num">{cdLeft}</span>
+            <span className="pt-wait-cd-label">秒後自動開始</span>
+          </div>
+        )}
+        <button type="button" className="pt-wait-ready-btn"
+          onClick={me?.ready ? onUnready : onReady} disabled={lockedIn}>
+          <img src="/ready-button.png" alt="" className="pt-wait-ready-img" />
+          <span className="pt-wait-ready-text">{me?.ready ? '✓ 已準備好' : '我準備好了'}</span>
+        </button>
+        <button type="button" className="pt-wait-leave-btn" onClick={onLeaveRoom}>
+          <img src="/leave-room-button.png" alt="" className="pt-wait-leave-img" />
+        </button>
+      </div>
     </div>
   )
 }
@@ -216,14 +253,14 @@ function ResultOverlay({ gameResult }) {
 const OPP_CARD_W = 14
 const OPP_PIVOT  = 72
 
-function OppFan({ count, compact = false }) {
+function OppFan({ count, compact = false, cardW = OPP_CARD_W, cardH = 20, pivot = OPP_PIVOT }) {
   const n      = Math.min(count, 13)
   const spread = compact
     ? Math.min(38, Math.max(10, n * 3))
     : Math.min(62, Math.max(16, n * 4.2))
-  const half   = OPP_CARD_W / 2
+  const half   = cardW / 2
   return (
-    <div className="bt-opp-fan">
+    <div className="bt-opp-fan" style={{ height: cardH }}>
       {Array(n).fill(0).map((_, idx) => {
         const t   = n > 1 ? idx / (n - 1) - 0.5 : 0
         const deg = t * spread
@@ -233,9 +270,11 @@ function OppFan({ count, compact = false }) {
             className="bt-opp-back"
             style={{
               left:            `calc(50% - ${half}px)`,
+              width:           cardW,
+              height:          cardH,
               zIndex:          idx,
               transform:       `rotate(${deg}deg)`,
-              transformOrigin: `${half}px calc(100% + ${OPP_PIVOT}px)`,
+              transformOrigin: `${half}px calc(100% + ${pivot}px)`,
             }}
           />
         )
@@ -244,14 +283,14 @@ function OppFan({ count, compact = false }) {
   )
 }
 
-function OppSeat({ player, isActing, winners, compact = false }) {
+function OppSeat({ player, isActing, winners, compact = false, cardW, cardH, pivot }) {
   const rank  = winners?.find(w => w.id === player.id)?.rank
   const count = player.cardCount
   return (
     <div className={`bt-opp${isActing ? ' is-acting' : ''}${player.status === 'finished' ? ' is-finished' : ''}`}>
       {isActing && <div className="pt-acting-arrow" />}
       <div className="bt-opp-top">
-        <div className="bt-opp-avatar">{player.username[0].toUpperCase()}</div>
+        <div className="bt-opp-avatar"><img src={player.avatar} alt="" /></div>
         {!compact && (
           <div className="bt-opp-info">
             <div className="bt-opp-name">{player.username}</div>
@@ -259,11 +298,16 @@ function OppSeat({ player, isActing, winners, compact = false }) {
           </div>
         )}
       </div>
-      {compact && <div className="bt-opp-name">{player.username}</div>}
+      {compact && (
+        <div className="bt-opp-info" style={{ alignItems: 'center' }}>
+          <div className="bt-opp-name">{player.username}</div>
+          <div className="bt-opp-bal">{fmt(player.balance)}</div>
+        </div>
+      )}
       {player.status === 'finished'
         ? <span className="bt-opp-done">第 {rank ?? '?'} 名</span>
         : <>
-            <OppFan count={count} compact={compact} />
+            <OppFan count={count} compact={compact} cardW={cardW} cardH={cardH} pivot={pivot} />
             <span className="bt-opp-count">{count}張</span>
           </>
       }
@@ -383,15 +427,28 @@ function getHint(hand, pile) {
 // ── Deal sound ────────────────────────────────────────────────────────────────
 
 // ── Game view ─────────────────────────────────────────────────────────────────
-const CARD_W = 50   // pcard-md width
-const PIVOT_Y = 180 // pivot distance below card bottom
-
 const AFK_SECS = 30
 
+function useIsPC() {
+  const [isPC, setIsPC] = useState(() => window.innerWidth >= 768)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const fn = e => setIsPC(e.matches)
+    mq.addEventListener('change', fn)
+    return () => mq.removeEventListener('change', fn)
+  }, [])
+  return isPC
+}
+
 function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
+  const isPC = useIsPC()
+  const CARD_W = isPC ? 56 : 50
+  const PIVOT_Y = isPC ? 220 : 180
   const [selected,    setSelected]    = useState([])
   const [isDealing,   setIsDealing]   = useState(false)
   const [turnSeconds, setTurnSeconds] = useState(null)
+  const [hintMsg,     setHintMsg]     = useState(null)
+  const hintMsgTimer = useRef(null)
   const prevPlayerRef  = useRef(null)
   const prevHandLenRef = useRef(0)
   const afkIntervalRef = useRef(null)
@@ -404,6 +461,7 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
   const passCount = gameState?.passCount ?? 0
   const winners   = gameState?.winners ?? []
   const isMyTurn  = currentId === myId
+  const myPlayer  = players.find(p => p.id === myId) ?? null
   const opponents = players.filter(p => p.id !== myId)
   const canPass   = !!pile && pile.playerId !== myId
   const pileOwner = pile ? players.find(p => p.id === pile.playerId)?.username : null
@@ -418,7 +476,12 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
   const n        = myHand.length
   const SPREAD   = Math.min(60, Math.max(24, n * 5.5))
   const halfCard = CARD_W / 2
-  const fanH     = 80   // fan container height
+  const fanH     = isPC ? 110 : 80
+  const cardSize = isPC ? 'lg' : 'md'
+  const pileSize = isPC ? 'lg' : 'sm'
+  const oppCardW = isPC ? CARD_W : 14
+  const oppCardH = isPC ? 80 : 20
+  const oppPivot = isPC ? 220 : 72
 
   useEffect(() => {
     if (prevPlayerRef.current !== currentId) {
@@ -455,7 +518,16 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
     setSelected(prev => prev.includes(card) ? prev.filter(c => c !== card) : [...prev, card])
   }
   function handlePlay() { onPlay(selected); setSelected([]) }
-  function handleHint() { setSelected(getHint(myHand, pile)) }
+  function handleHint() {
+    const hint = getHint(myHand, pile)
+    if (hint.length === 0) {
+      clearTimeout(hintMsgTimer.current)
+      setHintMsg('沒有可出的牌組')
+      hintMsgTimer.current = setTimeout(() => setHintMsg(null), 2000)
+      return
+    }
+    setSelected(hint)
+  }
 
   return (
     <div className="bt-game">
@@ -465,21 +537,23 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
 
         {/* Top opponent */}
         <div className="bt-seat bt-seat-top">
-          {oppTop && <OppSeat player={oppTop} isActing={currentId === oppTop.id} winners={winners} />}
+          {oppTop && <OppSeat player={oppTop} isActing={currentId === oppTop.id} winners={winners} cardW={oppCardW} cardH={oppCardH} pivot={oppPivot} />}
         </div>
 
         {/* Left opponent */}
         <div className="bt-seat bt-seat-left">
-          {oppLeft && <OppSeat player={oppLeft} isActing={currentId === oppLeft.id} winners={winners} compact />}
+          {oppLeft && <OppSeat player={oppLeft} isActing={currentId === oppLeft.id} winners={winners} compact cardW={oppCardW} cardH={oppCardH} pivot={oppPivot} />}
         </div>
 
         {/* ── Round table ── */}
         <div className="bt-table-wrap">
           <div className="bt-table-surface">
-            <div className={`bt-turn-bar${isMyTurn ? ' bt-my-turn' : ''}${turnSeconds !== null && turnSeconds <= 10 ? ' bt-turn-urgent' : ''}`}>
-              {isMyTurn
-                ? `✦ 輪到你行動 (${turnSeconds ?? AFK_SECS}s)`
-                : `等待 ${players.find(p => p.id === currentId)?.username ?? '…'} 出牌`
+            <div className={`bt-turn-bar${isMyTurn ? ' bt-my-turn' : ''}${isMyTurn && turnSeconds !== null && turnSeconds <= 10 ? ' bt-turn-urgent' : ''}`}>
+              {hintMsg
+                ? hintMsg
+                : isMyTurn
+                  ? `✦ 輪到你行動${turnSeconds !== null ? `（${turnSeconds}s）` : ''}`
+                  : `等待 ${players.find(p => p.id === currentId)?.username ?? '…'} 出牌`
               }
             </div>
 
@@ -495,7 +569,7 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
                     <div className="bt-pile-ghost bt-pile-ghost-1" />
                     <div className="bt-pile-ghost bt-pile-ghost-2" />
                     <div className="bt-pile-cards">
-                      {pile.cards.map((c, i) => <PlayingCard key={i} card={c} size="sm" />)}
+                      {pile.cards.map((c, i) => <PlayingCard key={i} card={c} size={pileSize} />)}
                     </div>
                   </div>
                 </div>
@@ -509,12 +583,10 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
 
         {/* Right opponent */}
         <div className="bt-seat bt-seat-right">
-          {oppRight && <OppSeat player={oppRight} isActing={currentId === oppRight.id} winners={winners} compact />}
+          {oppRight && <OppSeat player={oppRight} isActing={currentId === oppRight.id} winners={winners} compact cardW={oppCardW} cardH={oppCardH} pivot={oppPivot} />}
         </div>
         {/* ── Bottom: error + buttons + my fan ── */}
       <div className="bt-bottom">
-
-        {gameError && <div key={gameError} className="bt-game-error">{gameError}</div>}
 
         <div className="bt-action-bar">
           <BtBtn src="/big-two/hint.png" alt="提示"
@@ -549,11 +621,20 @@ function GameView({ gameState, myId, lastAction, gameError, onPlay, onPass }) {
                   onClick={() => isMyTurn && toggleCard(card)}
                   disabled={!isMyTurn}
                 >
-                  <PlayingCard card={card} size="md" />
+                  <PlayingCard card={card} size={cardSize} />
                 </button>
               )
             })}
           </div>
+           {myPlayer && (
+            <div className="bt-me-info">
+              <div className={`bt-opp-avatar${isMyTurn ? ' is-acting' : ''}`}><img src={myPlayer.avatar} alt="" /></div>
+              <div className="bt-me-stats">
+                <div className="bt-opp-name">{myPlayer.username}</div>
+                <div className="bt-opp-bal">{fmt(myPlayer.balance)}</div>
+              </div>
+          </div>
+        )}
         </div>
 
       </div>
@@ -585,7 +666,7 @@ function BigTwoTablePage({ auth }) {
 
   useEffect(() => {
     if (cashoutBalance !== null) auth?.applyBalance?.(cashoutBalance)
-  }, [cashoutBalance, auth])
+  }, [cashoutBalance]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const BT_VOICE = {
     single: 'bt_single', pair: 'bt_pair', triple: 'bt_triple',
@@ -755,24 +836,27 @@ function BigTwoTablePage({ auth }) {
       )}
 
       {/* Header */}
-      <header className="pt-header">
-        <button type="button" className="pt-back" onClick={handleBack}>
-          <img src="/arrow.png" alt="返回" />
-        </button>
-        <div className="pt-header-info">
-          {roomId
-            ? <span className="pt-room-label">房間 #{roomId}</span>
-            : <img src="/big-two/big-two.png" alt="大老二" className="pt-room-label-img" />
-          }
-          {roomId && <span className="pt-blinds">單位 {betUnit}</span>}
-        </div>
-        {isPlaying && <span className="pt-phase-badge">{BT_PHASE[phase]}</span>}
-        <button type="button" className="pt-mute-btn" onClick={toggleGameMute} title={isGameMuted ? '開啟音樂' : '關閉音樂'}>
-          <img src={isGameMuted ? '/enable-sound.png' : '/volume.png'} alt="" />
-        </button>
-      </header>
+      <div className="pt-header-con">
+        <header className="pt-header">
+          <button type="button" className="pt-back" onClick={handleBack}>
+            <img src="/arrow.png" alt="返回" />
+          </button>
+          <div className="pt-header-info">
+            {roomId
+              ? <span className="pt-room-label">房間 #{roomId}</span>
+              : <img src="/big-two/big-two.png" alt="大老二" className="pt-room-label-img" />
+            }
+            {roomId && <span className="pt-blinds">底分 {betUnit}</span>}
+          </div>
+          {isPlaying && <span className="pt-phase-badge">{BT_PHASE[phase]}</span>}
+          <button type="button" className="pt-mute-btn" onClick={toggleGameMute} title={isGameMuted ? '開啟音樂' : '關閉音樂'}>
+            <img src={isGameMuted ? '/enable-sound.png' : '/volume.png'} alt="" />
+          </button>
+        </header>
+      </div>
 
       <div className="pt-content">
+      {error && <div className="pt-error-bar">{error}</div>}
 
       {!roomId && status === 'connected' && (
         <LobbyView
@@ -789,6 +873,7 @@ function BigTwoTablePage({ auth }) {
         <WaitingView
           gameState={gameState}
           myId={myId}
+          roomId={roomId}
           onReady={setReady}
           onUnready={unready}
           onLeaveRoom={leaveRoom}

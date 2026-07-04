@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import HeartIcon from './HeartIcon'
 import MaintenanceSpriteOverlay from './MaintenanceSpriteOverlay'
 
@@ -34,6 +34,7 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
   }))
 
   const activeIndex = FILTERS.findIndex((f) => f.id === activeFilter)
+  const sentinelRef = useRef(null)
 
   // Precompute per-filter index for each item (for show-more cutoff)
   const enriched = useMemo(() => {
@@ -57,6 +58,24 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
   const visibleInFilter = visibleCounts[activeFilter] ?? INITIAL_VISIBLE_COUNT
   const hasMore = totalInFilter > visibleInFilter
   const noFavorites = activeFilter === 'favorites' && totalInFilter === 0
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el || !hasMore) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCounts((c) => ({
+            ...c,
+            [activeFilter]: (c[activeFilter] ?? INITIAL_VISIBLE_COUNT) + INITIAL_VISIBLE_COUNT,
+          }))
+        }
+      },
+      { rootMargin: '600px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasMore, activeFilter, visibleInFilter])
 
   function selectFilter(id) {
     if (id === activeFilter) return
@@ -115,7 +134,7 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
             return (
               <article
                 key={game.id}
-                className={`game-tile all-game-tile ${isMaintenance ? 'is-maintenance' : ''} ${isPreview ? 'is-preview' : ''}`}
+                className={`game-tile all-game-tile ${isMaintenance ? 'is-maintenance' : ''} ${isPreview ? 'is-preview' : ''} ${filterIdx[activeFilter] === 1 ? 'is-pc-featured' : ''}`}
                 style={hidden ? { display: 'none' } : undefined}
                 onClick={() => onGameClick?.(game)}
               >
@@ -144,21 +163,7 @@ function AllGamesSection({ items, isLoading, favoriteIds, onToggleFavorite, play
           })}
         </div>
 
-        {hasMore && (
-          <button
-            type="button"
-            className="show-more-games-button"
-            onClick={() => {
-              play?.('uiWhoosh')
-              setVisibleCounts((c) => ({
-                ...c,
-                [activeFilter]: (c[activeFilter] ?? INITIAL_VISIBLE_COUNT) + INITIAL_VISIBLE_COUNT,
-              }))
-            }}
-          >
-            顯示更多
-          </button>
-        )}
+        {hasMore && <div ref={sentinelRef} className="games-sentinel" />}
       </>}
     </section>
   )

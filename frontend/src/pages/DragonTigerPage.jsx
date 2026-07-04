@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDragonTigerSocket } from '../hooks/useDragonTigerSocket'
 import { useGameStatus } from '../hooks/useGameStatus'
@@ -35,8 +35,18 @@ const BET_LABELS = {
   tiger_spade: '虎♠', tiger_heart: '虎♥', tiger_club: '虎♣', tiger_diamond: '虎♦',
 }
 
-// Absolute positions within .dt-zones-area (covers top:29%–bottom:17% of table)
-// Tune these percentages to align with the background image zones
+function useIsPC() {
+  const [isPC, setIsPC] = useState(() => window.innerWidth >= 768)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const fn = e => setIsPC(e.matches)
+    mq.addEventListener('change', fn)
+    return () => mq.removeEventListener('change', fn)
+  }, [])
+  return isPC
+}
+
+// Mobile zone defs — within dt-zones-area (top:29% to bottom:17%)
 const ZONE_DEFS = {
   dragon:        { left: '4%',     top: '0%',   width: '31%',   height: '58%' },
   tie:           { left: '39%',    top: '0%',   width: '21%',   height: '100%' },
@@ -57,6 +67,29 @@ const ZONE_DEFS = {
   tiger_heart:   { left: '69.5%', top: '87%',  width: '7.75%', height: '16%' },
   tiger_club:    { left: '78.5%',  top: '87%',  width: '7.75%', height: '16%' },
   tiger_diamond: { left: '87.25%', top: '87%',  width: '7.75%', height: '16%' },
+}
+
+// PC zone defs — within pc dt-zones-area (top:28% to bottom:13% of table bg)
+const PC_ZONE_DEFS = {
+  dragon:         { left: '7.5%',  top: '0%',   width: '34%',   height: '42%' },
+  tie:            { left: '42%',   top: '0%',   width: '15%',   height: '100%' },
+  tiger:          { left: '58%',   top: '0%',   width: '34%',   height: '42%' },
+  dragon_big:     { left: '11%',  top: '51%',  width: '13%',   height: '12%' },
+  dragon_small:   { left: '25%', top: '51%',  width: '13%',   height: '12%' },
+  dragon_odd:     { left: '10.5%',  top: '65%',  width: '13%',   height: '12%' },
+  dragon_even:    { left: '24.5%', top: '65%',  width: '13%',   height: '12%' },
+  dragon_spade:   { left: '10%',  top: '79%',  width: '6.5%',  height: '19%' },
+  dragon_heart:   { left: '17%',   top: '79%',  width: '6.5%',  height: '19%' },
+  dragon_club:    { left: '24%', top: '79%',  width: '6.5%',  height: '19%' },
+  dragon_diamond: { left: '31%',   top: '79%',  width: '6.5%',  height: '19%' },
+  tiger_big:      { left: '61%',   top: '51%',  width: '13%',   height: '12%' },
+  tiger_small:    { left: '75%',   top: '51%',  width: '13%',   height: '12%' },
+  tiger_odd:      { left: '61.5%',   top: '66%',  width: '13%',   height: '12%' },
+  tiger_even:     { left: '75%',   top: '65%',  width: '13%',   height: '12%' },
+  tiger_spade:    { left: '61.5%',   top: '79%',  width: '6.5%',  height: '19%' },
+  tiger_heart:    { left: '68.5%', top: '79%',  width: '6.5%',  height: '19%' },
+  tiger_club:     { left: '75%',   top: '79%',  width: '6.5%',  height: '19%' },
+  tiger_diamond:  { left: '82.5%', top: '79%',  width: '6.5%',  height: '19%' },
 }
 
 const DEFAULT_ZONE_PAYOUTS = {
@@ -109,7 +142,7 @@ function isSuitZone(zone) {
 }
 
 // ── Floating draggable chip tray ───────────────────────────
-function DraggableChipTray({ selectedChip, onSelectChip, visible }) {
+function DraggableChipTray({ selectedChip, onSelectChip, visible, isPC }) {
   const trayRef    = useRef(null)
   const isDragging = useRef(false)
   const wasDragged = useRef(false) // suppresses chip onClick after a drag gesture
@@ -122,17 +155,16 @@ function DraggableChipTray({ selectedChip, onSelectChip, visible }) {
     const rect = el.getBoundingClientRect()
     isDragging.current = false
     wasDragged.current = false
-    origin.current = { px: e.clientX, py: e.clientY, ex: rect.left, ey: rect.top }
-    el.setPointerCapture(e.pointerId)
+    origin.current = { px: e.clientX, py: e.clientY, ex: rect.left, ey: rect.top, pointerId: e.pointerId }
   }
 
   function onPointerMove(e) {
     const dx = e.clientX - origin.current.px
     const dy = e.clientY - origin.current.py
-    // Start drag only after moving > 6px
     if (!isDragging.current && Math.sqrt(dx * dx + dy * dy) > 6) {
       isDragging.current = true
       wasDragged.current = true
+      trayRef.current?.setPointerCapture(origin.current.pointerId)
     }
     if (!isDragging.current || !trayRef.current) return
     const { width, height } = trayRef.current.getBoundingClientRect()
@@ -148,11 +180,11 @@ function DraggableChipTray({ selectedChip, onSelectChip, visible }) {
   return (
     <div
       ref={trayRef}
-      className={`dt-chip-float${pos ? ' is-placed' : ''}`}
-      style={pos ? { left: pos.x, top: pos.y } : {}}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
+      className={`dt-chip-float${!isPC && pos ? ' is-placed' : ''}`}
+      style={!isPC && pos ? { left: pos.x, top: pos.y } : {}}
+      onPointerDown={isPC ? undefined : onPointerDown}
+      onPointerMove={isPC ? undefined : onPointerMove}
+      onPointerUp={isPC ? undefined : onPointerUp}
       data-no-global-click="true"
     >
       <div className="dt-chip-tray">
@@ -259,7 +291,7 @@ function BeadRoad({ history, onLoadMore, hasMore }) {
   )
 }
 
-function PlayingCard({ card, faceDown, delay = 0 }) {
+function PlayingCard({ card, faceDown, delay = 0, cardClass = '' }) {
   const [flipped, setFlipped] = useState(false)
 
   useEffect(() => {
@@ -275,7 +307,7 @@ function PlayingCard({ card, faceDown, delay = 0 }) {
 
   return (
     <div className="dt-card-wrap">
-      <div className={`dt-card ${flipped ? 'is-flipped' : ''}`}>
+      <div className={`dt-card ${flipped ? 'is-flipped' : ''} ${cardClass}`}>
         <div className="dt-card-inner">
           <div className="dt-card-back">
             <img src="/texas-holdem/card-blackgold.png" alt="" draggable={false} />
@@ -451,23 +483,27 @@ const RESULT_LABEL = { dragon: '龍勝', tiger: '虎勝', tie: '和局' }
 const RESULT_COLOR = { dragon: '#5b8cff', tiger: '#ff7c5b', tie: '#c8a84b' }
 
 function HistoryModal({ history, onClose }) {
+  const todayStr = new Date().toLocaleDateString('en-CA')
+  const todayHistory = history.filter(r =>
+    !r.ts || new Date(r.ts).toLocaleDateString('en-CA') === todayStr
+  )
   return (
     <div className="dt-rules-overlay" onClick={onClose}>
       <div className="dt-history-modal" onClick={e => e.stopPropagation()}>
         <img src="/DragonTiger/Accounting-outline.png" alt="" className="dt-history-bg" draggable={false} />
         <div className="dt-history-inner">
           <button type="button" className="dt-history-close" onClick={onClose}></button>
-          {history.length === 0 ? (
-            <div className="dt-history-empty">本場尚無記錄</div>
+          {todayHistory.length === 0 ? (
+            <div className="dt-history-empty">今日尚無記錄</div>
           ) : (
           <div className="dt-history-list">
-            {history.map(r => {
+            {todayHistory.map(r => {
               const dc = r.dragonCard
               const tc = r.tigerCard
               return (
                 <div key={r._key ?? `${r.roundId}-${r.ts}`} className="dt-history-row">
                   <div className="dt-history-row-top">
-                    <span className="dt-history-round">第 {r.roundId} 局</span>
+                    <span className="dt-history-round">第 {r.dbId ?? r.roundId} 局</span>
                     <span className="dt-history-result" style={{ color: RESULT_COLOR[r.result] }}>
                       {RESULT_LABEL[r.result]}
                     </span>
@@ -618,6 +654,7 @@ function ResultOverlay({ result, myPayout, myTotalBet }) {
 }
 
 export default function DragonTigerPage({ auth }) {
+  const isPC      = useIsPC()
   const navigate  = useNavigate()
   const location  = useLocation()
   const gameStatus = useGameStatus('dragon-tiger')
@@ -705,10 +742,12 @@ export default function DragonTigerPage({ auth }) {
         setHasMoreDb(data.hasMore)
         setRoundHistory(data.rounds.map(r => ({
           _key:       `db-${r.dbId}`,
+          dbId:       r.dbId,
           roundId:    r.roundId,
           result:     r.result,
           dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
           tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
+          ts:         r.ts,
         })))
       } catch {}
       loadingDbRef.current = false
@@ -732,10 +771,12 @@ export default function DragonTigerPage({ auth }) {
           .filter(r => !seen.has(`db-${r.dbId}`))
           .map(r => ({
             _key:       `db-${r.dbId}`,
+            dbId:       r.dbId,
             roundId:    r.roundId,
             result:     r.result,
             dragonCard: { rank: r.dragonRank, suit: r.dragonSuit },
             tigerCard:  { rank: r.tigerRank,  suit: r.tigerSuit  },
+            ts:         r.ts,
           }))
         return [...h, ...fresh]
       })
@@ -1074,6 +1115,24 @@ export default function DragonTigerPage({ auth }) {
         <div className="dt-header-right">
           <span className="dt-balance-label">線上人數</span>
           <span className="dt-balance-val">{players.length}</span>
+          {isPC && (
+            <div className="dt-players-bar dt-players-bar-inline">
+              {visiblePlayers.map(p => (
+                <div
+                  key={p.id}
+                  className={`dt-player-chip ${p.id === myId ? 'is-me' : ''} ${flashingPlayers.has(p.id) ? 'is-betting' : ''}`}
+                >
+                  <span className="dt-player-name">{p.username}</span>
+                  {p.id === myId && <span className="dt-player-bal">{fmt(p.balance)}</span>}
+                </div>
+              ))}
+              {overflowCount > 0 && (
+                <button type="button" className="dt-more-players" onClick={() => setShowAllPlayers(true)}>
+                  +{overflowCount}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1083,7 +1142,7 @@ export default function DragonTigerPage({ auth }) {
       {/* Table area */}
       <div className="dt-table">
         <img
-          src="/DragonTiger/DragonTigerBg.png"
+          src={isPC ? '/DragonTiger/DragonTiger-PcBg.png' : '/DragonTiger/DragonTigerBg.png'}
           alt=""
           className="dt-table-bg"
           draggable={false}
@@ -1105,23 +1164,23 @@ export default function DragonTigerPage({ auth }) {
         </button>
 
         {/* Cards */}
-        <div className="dt-cards-area">
+        <div className="dt-cards-area" style={isPC ? { top: '8%', gap: 40 } : undefined}>
           <img src="/DragonTiger/DragonIcon.png" alt="龍" className="dt-card-label dt-label-dragon" draggable={false} />
-          <div className="dt-cards-row">
-            <PlayingCard card={dragonCard} faceDown={faceDown} delay={0} />
-            <PlayingCard card={tigerCard}  faceDown={faceDown} delay={600} />
+          <div className="dt-cards-row" style={isPC ? { gap: 40 } : undefined}>
+            <PlayingCard card={dragonCard} faceDown={faceDown} delay={0}   cardClass={isPC ? 'dt-card-pc' : ''} />
+            <PlayingCard card={tigerCard}  faceDown={faceDown} delay={600} cardClass={isPC ? 'dt-card-pc' : ''} />
           </div>
           <img src="/DragonTiger/TigerIcon.png" alt="虎" className="dt-card-label dt-label-tiger" draggable={false} />
         </div>
 
         {/* Bet zones — absolutely positioned over background */}
-        <div className="dt-zones-area">
+        <div className="dt-zones-area" style={isPC ? { top: '28%', bottom: '13%' } : undefined}>
           {ZONE_KEYS.map(zone => (
             <button
               key={zone}
               type="button"
               className={`dt-zone dt-zone-${zone}${isBetting ? ' is-active' : ''}`}
-              style={ZONE_DEFS[zone]}
+              style={isPC ? PC_ZONE_DEFS[zone] : ZONE_DEFS[zone]}
               onClick={() => handleZoneTap(zone)}
               disabled={!isBetting}
               data-no-global-click="true"
@@ -1167,10 +1226,21 @@ export default function DragonTigerPage({ auth }) {
           ))}
         </div>
 
+        {/* My bets summary — PC only (inside table) */}
+        {isPC && myTotalBet > 0 && (
+          <div className="dt-bet-summary-bar">
+            {ZONE_KEYS.filter(z => (myBets[z] || 0) > 0).map(z => (
+              <span key={z} className={`dt-bet-tag dt-bet-${z.split('_')[0]}`}>
+                {BET_LABELS[z]}：{fmt(myBets[z])}
+              </span>
+            ))}
+          </div>
+        )}
+
       </div>
 
-      {/* Player list */}
-      <div className="dt-players-bar">
+      {/* Player list — mobile only */}
+      {!isPC && <div className="dt-players-bar">
         {visiblePlayers.map(p => (
           <div
             key={p.id}
@@ -1185,11 +1255,10 @@ export default function DragonTigerPage({ auth }) {
             +{overflowCount}
           </button>
         )}
-      </div>
+      </div>}
 
-
-      {/* My bets summary */}
-      {myTotalBet > 0 && (
+      {/* My bets summary — mobile only (outside table) */}
+      {!isPC && myTotalBet > 0 && (
         <div className="dt-bet-summary-bar">
           {ZONE_KEYS.filter(z => (myBets[z] || 0) > 0).map(z => (
             <span key={z} className={`dt-bet-tag dt-bet-${z.split('_')[0]}`}>
@@ -1207,6 +1276,7 @@ export default function DragonTigerPage({ auth }) {
         selectedChip={selectedChip}
         onSelectChip={setSelectedChip}
         visible={isBetting}
+        isPC={isPC}
       />
 
       {/* Cashout notice */}

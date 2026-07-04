@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { getMe } from '../services/authApi'
+import { getMe, patchAvatar } from '../services/authApi'
 
 const TOKEN_STORAGE_KEY = 'texas_holdem_auth_token'
 
@@ -70,6 +70,12 @@ export function useAuth() {
     setUser(prev => prev ? { ...prev, balance } : prev)
   }, [])
 
+  const updateAvatar = useCallback(async (avatar) => {
+    if (!token) return
+    await patchAvatar(token, avatar)
+    setUser(prev => prev ? { ...prev, avatar } : prev)
+  }, [token])
+
   const value = useMemo(
     () => ({
       isAuthenticated: Boolean(token && user),
@@ -80,9 +86,10 @@ export function useAuth() {
       setToken,
       refreshUser,
       applyBalance,
+      updateAvatar,
       logout: () => setToken(''),
     }),
-    [isCheckingAuth, isRefreshingBalance, token, user, refreshUser, applyBalance],
+    [isCheckingAuth, isRefreshingBalance, token, user, refreshUser, applyBalance, updateAvatar],
   )
 
   return value

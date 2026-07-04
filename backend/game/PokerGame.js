@@ -53,12 +53,12 @@ export class PokerGame {
 
   // ── Player management ─────────────────────────────────────
 
-  addPlayer({ id, username, balance }) {
+  addPlayer({ id, username, balance, avatar }) {
     if (this.players.length >= this.maxPlayers) throw new Error('桌子已滿')
     if (this.phase !== 'waiting') throw new Error('遊戲進行中，請等待下一局')
     if (this.players.some(p => p.id === id)) throw new Error('已在桌上')
-    this.players.push(this._newPlayerState(id, username, balance))
-    this._emit('player_joined', { id, username, balance })
+    this.players.push(this._newPlayerState(id, username, balance, avatar))
+    this._emit('player_joined', { id, username, balance, avatar })
     this._broadcastState()
   }
 
@@ -561,9 +561,9 @@ export class PokerGame {
     this.countdownEnd = null
   }
 
-  _newPlayerState(id, username, balance) {
+  _newPlayerState(id, username, balance, avatar) {
     return {
-      id, username, balance,
+      id, username, balance, avatar,
       holeCards: [], roundBet: 0, totalBet: 0, hasActed: false,
       status: 'waiting',
       isDealer: false, isSB: false, isBB: false,
@@ -609,6 +609,7 @@ export class PokerGame {
       pot: this.pot,
       currentBet: this.currentBet,
       minRaise: this.lastRaiseSize,
+      maxPlayers: this.maxPlayers,
       smallBlind: this.smallBlind,
       bigBlind: this.bigBlind,
       communityCards: this.communityCards,
@@ -619,6 +620,7 @@ export class PokerGame {
         id: p.id,
         username: p.username,
         balance: p.balance,
+        avatar: p.avatar,
         roundBet: p.roundBet,
         status: p.status,
         isDealer: p.isDealer,

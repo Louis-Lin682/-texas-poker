@@ -20,7 +20,7 @@ function PtBtn({ src, alt, onClick, disabled, amount, amountStyle, style }) {
       {amount != null && (
         <span style={{
           position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-          fontSize: 11, fontWeight: 800, color: '#f0c96b',
+          fontSize: 14, fontWeight: 800, color: '#f0c96b',
           textShadow: '0 1px 3px #000', pointerEvents: 'none',
           ...amountStyle,
         }}>
@@ -78,7 +78,7 @@ function getSeats(players, myId) {
 }
 
 // ── Seat ──────────────────────────────────────────────────────────────────────
-function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, seatIndex = 0, dealKey, side }) {
+function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, seatIndex = 0, dealKey, side, cardSize = 'xs' }) {
   if (!player) {
     return <div className="pt-seat pt-seat-empty">空位</div>
   }
@@ -111,13 +111,13 @@ function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, se
 
       {isMe ? (
         <div className="pt-me-info">
-          <div className="pt-avatar">{player.username[0].toUpperCase()}</div>
+          <div className="pt-avatar"><img src={player.avatar} alt="" /></div>
           <span className="pt-name">{player.username}</span>
           <span className="pt-chips">{fmt(player.balance)}</span>
         </div>
       ) : (
         <div className="pt-opp-info">
-          <div className="pt-avatar">{player.username[0].toUpperCase()}</div>
+          <div className="pt-avatar"><img src={player.avatar} alt="" /></div>
           <span className="pt-name">{player.username}</span>
           <span className="pt-chips">{fmt(player.balance)}</span>
         </div>
@@ -127,8 +127,8 @@ function Seat({ player, isActing, isMe, myCards, handStrength, revealedCards, se
         <div key={dealKey} className="pt-opp-cards" style={{'--deal-base': `${baseDelay}s`}}>
           {!folded && player.cardCount > 0 && (
             shownCards
-              ? shownCards.map((c, i) => <PlayingCard key={i} card={c} size="xs" />)
-              : Array(player.cardCount).fill(0).map((_, i) => <PlayingCard key={i} faceDown size="xs" />)
+              ? shownCards.map((c, i) => <PlayingCard key={i} card={c} size={cardSize} />)
+              : Array(player.cardCount).fill(0).map((_, i) => <PlayingCard key={i} faceDown size={cardSize} />)
           )}
         </div>
       )}
@@ -208,10 +208,10 @@ const STATUS_MSG = {
 
 // ── Lobby ─────────────────────────────────────────────────────────────────────
 const BLIND_PRESETS = [
-  { label: '低限',  smallBlind: 10,  bigBlind: 20  },
-  { label: '中限',  smallBlind: 25,  bigBlind: 50  },
-  { label: '高限',  smallBlind: 50,  bigBlind: 100 },
-  { label: '豪華',  smallBlind: 100, bigBlind: 200 },
+  { label: '低限',  img: '/texas-holdem/room-green-felt-button.png',   smallBlind: 10,  bigBlind: 20  },
+  { label: '中限',  img: '/texas-holdem/room-golden-hall-button.png',  smallBlind: 25,  bigBlind: 50  },
+  { label: '高限',  img: '/texas-holdem/room-royal-hall-button.png',   smallBlind: 50,  bigBlind: 100 },
+  { label: '豪華',  img: '/texas-holdem/room-supreme-hall-button.png', smallBlind: 100, bigBlind: 200 },
 ]
 function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }) {
   const isConnected = status === 'connected'
@@ -228,11 +228,20 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
 
   const preset = BLIND_PRESETS[selectedPreset]
 
+  const filteredRooms = rooms.filter(r => r.smallBlind === preset.smallBlind)
+
   return (
     <div className="pt-lobby">
       <div className="pt-lobby-head">
         <span className="pt-lobby-title">選擇房間</span>
-        <button type="button" className={`pt-lobby-refresh${isSpinning ? ' is-spinning' : ''}`} onClick={handleRefresh} title="重新整理"><img src="/reload.png" alt="重整" /></button>
+        <div className="pt-lobby-head-actions">
+          <button type="button" className={`pt-lobby-refresh${isSpinning ? ' is-spinning' : ''}`} onClick={handleRefresh} title="重新整理">
+            <img src="/reload.png" alt="重整" />
+          </button>
+          <button type="button" className="pt-lobby-create" onClick={() => onCreateRoom({ smallBlind: preset.smallBlind, bigBlind: preset.bigBlind })} disabled={!isConnected}>
+            + 建立新房間
+          </button>
+        </div>
       </div>
 
       {(!isConnected || isSpinning) && (
@@ -241,61 +250,56 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, buyIn }
         </div>
       )}
 
-      <div className="pt-bet-unit-row">
-        <span className="pt-bet-unit-label">盲注</span>
-        <div className="pt-bet-unit-btns">
-          {BLIND_PRESETS.map((p, i) => (
-            <button
-              key={i}
-              type="button"
-              className={`pt-bet-unit-btn${selectedPreset === i ? ' is-active' : ''}`}
-              onClick={() => setSelectedPreset(i)}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+      <div className="pt-bet-unit-btns">
+        {BLIND_PRESETS.map((p, i) => (
+          <button key={i} type="button" className={`pt-bet-unit-btn${selectedPreset === i ? ' is-active' : ''}`} onClick={() => setSelectedPreset(i)}>
+            <img src={p.img} alt={p.label} />
+          </button>
+        ))}
       </div>
 
-      <button type="button" className="pt-lobby-create"
-        onClick={() => onCreateRoom({ smallBlind: preset.smallBlind, bigBlind: preset.bigBlind })}
-        disabled={!isConnected}>
-        + 建立新房間（{preset.smallBlind}/{preset.bigBlind}）
-      </button>
-
       <div className="pt-room-list">
-        {rooms.length === 0 ? (
-          <div className="pt-room-empty">目前沒有房間，來建立第一間吧！</div>
-        ) : rooms.map(r => (
-          <div key={r.id} className="pt-room-item">
-            <div className="pt-room-meta">
-              <span className="pt-room-id-tag">#{r.id}</span>
-              <span className="pt-room-blinds">{r.smallBlind}/{r.bigBlind}</span>
-              <span className="pt-room-phase">{PHASE_LABEL[r.phase] ?? r.phase}</span>
+        {filteredRooms.length === 0 ? (
+          <div className="pt-room-empty">此廳暫無房間，來建立第一間吧！</div>
+        ) : filteredRooms.map(r => {
+          const roomPreset = BLIND_PRESETS.find(p => p.smallBlind === r.smallBlind) ?? null
+          return (
+            <div key={r.id} className="pt-room-item">
+              {roomPreset && (
+                <div className="pt-room-img-wrap">
+                  <img src={roomPreset.img} alt={roomPreset.label} />
+                </div>
+              )}
+              <div className="pt-room-info">
+                <div className="pt-room-left">
+                  <span className="pt-room-id-tag">#{r.id.slice(0, 6).toUpperCase()}</span>
+                  <span className="pt-room-blinds">盲注 {r.smallBlind}/{r.bigBlind}</span>
+                  <span className="pt-room-players">{r.playerCount}/{r.maxPlayers} 玩家</span>
+                </div>
+                <div className="pt-room-right">
+                  <span className="pt-room-phase">{PHASE_LABEL[r.phase] ?? r.phase}</span>
+                  <button type="button" className="pt-room-join" onClick={() => onJoinRoom(r.id)}
+                    disabled={!isConnected || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers}>
+                    加入
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="pt-room-bottom">
-              <span className="pt-room-players">{r.playerCount} / {r.maxPlayers} 玩家</span>
-              <button
-                type="button"
-                className="pt-room-join"
-                onClick={() => onJoinRoom(r.id)}
-                disabled={!isConnected || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers}
-              >
-                加入
-              </button>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
 }
 
 // ── Waiting room ───────────────────────────────────────────────────────────────
-function WaitingView({ gameState, myId, onReady, onUnready, onLeaveRoom }) {
+function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom }) {
   const players = gameState?.players ?? []
   const me = players.find(p => p.id === myId)
   const countdownEnd = gameState?.countdownEnd ?? null
+  const maxPlayers = gameState?.maxPlayers ?? 6
+  const smallBlind = gameState?.smallBlind ?? 10
+  const bigBlind = gameState?.bigBlind ?? 20
   const [cdLeft, setCdLeft] = useState(0)
 
   useEffect(() => {
@@ -307,49 +311,57 @@ function WaitingView({ gameState, myId, onReady, onUnready, onLeaveRoom }) {
   }, [countdownEnd])
 
   const isCountingDown = !!countdownEnd && cdLeft > 0
-  const lockedIn = !!me?.ready && isCountingDown && cdLeft <= 10
 
   return (
     <div className="pt-wait">
-      <div className="pt-wait-title">等待玩家</div>
+      {/* 頂部牌匾 */}
+      <div className="pt-wait-plaque">
+        <img src="/waiting-player-plaque.png" alt="" className="pt-wait-plaque-img" />
+        <div className="pt-wait-plaque-body">
+          <div className="pt-wait-plaque-count">
+            <span className="pt-wait-plaque-num">{players.length}/{maxPlayers}</span>
+            <span className="pt-wait-plaque-unit">位玩家</span>
+          </div>
+          <div className="pt-wait-plaque-meta">
+            {roomId && <span className="pt-wait-plaque-room">#{roomId.slice(0, 6).toUpperCase()}</span>}
+            <span className="pt-wait-plaque-blinds">盲注 {smallBlind}/{bigBlind}</span>
+          </div>
+        </div>
+      </div>
 
+      {/* 玩家列表 */}
       <div className="pt-wait-players">
         {players.map(p => (
           <div key={p.id} className={`pt-wait-player${p.id === myId ? ' is-me' : ''}`}>
             <span className={`pt-wait-dot${p.ready ? ' is-ready' : ''}`} />
-            <span className="pt-wait-av">{p.username[0].toUpperCase()}</span>
-            <span className="pt-wait-name">{p.username}</span>
-            <span className="pt-wait-chips">{fmt(p.balance)}</span>
-            {p.ready && <span className="pt-wait-ready-tag">已準備</span>}
+            <div className="pt-wait-av"><img src={p.avatar} alt="" /></div>
+            <div className="pt-wait-info">
+              <span className="pt-wait-name">{p.username}</span>
+              <span className={`pt-wait-status${p.ready ? ' is-ready' : ''}`}>{p.ready ? '已準備' : '未準備'}</span>
+            </div>
+            <div className="pt-wait-chips-wrap">
+              <img src="/chip-gold.png" className="pt-wait-chip-img" alt="" />
+              <span className="pt-wait-chips">{fmt(p.balance)}</span>
+            </div>
           </div>
         ))}
       </div>
 
-      {isCountingDown ? (
-        <div className="pt-wait-countdown">
-          <span className="pt-wait-cd-num">{cdLeft}</span>
-          <span className="pt-wait-cd-label">秒後自動開始</span>
-        </div>
-      ) : (
-        <p className="pt-wait-hint">
-          {players.length < 2
-            ? `還需要 ${2 - players.length} 名玩家`
-            : players.every(p => p.ready)
-              ? '所有人已準備，即將開始…'
-              : '等待所有人準備'}
-        </p>
-      )}
-
-      <button
-        type="button"
-        className={`pt-wait-start${me?.ready ? ' is-ready' : ''}`}
-        onClick={me?.ready ? onUnready : onReady}
-        disabled={lockedIn}>
-        {me?.ready ? '✓ 已準備好' : '我準備好了'}
-      </button>
-      <button type="button" className="pt-wait-leave" onClick={onLeaveRoom}>
-        離開房間
-      </button>
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        {isCountingDown && (
+          <div className="pt-wait-countdown">
+            <span className="pt-wait-cd-num">{cdLeft}</span>
+            <span className="pt-wait-cd-label">秒後自動開始</span>
+          </div>
+        )}
+        <button type="button" className="pt-wait-ready-btn" onClick={me?.ready ? onUnready : onReady}>
+          <img src="/ready-button.png" alt="" className="pt-wait-ready-img" />
+          <span className="pt-wait-ready-text">{me?.ready ? '✓ 已準備好' : '我準備好了'}</span>
+        </button>
+        <button type="button" className="pt-wait-leave-btn" onClick={onLeaveRoom}>
+          <img src="/leave-room-button.png" alt="" className="pt-wait-leave-img" />
+        </button>
+      </div>
     </div>
   )
 }
@@ -664,22 +676,24 @@ function GameTablePage({ auth }) {
       )}
 
       {/* Header */}
-      <header className="pt-header">
-        <button type="button" className="pt-back" onClick={handleBack}>
-          <img src="/arrow.png" alt="返回" />
-        </button>
-        <div className="pt-header-info">
-          {roomId
-            ? <span className="pt-room-label">房間 #{roomId}</span>
-            : <img src="/texas-holdem/texas-holdem.png" alt="德州撲克" className="pt-room-label-img" />
-          }
-          <span className="pt-blinds">盲注 {gameState?.smallBlind ?? 10} / {gameState?.bigBlind ?? 20}</span>
-        </div>
-        {isPlaying && <span className="pt-phase-badge">{PHASE_LABEL[phase]}</span>}
-        <button type="button" className="pt-mute-btn" onClick={toggleGameMute} title={isGameMuted ? '開啟音樂' : '關閉音樂'}>
-          <img src={isGameMuted ? '/enable-sound.png' : '/volume.png'} alt="" />
-        </button>
-      </header>
+      <div className="pt-header-con">
+        <header className="pt-header">
+          <button type="button" className="pt-back" onClick={handleBack}>
+            <img src="/arrow.png" alt="返回" />
+          </button>
+          <div className="pt-header-info">
+            {roomId
+              ? <span className="pt-room-label">房間 #{roomId}</span>
+              : <img src="/texas-holdem/texas-holdem.png" alt="德州撲克" className="pt-room-label-img" />
+            }
+            <span className="pt-blinds">盲注 {gameState?.smallBlind ?? 10} / {gameState?.bigBlind ?? 20}</span>
+          </div>
+          {isPlaying && <span className="pt-phase-badge">{PHASE_LABEL[phase]}</span>}
+          <button type="button" className="pt-mute-btn" onClick={toggleGameMute} title={isGameMuted ? '開啟音樂' : '關閉音樂'}>
+            <img src={isGameMuted ? '/enable-sound.png' : '/volume.png'} alt="" />
+          </button>
+        </header>
+      </div>
 
       <div className="pt-content">
       {/* Error banner */}
@@ -702,6 +716,7 @@ function GameTablePage({ auth }) {
         <WaitingView
           gameState={gameState}
           myId={myId}
+          roomId={roomId}
           onReady={setReady}
           onUnready={unready}
           onLeaveRoom={leaveRoom}
@@ -711,7 +726,7 @@ function GameTablePage({ auth }) {
       {/* ── Game table ── */}
       {isPlaying && (
         <>
-          <div className="pt-top-container">
+          <div className="pt-mobile-layout pt-top-container">
           {/* Seat 3 — top center */}
           <div className="pt-top-center">
             <Seat player={p3} isActing={acting(p3?.id)} revealedCards={revealedCards} seatIndex={2} dealKey={dealKey} side="top" />
@@ -800,12 +815,12 @@ function GameTablePage({ auth }) {
                 disabled={!isMyTurn}
                 onClick={() => doAction(toCall === 0 ? 'check' : 'call')}
                 amount={toCall > 0 ? fmt(toCall) : null}
-                amountStyle={{ right: '27%', top: '30%', transform: 'none' }}
+                amountStyle={{ right: '27%', top: '25%', transform: 'none' }}
               />
               <PtBtn src="/texas-holdem/add.png" alt="加注"
                 disabled={!isMyTurn} onClick={() => doAction('raise', raiseAmt)}
                 amount={`+${fmt(raiseAmt)}`}
-                amountStyle={{ right: '27%', top: '30%', transform: 'none' }} />
+                amountStyle={{ right: '27%', top: '25%', transform: 'none' }} />
               <PtBtn src="/texas-holdem/all-in.png" alt="ALL IN"
                 disabled={!isMyTurn} onClick={() => {
                   const chips = me?.balance ?? 0
@@ -813,6 +828,94 @@ function GameTablePage({ auth }) {
                 }} />
             </div>
           </div>
+          </div>
+
+          {/* ── PC layout ── */}
+          <div className="pt-pc-layout pt-top-container">
+            <div className="pt-pc-top">
+              <Seat player={p1} isActing={acting(p1?.id)} revealedCards={revealedCards} seatIndex={0} dealKey={dealKey} side="top" cardSize="lg" />
+              <Seat player={p2} isActing={acting(p2?.id)} revealedCards={revealedCards} seatIndex={1} dealKey={dealKey} side="top" cardSize="lg" />
+            </div>
+            <div className="pt-pc-middle">
+              <Seat player={p3} isActing={acting(p3?.id)} revealedCards={revealedCards} seatIndex={2} dealKey={dealKey} side="left" cardSize="lg" />
+              <div className="pt-table-center">
+                <div className="pt-overlay">
+                  <div className="pt-community-cards">
+                    {communityCards.map((c, i) => {
+                      const bp = i < 3 ? 'f' : i === 3 ? 't' : 'r'
+                      return <PlayingCard key={`pc-${bp}${i}`} card={c} size="sm" />
+                    })}
+                    {Array(5 - communityCards.length).fill(0).map((_, i) => (
+                      <div key={`pc-ph-${i}`} className="pt-card-slot" />
+                    ))}
+                  </div>
+                  <div className="pt-pot">
+                    <div className="pt-pot-chips">
+                      <img src="/chip-red.png" className="pt-pot-chip" alt="" />
+                      <img src="/chip-purple.png" className="pt-pot-chip" alt="" />
+                      <img src="/chip-blackgold.png" className="pt-pot-chip" alt="" />
+                    </div>
+                    <span className="pt-pot-label">底池</span>
+                    <span className="pt-pot-amount">{fmt(pot)}</span>
+                  </div>
+                </div>
+
+                {/* PC 桌面下注圈 */}
+                {[
+                  { player: p1, style: { left: '28%', top: '18%' } },
+                  { player: p2, style: { left: '72%', top: '18%' } },
+                  { player: p3, style: { left: '10%', top: '50%' } },
+                  { player: p4, style: { left: '90%', top: '50%' } },
+                  { player: me, style: { left: '28%', top: '80%' } },
+                  { player: p5, style: { left: '72%', top: '80%' } },
+                ].map(({ player, cls, style }, i) => (
+                  <div key={i} className="pc-bet-zone" style={{ ...style, transform: 'translate(-50%,-50%)' }}>
+                    {player?.roundBet > 0 && (
+                      <>
+                        <img src="/chip-gold.png" alt="" className="pc-bet-zone-chip" />
+                        <span className="pc-bet-zone-val">{fmt(player.roundBet)}</span>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <Seat player={p4} isActing={acting(p4?.id)} revealedCards={revealedCards} seatIndex={3} dealKey={dealKey} side="right" cardSize="lg" />
+            </div>
+            <div className="pt-pc-bottom">
+              <div className="pt-pc-me-col">
+                <Seat player={me} isActing={isMyTurn} isMe myCards={myHoleCards} handStrength={myHandStrength}
+                  revealedCards={revealedCards} seatIndex={5} dealKey={dealKey} />
+                <div className={`pt-actions${isMyTurn ? '' : ' pt-actions-inactive'}`}>
+                  <div className="pt-countdown-wrap">
+                    {isMyTurn && (<><div className="pt-countdown-bar" style={{width:`${(timeLeft/TURN_TIME)*100}%`}} /><span className="pt-countdown-num">{timeLeft}s</span></>)}
+                    {!isMyTurn && (<span className="pt-waiting-inline">等待 {(gameState?.players ?? []).find(p => p.id === gameState?.actingPlayerId)?.username ?? '…'} 行動中</span>)}
+                  </div>
+                  <div className="pt-raise-row">
+                    <span className="pt-raise-label">加注</span>
+                    <input type="range" className="pt-raise-slider" min={raiseSliderMin} max={raiseSliderMax}
+                      value={raiseAmt} disabled={!isMyTurn} onChange={e => setRaiseAmt(Number(e.target.value))} />
+                    <span className="pt-raise-val">共 {fmt(toCall + raiseAmt)}</span>
+                  </div>
+                  <div className="pt-btn-row">
+                    <PtBtn src="/texas-holdem/giveUp.png" alt="棄牌" disabled={!isMyTurn} onClick={() => doAction('fold')} />
+                    <PtBtn src={toCall === 0 ? '/texas-holdem/Pass.png' : '/texas-holdem/follow.png'}
+                      alt={toCall === 0 ? '過牌' : '跟注'} disabled={!isMyTurn}
+                      onClick={() => doAction(toCall === 0 ? 'check' : 'call')}
+                      amount={toCall > 0 ? fmt(toCall) : null}
+                      amountStyle={{ right: '25%', top: '30%', transform: 'none' }} />
+                    <PtBtn src="/texas-holdem/add.png" alt="加注" disabled={!isMyTurn}
+                      onClick={() => doAction('raise', raiseAmt)} amount={`+${fmt(raiseAmt)}`}
+                      amountStyle={{ right: '25%', top: '30%', transform: 'none' }} />
+                    <PtBtn src="/texas-holdem/all-in.png" alt="ALL IN" disabled={!isMyTurn} onClick={() => {
+                      const chips = me?.balance ?? 0
+                      chips <= toCall ? doAction('call') : doAction('raise', chips - toCall)
+                    }} />
+                  </div>
+                </div>
+              </div>
+              <Seat player={p5} isActing={acting(p5?.id)} revealedCards={revealedCards} seatIndex={4} dealKey={dealKey} side="right" cardSize="lg" />
+            </div>
+            <WinOverlay winInfo={winInfo} />
           </div>
 
         </>

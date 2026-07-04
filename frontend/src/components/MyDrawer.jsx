@@ -22,7 +22,7 @@ function MenuRow({ label, onClick, danger = false }) {
   )
 }
 
-function MyDrawer({ isOpen, onClose, profile, isAuthenticated, isGuest, onGuestLogin, onGoLogin, onLogout }) {
+function MyDrawer({ isOpen, onClose, profile, isAuthenticated, isGuest, onGuestLogin, onGoLogin, onLogout, onAvatarClick }) {
   const [shouldRender, setShouldRender] = useState(isOpen)
   const [isClosing, setIsClosing] = useState(false)
   const navigate = useNavigate()
@@ -111,7 +111,7 @@ function MyDrawer({ isOpen, onClose, profile, isAuthenticated, isGuest, onGuestL
                 <div className="my-profile-topline">
                   <div className="my-profile-avatar-wrap">
                     <div className="my-profile-avatar">
-                      <img src="/phantom-footer-logo.png" alt="" />
+                      <img src={profile.avatar} alt="" />
                     </div>
                     {!isGuest && <div className="my-profile-vip">{profile.vip}</div>}
                   </div>

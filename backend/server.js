@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import bcrypt from 'bcryptjs'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import http from 'node:http'
 import { randomUUID, randomInt } from 'node:crypto'
 import path from 'node:path'
@@ -75,6 +75,12 @@ function getCheckInReward(cycleDay) {
   return 800
 }
 
+const _AVATAR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '../frontend/public/player')
+function getAllowedAvatars() {
+  const files = readdirSync(_AVATAR_DIR).filter(f => /\.(png|jpe?g|webp)$/i.test(f))
+  return new Set(['/notice-angel.png', ...files.map(f => `/player/${f}`)])
+}
+
 function toPublicUser(user) {
   return {
     id:           user.id,
@@ -82,6 +88,7 @@ function toPublicUser(user) {
     balance:      user.balance,
     suspended_at: user.suspended_at ?? null,
     is_guest:     user.is_guest    ?? false,
+    avatar:       user.avatar      ?? '/notice-angel.png',
   }
 }
 
@@ -294,6 +301,25 @@ const server = http.createServer(async (request, response) => {
         return
       }
       sendJson(response, 200, toPublicUser(user))
+      return
+    }
+
+    if (request.method === 'GET' && pathname === '/avatars') {
+      const urls = [...getAllowedAvatars()]
+      sendJson(response, 200, { avatars: urls })
+      return
+    }
+
+    if (request.method === 'PATCH' && pathname === '/me/avatar') {
+      const user = await getSessionUser(request)
+      if (!user) { sendJson(response, 401, { message: 'Unauthorized.' }); return }
+      const body   = await getRequestBody(request)
+      const avatar = body.avatar === null ? null : String(body.avatar || '')
+      if (avatar !== null && !getAllowedAvatars().has(avatar)) {
+        sendJson(response, 400, { message: '不合法的頭像。' }); return
+      }
+      await query('UPDATE users SET avatar=$1 WHERE id=$2', [avatar, user.id])
+      sendJson(response, 200, { ok: true, avatar })
       return
     }
 
@@ -580,7 +606,7 @@ const server = http.createServer(async (request, response) => {
       const limit  = Math.min(Number(url.searchParams.get('limit')  || 60), 120)
       const offset = Math.max(Number(url.searchParams.get('offset') || 0),  0)
       const { rows } = await query(
-        `SELECT id, round_id, result, dragon_rank, dragon_suit, tiger_rank, tiger_suit
+        `SELECT id, round_id, result, dragon_rank, dragon_suit, tiger_rank, tiger_suit, created_at
          FROM dt_round_history
          ORDER BY id DESC
          LIMIT $1 OFFSET $2`,
@@ -596,6 +622,7 @@ const server = http.createServer(async (request, response) => {
           dragonSuit: r.dragon_suit,
           tigerRank:  r.tiger_rank,
           tigerSuit:  r.tiger_suit,
+          ts:         r.created_at,
         })),
         hasMore,
       }, effectiveCors)
@@ -1580,6 +1607,40 @@ const server = http.createServer(async (request, response) => {
       }
 
       // ── 遊戲設定 ──
+      if (pathname === '/admin/chip-restore' && request.method === 'GET') {
+        const { rows } = await query(`
+          SELECT u.id, u.username, u.balance AS current_balance,
+                 COALESCE(SUM(-l.amount) FILTER (WHERE l.type = 'buy_in'), 0)  AS total_buyin,
+                 COALESCE(SUM( l.amount) FILTER (WHERE l.type = 'cash_out'), 0) AS total_cashout
+          FROM users u
+          LEFT JOIN ledger l ON l.user_id = u.id
+          WHERE u.is_bot = false AND u.username != $1
+          GROUP BY u.id, u.username, u.balance
+          HAVING COALESCE(SUM(-l.amount) FILTER (WHERE l.type='buy_in'),0)
+               > COALESCE(SUM( l.amount) FILTER (WHERE l.type='cash_out'),0)
+          ORDER BY u.username
+        `, [HOUSE_USERNAME])
+        sendJson(response, 200, {
+          users: rows.map(r => ({
+            id: r.id, username: r.username,
+            currentBalance: Number(r.current_balance),
+            owed: Number(r.total_buyin) - Number(r.total_cashout),
+          }))
+        }, effectiveCors); return
+      }
+
+      if (pathname === '/admin/chip-restore' && request.method === 'POST') {
+        const body = await readBody(request)
+        const { userId, amount } = JSON.parse(body)
+        if (!userId || !amount || amount <= 0) { sendJson(response, 400, { error: 'invalid' }, effectiveCors); return }
+        await query('UPDATE users SET balance = $1 WHERE id = $2', [amount, userId])
+        await query(
+          `INSERT INTO ledger (user_id, type, amount, detail) VALUES ($1, 'cash_out', $2, '{"reason":"admin-manual-restore"}')`,
+          [userId, amount],
+        )
+        sendJson(response, 200, { ok: true }, effectiveCors); return
+      }
+
       if (pathname === '/admin/games' && request.method === 'GET') {
         const { rows } = await query('SELECT slug, status, notice, display_name, image_url, badge, category, is_hot FROM game_configs ORDER BY slug')
         sendJson(response, 200, { games: rows }, effectiveCors); return
@@ -1813,7 +1874,7 @@ wss.on('connection', async (ws, request, user) => {
   ws.isAlive = true
   ws.on('pong', () => { ws.isAlive = true })
 
-  roomManager.registerClient(ws, { userId: user.id, username: user.username })
+  roomManager.registerClient(ws, { userId: user.id, username: user.username, avatar: user.avatar ?? null })
 
   ws.on('message', async (raw) => {
     let msg
@@ -1968,6 +2029,7 @@ initDbWithRetry()
   .then(() => {
     dbReady = true
     console.log('Database ready.')
+
 
 
     // Auto-close inactive support tickets

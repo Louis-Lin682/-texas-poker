@@ -95,8 +95,8 @@ const PHASE_LABEL = {
 
 function getSeats(players, myId) {
   const others = players.filter(p => p.id !== myId)
-  while (others.length < 4) others.push(null)
-  return others.slice(0, 4)
+  while (others.length < 5) others.push(null)
+  return others.slice(0, 5)
 }
 
 const CHIP_DEFS = [
@@ -110,9 +110,10 @@ const CHIP_DEFS = [
 
 // buyIn is the minimum balance required (and chips taken from account) for this tier.
 const MAX_BET_PRESETS = [
-  { label: '低限', maxBet: 1000,  buyIn: 3000  },
-  { label: '高限', maxBet: 5000,  buyIn: 10000 },
-  { label: '豪華', maxBet: 10000, buyIn: 30000 },
+  { label: '低限', maxBet: 500,   buyIn: 1500,  img: '/texas-holdem/room-green-felt-button.png',   cardImg: '/texas-holdem/room-card-green-felt.png'   },
+  { label: '中限', maxBet: 1000,  buyIn: 3000,  img: '/texas-holdem/room-golden-hall-button.png',  cardImg: '/texas-holdem/room-card-golden-hall.png'  },
+  { label: '高限', maxBet: 5000,  buyIn: 10000, img: '/texas-holdem/room-royal-hall-button.png',   cardImg: '/texas-holdem/room-card-royal-hall.png'   },
+  { label: '豪華', maxBet: 10000, buyIn: 30000, img: '/texas-holdem/room-supreme-hall-button.png', cardImg: '/texas-holdem/room-card-supreme-hall.png' },
 ]
 
 // ── Image action button (blackjack UI) ────────────────────
@@ -139,13 +140,13 @@ function BjBtn({ src, alt, onClick, disabled, amount, amountStyle, style, imgSty
 }
 
 // ── Chip button (betting UI) ───────────────────────────────
-function ChipBtn({ value, img, onClick }) {
+function ChipBtn({ value, img, onClick, size = 50 }) {
   return (
     <button type="button" onClick={onClick} style={{
-      position: 'relative', width: 50, height: 50,
+      position: 'relative', width: size, height: size,
       background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0,
     }}>
-      <img src={img} alt={String(value)} style={{ width: 50, height: 50, display: 'block' }} />
+      <img src={img} alt={String(value)} style={{ width: size, height: size, display: 'block' }} />
       <span style={{
         position: 'absolute', inset: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -186,20 +187,27 @@ function BettingZone({ bet, chipKey, animClass, hasPlayer }) {
   )
 }
 
-// Absolute positions in pt-table-center for each betting zone circle
-// translate(-50%,-50%) centers the 44px circle on the point
-// Order: [p2 upper-left, p1 lower-left, me bottom-center, p3 upper-right, p4 lower-right]
-const BZ_POSITIONS = [
+// Mobile BZ positions: [p2 upper-left, p1 lower-left, me bottom-center, p3 upper-right, p4 lower-right]
+const BZ_POSITIONS_MOBILE = [
   { left: '14%', top: '26%', transform: 'translate(-50%,-50%)' },
   { left: '14%', top: '66%', transform: 'translate(-50%,-50%)' },
   { left: '50%', top: '80%', transform: 'translate(-50%,-50%)' },
   { left: '86%', top: '26%', transform: 'translate(-50%,-50%)' },
   { left: '86%', top: '66%', transform: 'translate(-50%,-50%)' },
 ]
+// PC BZ positions: [p1 top-left, p2 top-right, p3 left, p4 right, me bottom-left, p5 bottom-right]
+const BZ_POSITIONS_PC = [
+  { left: '20%', top: '10%', transform: 'translate(-50%,-50%)' },
+  { left: '78%', top: '10%', transform: 'translate(-50%,-50%)' },
+  { left: '10%', top: '50%', transform: 'translate(-50%,-50%)' },
+  { left: '90%', top: '50%', transform: 'translate(-50%,-50%)' },
+  { left: '28%', top: '80%', transform: 'translate(-50%,-50%)' },
+  { left: '72%', top: '80%', transform: 'translate(-50%,-50%)' },
+]
 
 // ── Dealer seat (top center) ───────────────────────────────
 // dealVisible: Infinity = show normally; finite number = show that many cards face-down (deal anim)
-function DealerSeat({ dealer, dealVisible = Infinity }) {
+function DealerSeat({ dealer, dealVisible = Infinity, cardSize = 'xs' }) {
   const allCards = dealer?.cards ?? []
   const animating = Number.isFinite(dealVisible)
   const score = dealer?.score ?? 0
@@ -212,11 +220,14 @@ function DealerSeat({ dealer, dealVisible = Infinity }) {
       <div className="pt-badges">
         <span className="pt-badge pt-badge-d">D</span>
       </div>
-      <div className="pt-avatar">莊</div>
+      <div className="pt-avatar" style={{ padding: 0, overflow: 'hidden', background: 'none', border: 'none' }}>
+        <img src="/dealer-badge.png" alt="莊家" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+      </div>
       <span className="pt-name">莊家</span>
       <div className="pt-opp-cards">
         <StackedHand
           cards={displayCards.length > 0 ? displayCards : [null, null]}
+          size={cardSize}
           forceDown={animating && displayCards.length > 0}
         />
       </div>
@@ -231,23 +242,23 @@ function DealerSeat({ dealer, dealVisible = Infinity }) {
 
 // ── BJ Seat (other players) — no bet chip here ─────────────
 // dealVisible: Infinity = show normally; finite number = show that many cards face-down (deal anim)
-function BJSeat({ player, isActing, dealVisible = Infinity }) {
-  if (!player) return <div className="pt-seat pt-seat-empty">空位</div>
+function BJSeat({ player, isActing, dealVisible = Infinity, cardSize = 'xs', side }) {
+  if (!player) return <div className={`pt-seat pt-seat-empty${side === 'left' ? ' pt-seat-left' : side === 'right' ? ' pt-seat-right' : ''}`}>空位</div>
   const hands = player.hands ?? []
   const hasBet = player.bet > 0
   const animating = Number.isFinite(dealVisible)
 
   return (
-    <div className={`pt-seat${isActing ? ' is-acting' : ''}`}>
+    <div className={`pt-seat${isActing ? ' is-acting' : ''}${side === 'left' ? ' pt-seat-left' : side === 'right' ? ' pt-seat-right' : ''}`}>
       {isActing && <div className="pt-acting-arrow" />}
-      <div className="pt-avatar">{player.username[0].toUpperCase()}</div>
+      <div className="pt-avatar"><img src={player.avatar} alt="" /></div>
       <span className="pt-name">{player.username}</span>
       <span className="pt-chips">{fmt(player.balance)}</span>
 
       {hands.length === 0 && (
         <div className="pt-opp-cards">
           {hasBet
-            ? <StackedHand cards={[null, null]} />
+            ? <StackedHand cards={[null, null]} size={cardSize} />
             : <span style={{ fontSize: 9, color: player.ready ? '#57d46f' : '#555' }}>
                 {player.ready ? '✓ 準備' : '等待中'}
               </span>
@@ -255,33 +266,37 @@ function BJSeat({ player, isActing, dealVisible = Infinity }) {
         </div>
       )}
 
-      {hands.map((hand, i) => {
-        const displayCards = animating
-          ? hand.cards.slice(0, Math.min(hand.cards.length, dealVisible))
-          : hand.cards
-        return (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, marginTop: 2 }}>
-            <div style={{ position: 'relative', display: 'inline-flex' }}>
-              <StackedHand cards={displayCards} forceDown={animating && displayCards.length > 0} />
-              {!animating && hand.result && (
-                <span style={{
-                  position: 'absolute', top: -8, right: -6, fontSize: 9, fontWeight: 700,
-                  color: resultColor(hand.result), background: '#000a',
-                  borderRadius: 4, padding: '1px 3px',
-                }}>{resultLabel(hand.result)}</span>
-              )}
-            </div>
-            {!animating && (hand.score ?? 0) > 0 && (
-              <span style={{
-                fontSize: 9, fontWeight: 700, lineHeight: 1,
-                color: hand.score > 21 ? '#f06060' : '#e2ce87',
-              }}>
-                {hand.score > 21 ? '爆' : hand.score}
-              </span>
-            )}
-          </div>
-        )
-      })}
+      {hands.length > 0 && (
+        <div className="pt-opp-cards" style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {hands.map((hand, i) => {
+            const displayCards = animating
+              ? hand.cards.slice(0, Math.min(hand.cards.length, dealVisible))
+              : hand.cards
+            return (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <div style={{ position: 'relative', display: 'inline-flex' }}>
+                  <StackedHand cards={displayCards} size={cardSize} forceDown={animating && displayCards.length > 0} />
+                  {!animating && hand.result && (
+                    <span style={{
+                      position: 'absolute', top: -8, right: -6, fontSize: 9, fontWeight: 700,
+                      color: resultColor(hand.result), background: '#000a',
+                      borderRadius: 4, padding: '1px 3px',
+                    }}>{resultLabel(hand.result)}</span>
+                  )}
+                </div>
+                {!animating && (hand.score ?? 0) > 0 && (
+                  <span style={{
+                    fontSize: 13, fontWeight: 700, lineHeight: 1,
+                    color: hand.score > 21 ? '#f06060' : '#e2ce87',
+                  }}>
+                    {hand.score > 21 ? '爆' : hand.score}
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -289,7 +304,7 @@ function BJSeat({ player, isActing, dealVisible = Infinity }) {
 // ── Lobby ──────────────────────────────────────────────────
 function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBalance = 0, minBuyIn = 0 }) {
   const [isSpinning, setIsSpinning] = useState(false)
-  const [selectedMaxBet, setSelectedMaxBet] = useState(0)
+  const [selectedIdx, setSelectedIdx] = useState(0)
 
   function handleRefresh() {
     if (isSpinning) return
@@ -297,62 +312,62 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBal
     setTimeout(() => setIsSpinning(false), 700)
   }
 
-  const selectedPreset = MAX_BET_PRESETS[selectedMaxBet]
+  const selectedPreset = MAX_BET_PRESETS[selectedIdx]
   const canCreate = status === 'connected'
+  const filteredRooms = rooms.filter(r => r.maxBet === selectedPreset.maxBet)
 
   return (
     <div className="pt-lobby">
       <div className="pt-lobby-head">
         <span className="pt-lobby-title">選擇房間</span>
-        <button type="button" className={`pt-lobby-refresh${isSpinning ? ' is-spinning' : ''}`}
-          onClick={handleRefresh} title="重新整理">
-          <img src="/reload.png" alt="重整" />
-        </button>
-      </div>
-      <div className="pt-bet-unit-row">
-        <span className="pt-bet-unit-label">最大下注</span>
-        <div className="pt-bet-unit-btns">
-          {MAX_BET_PRESETS.map((p, i) => (
-            <button key={i} type="button"
-              className={`pt-bet-unit-btn${selectedMaxBet === i ? ' is-active' : ''}`}
-              onClick={() => setSelectedMaxBet(i)}>
-              {p.label}
-              <span style={{ fontSize: 10, opacity: 0.75, marginLeft: 2 }}>
-                ({p.maxBet >= 1000 ? `${p.maxBet / 1000}K` : p.maxBet})
-              </span>
-            </button>
-          ))}
+        <div className="pt-lobby-head-actions">
+          <button type="button" className={`pt-lobby-refresh${isSpinning ? ' is-spinning' : ''}`} onClick={handleRefresh} title="重新整理">
+            <img src="/reload.png" alt="重整" />
+          </button>
+          <button type="button" className="pt-lobby-create"
+            onClick={() => onCreateRoom({ maxBet: selectedPreset.maxBet, buyIn: minBuyIn })}
+            disabled={!canCreate}>
+            + 建立新房間
+          </button>
         </div>
       </div>
-      <button type="button" className="pt-lobby-create"
-        onClick={() => onCreateRoom({ maxBet: selectedPreset.maxBet, buyIn: minBuyIn })}
-        disabled={!canCreate}>
-        + 建立新房間
-      </button>
+
+      <div className="pt-bet-unit-btns">
+        {MAX_BET_PRESETS.map((p, i) => (
+          <button key={i} type="button"
+            className={`pt-bet-unit-btn${selectedIdx === i ? ' is-active' : ''}`}
+            onClick={() => setSelectedIdx(i)}>
+            <img src={p.img} alt={p.label} />
+          </button>
+        ))}
+      </div>
+
       <div className="pt-room-list">
-        {rooms.length === 0 ? (
-          <div className="pt-room-empty">目前沒有房間，來建立第一間吧！</div>
-        ) : rooms.map(r => {
-          const roomMaxBet = r.maxBet ?? 0
+        {filteredRooms.length === 0 ? (
+          <div className="pt-room-empty">此廳暫無房間，來建立第一間吧！</div>
+        ) : filteredRooms.map(r => {
+          const roomPreset = MAX_BET_PRESETS.find(p => p.maxBet === r.maxBet) ?? null
           return (
             <div key={r.id} className="pt-room-item">
-              <div className="pt-room-meta">
-                <span className="pt-room-id-tag">#{r.id}</span>
-                <span className="pt-room-phase">{PHASE_LABEL[r.phase] ?? r.phase}</span>
-                {roomMaxBet > 0 && (
-                  <span style={{ fontSize: 10, color: '#aaa', marginLeft: 4 }}>
-                    上限 {roomMaxBet >= 1000 ? `${roomMaxBet / 1000}K` : roomMaxBet}
-                  </span>
-                )}
-              </div>
-              <div className="pt-room-bottom">
-                <span className="pt-room-players">{r.playerCount} / {r.maxPlayers} 玩家</span>
-                <button type="button"
-                  className="pt-room-join"
-                  onClick={() => onJoinRoom(r.id, minBuyIn)}
-                  disabled={status !== 'connected' || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers}>
-                  加入
-                </button>
+              {roomPreset && (
+                <div className="pt-room-img-wrap">
+                  <img src={roomPreset.img} alt={roomPreset.label} />
+                </div>
+              )}
+              <div className="pt-room-info">
+                <div className="pt-room-left">
+                  <span className="pt-room-id-tag">#{r.id.slice(0, 6).toUpperCase()}</span>
+                  <span className="pt-room-blinds">上限 {r.maxBet >= 1000 ? `${r.maxBet / 1000}K` : r.maxBet}</span>
+                  <span className="pt-room-players">{r.playerCount}/{r.maxPlayers} 玩家</span>
+                </div>
+                <div className="pt-room-right">
+                  <span className="pt-room-phase">{PHASE_LABEL[r.phase] ?? r.phase}</span>
+                  <button type="button" className="pt-room-join"
+                    onClick={() => onJoinRoom(r.id, minBuyIn)}
+                    disabled={status !== 'connected' || r.phase !== 'waiting' || r.playerCount >= r.maxPlayers}>
+                    加入
+                  </button>
+                </div>
               </div>
             </div>
           )
@@ -363,46 +378,64 @@ function LobbyView({ status, rooms, onCreateRoom, onJoinRoom, onRefresh, userBal
 }
 
 // ── Waiting view ───────────────────────────────────────────
-function WaitingView({ gameState, myId, onReady, onUnready, onLeaveRoom }) {
+function WaitingView({ gameState, myId, roomId, onReady, onUnready, onLeaveRoom }) {
   const players = gameState?.players ?? []
   const me = players.find(p => p.id === myId)
+  const maxPlayers = gameState?.maxPlayers ?? 6
+  const maxBet = gameState?.maxBet
   const startLeft = useCountdown(gameState?.startDeadline)
-  const countingDown = !!gameState?.startDeadline && startLeft > 0
-  const lockedIn = !!me?.ready && countingDown && startLeft <= 10
+  const isCountingDown = !!gameState?.startDeadline && startLeft > 0
+  const lockedIn = !!me?.ready && isCountingDown && startLeft <= 10
 
   return (
     <div className="pt-wait">
-      <div className="pt-wait-title">等待玩家</div>
+      <div className="pt-wait-plaque">
+        <img src="/waiting-player-plaque.png" alt="" className="pt-wait-plaque-img" />
+        <div className="pt-wait-plaque-body">
+          <div className="pt-wait-plaque-count">
+            <span className="pt-wait-plaque-num">{players.length}/{maxPlayers}</span>
+            <span className="pt-wait-plaque-unit">位玩家</span>
+          </div>
+          <div className="pt-wait-plaque-meta">
+            {roomId && <span className="pt-wait-plaque-room">#{roomId.slice(0, 6).toUpperCase()}</span>}
+            {maxBet && <span className="pt-wait-plaque-blinds">上限 {maxBet}</span>}
+          </div>
+        </div>
+      </div>
+
       <div className="pt-wait-players">
         {players.map(p => (
           <div key={p.id} className={`pt-wait-player${p.id === myId ? ' is-me' : ''}`}>
             <span className={`pt-wait-dot${p.ready ? ' is-ready' : ''}`} />
-            <span className="pt-wait-av">{p.username[0].toUpperCase()}</span>
-            <span className="pt-wait-name">{p.username}</span>
-            <span className="pt-wait-chips">{fmt(p.balance)}</span>
-            {p.ready && <span className="pt-wait-ready-tag">已準備</span>}
+            <div className="pt-wait-av"><img src={p.avatar} alt="" /></div>
+            <div className="pt-wait-info">
+              <span className="pt-wait-name">{p.username}</span>
+              <span className={`pt-wait-status${p.ready ? ' is-ready' : ''}`}>{p.ready ? '已準備' : '未準備'}</span>
+            </div>
+            <div className="pt-wait-chips-wrap">
+              <img src="/chip-gold.png" className="pt-wait-chip-img" alt="" />
+              <span className="pt-wait-chips">{fmt(p.balance)}</span>
+            </div>
           </div>
         ))}
       </div>
 
-      {countingDown ? (
-        <div className="pt-wait-countdown">
-          <span className="pt-wait-cd-num">{startLeft}</span>
-          <span className="pt-wait-cd-label">秒後自動開始</span>
-        </div>
-      ) : (
-        <p className="pt-wait-hint">
-          {players.length < 2 ? `還需要 ${2 - players.length} 名玩家` : '等待所有人準備'}
-        </p>
-      )}
-
-      <button type="button"
-        className={`pt-wait-start${me?.ready ? ' is-ready' : ''}`}
-        onClick={me?.ready ? onUnready : onReady}
-        disabled={lockedIn}>
-        {me?.ready ? '✓ 已準備好' : '我準備好了'}
-      </button>
-      <button type="button" className="pt-wait-leave" onClick={onLeaveRoom}>離開房間</button>
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        {isCountingDown && (
+          <div className="pt-wait-countdown">
+            <span className="pt-wait-cd-num">{startLeft}</span>
+            <span className="pt-wait-cd-label">秒後自動開始</span>
+          </div>
+        )}
+        <button type="button" className="pt-wait-ready-btn"
+          onClick={me?.ready ? onUnready : onReady} disabled={lockedIn}>
+          <img src="/ready-button.png" alt="" className="pt-wait-ready-img" />
+          <span className="pt-wait-ready-text">{me?.ready ? '✓ 已準備好' : '我準備好了'}</span>
+        </button>
+        <button type="button" className="pt-wait-leave-btn" onClick={onLeaveRoom}>
+          <img src="/leave-room-button.png" alt="" className="pt-wait-leave-img" />
+        </button>
+      </div>
     </div>
   )
 }
@@ -633,9 +666,11 @@ export default function BlackjackTablePage({ auth }) {
   const phase = gameState?.phase ?? 'waiting'
   const myPlayer = gameState?.players?.find(p => p.id === myId)
   if (myPlayer?.balance != null) lastChipsRef.current = myPlayer.balance
-  const [p1, p2, p3, p4] = getSeats(gameState?.players ?? [], myId)
-  // Ordered for table positions: [p2, p1, me, p3, p4]
+  const [p1, p2, p3, p4, p5] = getSeats(gameState?.players ?? [], myId)
+  // Mobile order: [p2, p1, me, p3, p4]
   const tablePlayers = [p2, p1, myPlayer ?? null, p3, p4]
+  // PC order: [p1, p2, p3, p4, me, p5]
+  const tablePlayers_pc = [p1, p2, p3, p4, myPlayer ?? null, p5]
 
   // Deal animation: dealStep > 0 means animation is running
   const isDealingFaceDown = dealStep > 0
@@ -756,23 +791,25 @@ export default function BlackjackTablePage({ auth }) {
         </div>
       )}
 
-      <header className="pt-header">
-        <button type="button" className="pt-back" onClick={handleBack}>
-          <img src="/arrow.png" alt="返回" />
-        </button>
-        <div className="pt-header-info">
-          {roomId
-            ? <span className="pt-room-label">房間 #{roomId}</span>
-            : <img src="/blackjack/blackjack.png" alt="21點" className="pt-room-label-img" />
-          }
-          {roomId && <span className="pt-blinds">最低下注 {gameState?.minBet ?? 50}</span>}
-        </div>
-        {isPlaying && <span className="pt-phase-badge">{PHASE_LABEL[phase]}</span>}
-        <button type="button" className="pt-mute-btn" onClick={toggleGameMute}
-          title={isGameMuted ? '開啟音樂' : '關閉音樂'}>
-          <img src={isGameMuted ? '/enable-sound.png' : '/volume.png'} alt="" />
-        </button>
-      </header>
+      <div className="pt-header-con">
+        <header className="pt-header">
+          <button type="button" className="pt-back" onClick={handleBack}>
+            <img src="/arrow.png" alt="返回" />
+          </button>
+          <div className="pt-header-info">
+            {roomId
+              ? <span className="pt-room-label">房間 #{roomId}</span>
+              : <img src="/blackjack/blackjack.png" alt="21點" className="pt-room-label-img" />
+            }
+            {roomId && <span className="pt-blinds">最低下注 {gameState?.minBet ?? 50}</span>}
+          </div>
+          {isPlaying && <span className="pt-phase-badge">{PHASE_LABEL[phase]}</span>}
+          <button type="button" className="pt-mute-btn" onClick={toggleGameMute}
+            title={isGameMuted ? '開啟音樂' : '關閉音樂'}>
+            <img src={isGameMuted ? '/enable-sound.png' : '/volume.png'} alt="" />
+          </button>
+        </header>
+      </div>
 
       <div className="pt-content">
       {error && <div className="pt-error-bar">{error}</div>}
@@ -789,7 +826,7 @@ export default function BlackjackTablePage({ auth }) {
       )}
 
       {isWaiting && (
-        <WaitingView gameState={gameState} myId={myId} onReady={setReady} onUnready={unready} onLeaveRoom={leaveRoom} />
+        <WaitingView gameState={gameState} myId={myId} roomId={roomId} onReady={setReady} onUnready={unready} onLeaveRoom={leaveRoom} />
       )}
 
       {isPlaying && (
@@ -868,7 +905,8 @@ export default function BlackjackTablePage({ auth }) {
             </div>
           )}
 
-          <div className="pt-top-container">
+          {/* ── Mobile layout ── */}
+          <div className="pt-mobile-layout pt-top-container">
 
             {/* Dealer at top center */}
             <div className="pt-top-center">
@@ -882,7 +920,7 @@ export default function BlackjackTablePage({ auth }) {
               </div>
 
               <div className="pt-table-center">
-                {/* Betting zones — one per player position, spread around the oval */}
+                {/* Betting zones */}
                 {tablePlayers.map((player, i) => {
                   const animKey = chipAnimKeys[player?.id] ?? 1
                   const resultAnim = player ? resultAnimMap.get(player.id) : undefined
@@ -895,7 +933,7 @@ export default function BlackjackTablePage({ auth }) {
                   return (
                     <div key={i} style={{
                       position: 'absolute', zIndex: 3, pointerEvents: 'none',
-                      ...BZ_POSITIONS[i],
+                      ...BZ_POSITIONS_MOBILE[i],
                     }}>
                       <BettingZone
                         bet={player?.bet ?? 0}
@@ -945,7 +983,8 @@ export default function BlackjackTablePage({ auth }) {
             {/* Me at bottom */}
             <div className="pt-bottom-center">
               <div className={`pt-seat pt-seat-me${isMyTurn ? ' is-acting' : ''}`}>
-                <div className="pt-avatar">{myPlayer?.username?.[0]?.toUpperCase() ?? 'M'}</div>
+                {isMyTurn && <div className="pt-acting-arrow" />}
+                <div className="pt-avatar"><img src={myPlayer?.avatar} alt="" /></div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }}>
                   <span className="pt-name">{myPlayer?.username}</span>
                   <span className="pt-chips">{fmt(myPlayer?.balance ?? 0)}</span>
@@ -974,7 +1013,7 @@ export default function BlackjackTablePage({ auth }) {
                             forceDown={animating && displayCards.length > 0}
                           />
                           {!animating && (
-                            <span style={{ fontSize: 9, color: hand.result ? resultColor(hand.result) : '#aaa' }}>
+                            <span className="pt-chips" style={{ fontSize: 13, color: hand.result ? resultColor(hand.result) : hand.score > 21 ? '#f06060' : undefined }}>
                               {hand.score > 0 ? hand.score : ''}
                               {hand.result ? ` ${resultLabel(hand.result)}` : ''}
                             </span>
@@ -1058,23 +1097,175 @@ export default function BlackjackTablePage({ auth }) {
             {phase === 'playing' && (
               <div className="pt-actions">
                 {!isMyTurn && <div className="pt-actions-mask" />}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
-                  {canInsurance && (
-                    <BjBtn
-                      src="/blackjack/Insurance.png" alt="買保險"
-                      amount={Math.floor((myCurrentHand?.bet ?? 0) / 2)}
-                      amountStyle={{ right: '15%', top: '25%', transform: 'none' }}
-                      onClick={() => doAction('insurance')}
-                    />
-                  )}
-                  <BjBtn src="/blackjack/stop.png" alt="停牌" onClick={() => { play('bj_stand'); doAction('stand') }} />
-                  <BjBtn src="/blackjack/hold.png" alt="要牌" onClick={() => { play('bj_hit'); doAction('hit') }} />
-                  <BjBtn src="/blackjack/double.png" alt="加倍" disabled={!canDouble} onClick={() => { play('bj_double'); doAction('double') }} />
-                  <BjBtn src="/blackjack/Split.png" alt="分牌" disabled={!canSplit} onClick={() => { play('bj_split'); doAction('split') }} />
-                </div>
+                {(() => {
+                  const btnS = { flex: 1, minWidth: 0 }
+                  const imgS = { width: '100%', height: 'auto', maxWidth: 'none' }
+                  return (
+                    <div style={{ display: 'flex', gap: 6, width: '100%', padding: '0 8px' }}>
+                      {canInsurance && (
+                        <BjBtn src="/blackjack/Insurance.png" alt="買保險"
+                          amount={Math.floor((myCurrentHand?.bet ?? 0) / 2)}
+                          amountStyle={{ right: '15%', top: '25%', transform: 'none' }}
+                          style={btnS} imgStyle={imgS}
+                          onClick={() => doAction('insurance')} />
+                      )}
+                      <BjBtn src="/blackjack/stop.png" alt="停牌" style={btnS} imgStyle={imgS} onClick={() => { play('bj_stand'); doAction('stand') }} />
+                      <BjBtn src="/blackjack/hold.png" alt="要牌" style={btnS} imgStyle={imgS} onClick={() => { play('bj_hit'); doAction('hit') }} />
+                      <BjBtn src="/blackjack/double.png" alt="加倍" style={btnS} imgStyle={imgS} disabled={!canDouble} onClick={() => { play('bj_double'); doAction('double') }} />
+                      <BjBtn src="/blackjack/Split.png" alt="分牌" style={btnS} imgStyle={imgS} disabled={!canSplit} onClick={() => { play('bj_split'); doAction('split') }} />
+                    </div>
+                  )
+                })()}
               </div>
             )}
 
+          </div>
+
+          {/* ── PC layout ── */}
+          <div className="pt-pc-layout pt-top-container">
+            {/* 莊家獨立一排 */}
+            <div className="pt-pc-dealer-row">
+              <DealerSeat dealer={gameState?.dealer} dealVisible={dealerDealVis} cardSize="md" />
+            </div>
+            <div className="pt-pc-top" style={{ position: 'relative', top: '-20%' }}>
+              <BJSeat player={p1} isActing={acting(p1?.id)} dealVisible={playerDealVis(p1)} cardSize="md" />
+              <BJSeat player={p2} isActing={acting(p2?.id)} dealVisible={playerDealVis(p2)} cardSize="md" />
+            </div>
+            <div className="pt-pc-middle" style={{ position: 'relative', top: '-16%' }}>
+              <BJSeat player={p3} isActing={acting(p3?.id)} dealVisible={playerDealVis(p3)} cardSize="md" side="left" />
+              <div className="pt-table-center">
+                {/* PC betting zones */}
+                {tablePlayers_pc.map((player, i) => {
+                  const animKey = chipAnimKeys[player?.id] ?? 1
+                  const resultAnim = player ? resultAnimMap.get(player.id) : undefined
+                  let animClass = 'bj-chip-place'
+                  if (resultAnim === 'win') animClass = 'bj-chip-win'
+                  else if (resultAnim === 'lose') animClass = iMeWinner ? 'bj-chip-lose-down' : 'bj-chip-lose'
+                  const chipKey = resultAnim ? `${player?.id}-${resultAnim}` : `${player?.id}-${animKey}`
+                  return (
+                    <div key={i} style={{ position: 'absolute', zIndex: 3, pointerEvents: 'none', ...BZ_POSITIONS_PC[i] }}>
+                      <BettingZone bet={player?.bet ?? 0} chipKey={chipKey} animClass={animClass} hasPlayer={!!player} />
+                    </div>
+                  )
+                })}
+                <div className="pt-overlay">
+                  {phase === 'playing' && (
+                    <div style={{ background: isMyTurn ? 'rgba(240,201,107,0.12)' : 'rgba(0,0,0,0.65)', border: `1px solid ${isMyTurn ? 'rgba(226,206,135,0.4)' : 'rgba(255,255,255,0.1)'}`, borderRadius: 20, padding: '4px 14px', backdropFilter: 'blur(4px)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: isMyTurn ? '#f0c96b' : '#bbb' }}>
+                        {isMyTurn ? '你的回合' : `輪到 ${(gameState?.players ?? []).find(p => p.id === gameState?.currentActorId)?.username ?? '…'}`}
+                      </span>
+                    </div>
+                  )}
+                  {phase === 'dealer' && (
+                    <div style={{ background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '4px 14px', backdropFilter: 'blur(4px)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#bbb', whiteSpace: 'nowrap' }}>莊家出牌中…</span>
+                    </div>
+                  )}
+                  <div className="pt-pot"><span className="pt-pot-label">21點</span></div>
+                </div>
+              </div>
+              <BJSeat player={p4} isActing={acting(p4?.id)} dealVisible={playerDealVis(p4)} cardSize="md" side="right" />
+            </div>
+            <div className="pt-pc-bottom">
+              <div className="pt-pc-me-col">
+                <div className={`pt-seat pt-seat-me${isMyTurn ? ' is-acting' : ''}`}>
+                  {isMyTurn && <div className="pt-acting-arrow" />}
+                  <div className="pt-avatar"><img src={myPlayer?.avatar} alt="" /></div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }}>
+                    <span className="pt-name">{myPlayer?.username}</span>
+                    <span className="pt-chips">{fmt(myPlayer?.balance ?? 0)}</span>
+                  </div>
+                  {(myPlayer?.hands?.length ?? 0) > 0 && (
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginTop: 4 }}>
+                      {myPlayer.hands.map((hand, i) => {
+                        const myDealVis = playerDealVis(myPlayer)
+                        const animating = Number.isFinite(myDealVis)
+                        const displayCards = animating ? hand.cards.slice(0, Math.min(hand.cards.length, myDealVis)) : hand.cards
+                        return (
+                          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                            {myPlayer.hands.length > 1 && <span style={{ fontSize: 9, color: '#888' }}>#{i + 1}</span>}
+                            <StackedHand cards={displayCards} size="md" activeHand={isMyTurn && i === myCurrentHandIdx} forceDown={animating && displayCards.length > 0} />
+                            {!animating && (
+                              <span className="pt-chips" style={{ fontSize: 13, color: hand.result ? resultColor(hand.result) : hand.score > 21 ? '#f06060' : undefined }}>
+                                {hand.score > 0 ? hand.score : ''}{hand.result ? ` ${resultLabel(hand.result)}` : ''}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                  {(myPlayer?.hands?.length ?? 0) === 0 && (myPlayer?.bet ?? 0) > 0 && (
+                    <div className="pt-opp-cards"><StackedHand cards={[null, null]} size="md" /></div>
+                  )}
+                </div>
+              </div>
+              <BJSeat player={p5} isActing={acting(p5?.id)} dealVisible={playerDealVis(p5)} cardSize="md" />
+            </div>
+            <div className={`pt-actions${(!isMyTurn && phase === 'playing') ? ' pt-actions-inactive' : ''}`}>
+              <div className="pt-countdown-wrap">
+                {phase === 'betting' && (myPlayer?.bet ?? 0) > 0 && (
+                  <span className="pt-waiting-inline" style={{ color: '#57d46f' }}>✓ 已下注 {fmtNum(myPlayer.bet)}，等待其他玩家…</span>
+                )}
+                {phase === 'betting' && (myPlayer?.bet ?? 0) === 0 && (<>
+                  <div className="pt-countdown-bar" style={{ width: `${Math.max(0, (timeLeft / 15) * 100)}%` }} />
+                  <span className="pt-countdown-num">{timeLeft}s</span>
+                </>)}
+                {phase === 'playing' && isMyTurn && actionLeft > 0 && (<>
+                  <div className="pt-countdown-bar" style={{ width: `${Math.max(0, (actionLeft / 30) * 100)}%`, background: actionLeft <= 10 ? '#f06060' : undefined }} />
+                  <span className="pt-countdown-num" style={{ color: actionLeft <= 10 ? '#f06060' : undefined }}>{actionLeft}s</span>
+                </>)}
+                {phase === 'playing' && !isMyTurn && (
+                  <span className="pt-waiting-inline">等待 {(gameState?.players ?? []).find(p => p.id === gameState?.currentActorId)?.username ?? '…'} 行動中</span>
+                )}
+              </div>
+              {phase === 'betting' && (myPlayer?.bet ?? 0) === 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {activeChips.map(({ value, img }) => (
+                      <ChipBtn key={value} value={value} img={img} onClick={() => addChip(value)} size={64} />
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <BjBtn src="/blackjack/Clear.png" alt="清除" onClick={() => setBetAmount(0)} imgStyle={{ height: 47 }} />
+                    {lastBetRef.current > 0 && betAmount === 0
+                      ? <BjBtn src="/blackjack/repeat.png" alt="重複" amount={lastBetRef.current}
+                          amountStyle={{ right: '20%', top: '35%', transform: 'none' }}
+                          imgStyle={{ height: 64 }}
+                          onClick={() => {
+                            const p = gameState?.players?.find(p => p.id === myId)
+                            if (p) setBetAmount(Math.min(lastBetRef.current, Math.min(maxBet, p.balance)))
+                          }} />
+                      : <span style={{ fontSize: 14, color: '#f0c96b', fontWeight: 700, minWidth: 40, textAlign: 'center' }}>下注: {fmtNum(betAmount)}</span>
+                    }
+                    <BjBtn src="/blackjack/Betting.png" alt="確認下注"
+                      disabled={betAmount < (gameState?.minBet ?? 50)}
+                      onClick={confirmBet} imgStyle={{ height: 64, maxWidth: 'none' }} />
+                  </div>
+                </div>
+              )}
+              {phase === 'playing' && (
+                <div className="pt-btn-row">
+                  {(() => {
+                    const btnW = canInsurance ? 88 : 115
+                    const s = { width: btnW, height: 'auto', maxWidth: 'none' }
+                    return (<>
+                      {canInsurance && (
+                        <BjBtn src="/blackjack/Insurance.png" alt="買保險"
+                          amount={Math.floor((myCurrentHand?.bet ?? 0) / 2)}
+                          amountStyle={{ right: '15%', top: '25%', transform: 'none' }}
+                          imgStyle={s}
+                          onClick={() => doAction('insurance')} />
+                      )}
+                      <BjBtn src="/blackjack/stop.png" alt="停牌" imgStyle={s} onClick={() => { play('bj_stand'); doAction('stand') }} />
+                      <BjBtn src="/blackjack/hold.png" alt="要牌" imgStyle={s} onClick={() => { play('bj_hit'); doAction('hit') }} />
+                      <BjBtn src="/blackjack/double.png" alt="加倍" imgStyle={s} disabled={!canDouble} onClick={() => { play('bj_double'); doAction('double') }} />
+                      <BjBtn src="/blackjack/Split.png" alt="分牌" imgStyle={s} disabled={!canSplit} onClick={() => { play('bj_split'); doAction('split') }} />
+                    </>)
+                  })()}
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}

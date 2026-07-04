@@ -10,6 +10,8 @@ import EventDrawer from '../components/EventDrawer'
 import FavoritesDrawer from '../components/FavoritesDrawer'
 import GameModal from '../components/GameModal'
 import BannerCarousel from '../components/BannerCarousel'
+import PcTopBar from '../components/PcTopBar'
+import AvatarPickerModal from '../components/AvatarPickerModal'
 import LobbyIntroModal from '../components/LobbyIntroModal'
 import LogoutConfirmModal from '../components/LogoutConfirmModal'
 import SpaceBackground from '../components/SpaceBackground'
@@ -35,6 +37,7 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false)
   const [isMyDrawerOpen, setIsMyDrawerOpen] = useState(false)
   const [isEventDrawerOpen, setIsEventDrawerOpen] = useState(false)
+  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false)
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
   const [isGuestBrokeOpen,   setIsGuestBrokeOpen]   = useState(false)
   const { games, featuredGames, isLoadingGames } = useGames()
@@ -143,6 +146,7 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
     account: auth.user?.username ?? '',
     balance: new Intl.NumberFormat('en-US').format(auth.user?.balance ?? 0),
     vip: auth.isAuthenticated ? 'VIP 1' : 'GUEST',
+    avatar: auth.user?.avatar ?? null,
   }
 
   const navItems = bottomNavItems.map((item) =>
@@ -164,6 +168,17 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
     >
       <SpaceBackground />
 
+      <PcTopBar
+        profile={profile}
+        isAuthenticated={auth.isAuthenticated}
+        isRefreshingBalance={!balanceReady || auth.isRefreshingBalance}
+        supportUnread={supportUnread}
+        onSupportRead={onSupportRead}
+        onAccountAction={() => setIsLogoutConfirmOpen(true)}
+        onGoLogin={onGoLogin}
+        onAvatarClick={() => setIsAvatarPickerOpen(true)}
+      />
+
       {/* {showFloatTop && (
         <button
           type="button"
@@ -183,17 +198,30 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
             isRefreshingBalance={!balanceReady || auth.isRefreshingBalance}
             supportUnread={supportUnread}
             onSupportRead={onSupportRead}
-            onAccountAction={() => {
-              setIsLogoutConfirmOpen(true)
-            }}
+            onAccountAction={() => setIsLogoutConfirmOpen(true)}
+            onAvatarClick={() => setIsAvatarPickerOpen(true)}
           />
         ) : (
           <GuestBanner onGoLogin={onGoLogin} />
         )}
-        <BannerCarousel onCheckin={() => {
-            if (!auth.isAuthenticated) { openAuthPrompt('default'); return }
-            setIsCheckInOpen(true)
-          }} />
+        <div className="pc-hero-row">
+          <div className="pc-banner-col">
+            <BannerCarousel onCheckin={() => {
+                if (!auth.isAuthenticated) { openAuthPrompt('default'); return }
+                setIsCheckInOpen(true)
+              }} />
+            <div className="pc-notice-slot">
+              <NoticeTicker text={marqueeText} />
+            </div>
+          </div>
+          <GameSection
+            items={featuredGames}
+            isLoading={isLoadingGames}
+            favoriteIds={favoriteIds}
+            onToggleFavorite={toggleFavorite}
+            onGameClick={setSelectedGame}
+          />
+        </div>
         <QuickActions
           items={quickActions}
           onAction={(action) => {
@@ -202,13 +230,6 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
               setIsCheckInOpen(true)
             }
           }}
-        />
-        <GameSection
-          items={featuredGames}
-          isLoading={isLoadingGames}
-          favoriteIds={favoriteIds}
-          onToggleFavorite={toggleFavorite}
-          onGameClick={setSelectedGame}
         />
         <AllGamesSection
           items={games}
@@ -259,6 +280,14 @@ function LobbyPage({ auth, isActive = true, onGoLogin, onCenterLogoClick, hasEnt
           setIsMyDrawerOpen(false)
           setIsLogoutConfirmOpen(true)
         }}
+        onAvatarClick={() => setIsAvatarPickerOpen(true)}
+      />
+
+      <AvatarPickerModal
+        isOpen={isAvatarPickerOpen}
+        currentAvatar={profile.avatar}
+        onSelect={async (avatar) => { await auth.updateAvatar(avatar); setIsAvatarPickerOpen(false) }}
+        onClose={() => setIsAvatarPickerOpen(false)}
       />
 
       <CheckInModal

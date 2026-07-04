@@ -148,12 +148,13 @@ export class BigTwoGame {
 
   // ── Player management ─────────────────────────────────
 
-  addPlayer({ id, username, balance }) {
+  addPlayer({ id, username, balance, avatar }) {
     if (this.players.length >= this.maxPlayers) throw new Error('房間已滿')
     if (this.phase !== 'waiting') throw new Error('遊戲進行中，無法加入')
     if (this.players.find(p => p.id === id)) return
-    this.players.push({ id, username, balance, hand: [], ready: false, status: 'waiting' })
+    this.players.push({ id, username, balance, avatar, hand: [], ready: false, status: 'waiting' })
     this._broadcastState()
+    this._checkCountdown()
   }
 
   removePlayer(id) {
@@ -180,8 +181,9 @@ export class BigTwoGame {
     p.ready = true
     this._broadcastState()
     const eligible = this.players.filter(p => p.balance > 0)
+    const isFull   = this.players.length >= this.maxPlayers
     const allReady = eligible.length >= this.minPlayers && eligible.every(p => p.ready)
-    if ((this.players.length >= this.maxPlayers || allReady)) {
+    if (isFull && allReady) {
       this._clearCountdown()
       try { this._startGame() } catch {}
       return
@@ -203,7 +205,8 @@ export class BigTwoGame {
     if (this.phase !== 'waiting') return
     const eligible = this.players.filter(p => p.balance > 0)
     if (eligible.length < this.minPlayers) return
-    if (!eligible.some(p => p.ready)) return
+    const isFull = this.players.length >= this.maxPlayers
+    if (!isFull && !eligible.some(p => p.ready)) return
     if (this._countdownTimer) return
     this.countdownEnd = Date.now() + COUNTDOWN_MS
     this._broadcastState()
@@ -452,6 +455,7 @@ export class BigTwoGame {
         id:             p.id,
         username:       p.username,
         balance:        p.balance,
+        avatar:         p.avatar,
         cardCount:      p.hand.length,
         status:         p.status,
         ready:          p.ready,
@@ -465,6 +469,7 @@ export class BigTwoGame {
       currentPlayerId: this.players[this.currentPlayerIdx]?.id ?? null,
       passCount:       this.passCount,
       winners:         this.winners,
+      maxPlayers:      this.maxPlayers,
       betUnit:         this.betUnit,
       countdownEnd:    this.countdownEnd,
       myHand:          [],

@@ -25,3 +25,11 @@ export function register(payload) {
 export function guestLogin() {
   return apiRequest('/auth/guest', { method: 'POST' })
 }
+
+export function patchAvatar(token, avatar) {
+  return apiRequest('/me/avatar', {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ avatar }),
+  })
+}

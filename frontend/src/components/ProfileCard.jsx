@@ -38,9 +38,8 @@ function AccountDoorIcon() {
 
 import { useNavigate } from 'react-router-dom'
 
-function ProfileCard({ profile, isAuthenticated, isRefreshingBalance, onAccountAction, supportUnread = 0, onSupportRead }) {
+function ProfileCard({ profile, isAuthenticated, isRefreshingBalance, onAccountAction, supportUnread = 0, onSupportRead, onAvatarClick }) {
   const navigate = useNavigate()
-  const avatarText = profile.account ? profile.account.slice(0, 1).toUpperCase() : 'G'
 
   function handleMessageClick() {
     onSupportRead?.()
@@ -49,17 +48,19 @@ function ProfileCard({ profile, isAuthenticated, isRefreshingBalance, onAccountA
 
   return (
     <section className="profile-bar">
-      <div className="avatar-wrap">
-        <img src="/notice-angel.png" alt="avatar" className="avatar-img" />
-        <span className="vip-tag">{profile.vip}</span>
-      </div>
+      <button type="button" className="avatar-wrap" onClick={onAvatarClick} aria-label="更換頭像">
+        <img src={profile.avatar} alt="avatar" className="avatar-img" />
+      </button>
 
       <div className="profile-main">
         <div className="profile-header">
           <div className={`profile-identity ${isAuthenticated ? '' : 'is-hidden'}`}>
             {isAuthenticated ? (
               <>
-                <span className="profile-label">玩家帳號</span>
+                <div className="profile-label-row">
+                  <span className="profile-label">玩家帳號</span>
+                  <span className="vip-tag">{profile.vip}</span>
+                </div>
                 <strong>{profile.account}</strong>
               </>
             ) : null}
