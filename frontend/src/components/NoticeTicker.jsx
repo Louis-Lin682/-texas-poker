@@ -27,9 +27,17 @@ function NoticeTicker({ text }) {
   useLayoutEffect(() => {
     const el = trackRef.current
     if (!el || !text) return
-    const dist = el.scrollWidth / 2
-    const dur = Math.max(5, dist / 70)
-    el.style.animationDuration = `${dur.toFixed(1)}s`
+    let rafId
+    const measure = () => {
+      const dist = el.scrollWidth / 2
+      if (dist > 0) {
+        el.style.animationDuration = `${Math.max(5, dist / 70).toFixed(1)}s`
+      } else {
+        rafId = requestAnimationFrame(measure)
+      }
+    }
+    measure()
+    return () => cancelAnimationFrame(rafId)
   }, [text])
 
   return (

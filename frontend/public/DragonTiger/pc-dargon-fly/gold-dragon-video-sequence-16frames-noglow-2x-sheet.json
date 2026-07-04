@@ -1,0 +1,358 @@
+{
+  "meta": {
+    "image": "gold-dragon-video-sequence-16frames-noglow-2x-sheet.png",
+    "size": {
+      "w": 674,
+      "h": 4800
+    },
+    "scale": "1",
+    "layout": {
+      "columns": 2,
+      "rows": 8
+    },
+    "frameDurationMs": 65,
+    "loop": false
+  },
+  "animations": {
+    "dragonFly": [
+      "dragon_00",
+      "dragon_01",
+      "dragon_02",
+      "dragon_03",
+      "dragon_04",
+      "dragon_05",
+      "dragon_06",
+      "dragon_07",
+      "dragon_08",
+      "dragon_09",
+      "dragon_10",
+      "dragon_11",
+      "dragon_12",
+      "dragon_13",
+      "dragon_14",
+      "dragon_15"
+    ]
+  },
+  "frames": {
+    "dragon_00": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_01": {
+      "frame": {
+        "x": 337,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_02": {
+      "frame": {
+        "x": 0,
+        "y": 600,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_03": {
+      "frame": {
+        "x": 337,
+        "y": 600,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_04": {
+      "frame": {
+        "x": 0,
+        "y": 1200,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_05": {
+      "frame": {
+        "x": 337,
+        "y": 1200,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_06": {
+      "frame": {
+        "x": 0,
+        "y": 1800,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_07": {
+      "frame": {
+        "x": 337,
+        "y": 1800,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_08": {
+      "frame": {
+        "x": 0,
+        "y": 2400,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_09": {
+      "frame": {
+        "x": 337,
+        "y": 2400,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_10": {
+      "frame": {
+        "x": 0,
+        "y": 3000,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_11": {
+      "frame": {
+        "x": 337,
+        "y": 3000,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_12": {
+      "frame": {
+        "x": 0,
+        "y": 3600,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_13": {
+      "frame": {
+        "x": 337,
+        "y": 3600,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_14": {
+      "frame": {
+        "x": 0,
+        "y": 4200,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    },
+    "dragon_15": {
+      "frame": {
+        "x": 337,
+        "y": 4200,
+        "w": 337,
+        "h": 600
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 600
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 600
+      }
+    }
+  }
+}

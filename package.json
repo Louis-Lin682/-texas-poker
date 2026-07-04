@@ -8,5 +8,8 @@
     "build": "npm --prefix frontend run build",
     "preview": "npm --prefix frontend run preview",
     "backend": "npm --prefix backend run start"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.3"
   }
 }

@@ -136,7 +136,7 @@ export class RoomManager {
     const info = this.clients.get(ws)
     if (info?.roomId) {
       const game = this.rooms.get(info.roomId)
-      this._leaveRoom(ws, info)
+      this._leaveRoom(ws, info, true)
     }
     this.clients.delete(ws)
   }
@@ -289,6 +289,14 @@ export class RoomManager {
         throw new Error(hasPending ? '籌碼結算中，請稍後再試' : '餘額不足，無法加入房間')
       }
       await dbQuery('UPDATE users SET balance = 0 WHERE id = $1', [info.userId])
+
+      // Guard: if WS disconnected while awaiting DB ops, undo the deduction and
+      // abort — unregisterClient won't cashout because info.roomId is still null.
+      if (!this.clients.has(ws)) {
+        dbQuery('UPDATE users SET balance = balance + $1 WHERE id = $2', [buyIn, info.userId])
+          .catch(err => console.error('[join-abort restore]', err))
+        return
+      }
     }
 
     // Record buy-in in ledger
@@ -298,6 +306,16 @@ export class RoomManager {
     ).catch(err => console.error('[ledger buy_in]', err))
 
     game.addPlayer({ id: info.userId, username: info.username, balance: buyIn, avatar: info.avatar })
+
+    // Second guard: check again after addPlayer (sync, but covers the edge case
+    // where disconnect arrived between the two guards and pool is null).
+    if (this.pool && !this.clients.has(ws)) {
+      game.removePlayer(info.userId)
+      dbQuery('UPDATE users SET balance = balance + $1 WHERE id = $2', [buyIn, info.userId])
+        .catch(err => console.error('[join-abort post-add restore]', err))
+      return
+    }
+
     info.roomId = roomId
     this._auditChips(`join:human buyIn=${buyIn}`, roomId)
 
@@ -333,7 +351,7 @@ export class RoomManager {
     }
   }
 
-  _leaveRoom(ws, info) {
+  _leaveRoom(ws, info, isDisconnect = false) {
     const roomId = info.roomId
     if (!roomId) return
     const game = this.rooms.get(roomId)
@@ -357,10 +375,11 @@ export class RoomManager {
     const player = game.players.find(p => p.id === info.userId)
     const midHandRefund = game.pot > 0 ? (player?.totalBet ?? 0) : 0
     // Voluntary leave mid-Dragon-Tiger-round: forfeit the pending bet to the
-    // house rather than refunding it (quitting on an unresolved bet is on the
-    // player) or silently destroying it.
-    const dtForfeit = this._dtPendingBet(game, player)
-    const cashout = (player?.balance ?? 0) + midHandRefund
+    // house. On disconnect, refund instead (same as _expireGrace).
+    const dtPending = this._dtPendingBet(game, player)
+    const dtForfeit = isDisconnect ? 0 : dtPending
+    const dtRefund  = isDisconnect ? dtPending : 0
+    const cashout = (player?.balance ?? 0) + midHandRefund + dtRefund
 
     game.removePlayer(info.userId)
     this._creditHouse(dtForfeit, roomId, 'voluntary-leave-forfeit')

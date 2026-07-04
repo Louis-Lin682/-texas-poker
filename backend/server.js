@@ -2092,3 +2092,32 @@ initDbWithRetry()
     console.error('Failed to initialize:', error)
     process.exit(1)
   })
+
+async function gracefulShutdown(signal) {
+  console.log(`[shutdown] ${signal} — returning in-game chips to DB…`)
+  const ops = []
+  for (const [roomId, game] of roomManager.rooms) {
+    for (const p of game.players) {
+      if (roomManager.botManager?.isBot(p.id)) continue
+      const dtPending = game.gameSlug === 'dragon-tiger'
+        ? Object.values(p.bets ?? {}).reduce((a, v) => a + v, 0)
+        : 0
+      const cashout = (p.balance ?? 0) + dtPending
+      if (cashout <= 0) continue
+      ops.push(
+        query('UPDATE users SET balance = balance + $1 WHERE id = $2', [cashout, p.id])
+          .then(() => query(
+            'INSERT INTO ledger (user_id, type, amount, room_id, game) VALUES ($1, $2, $3, $4, $5)',
+            [p.id, 'cash_out', cashout, roomId, game.gameSlug],
+          ))
+          .catch(err => console.error(`[shutdown cashout] user=${p.id}`, err))
+      )
+    }
+  }
+  await Promise.allSettled(ops)
+  console.log('[shutdown] Done.')
+  process.exit(0)
+}
+
+process.on('SIGINT',  () => gracefulShutdown('SIGINT'))
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))

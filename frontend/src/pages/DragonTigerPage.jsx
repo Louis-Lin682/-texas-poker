@@ -7,7 +7,8 @@ import { API_BASE_URL } from '../services/apiClient'
 import LeaveConfirmModal from '../components/LeaveConfirmModal'
 
 function _mkImg(src) { const i = new Image(); i.src = src; return i }
-const _dragonFlyImg  = _mkImg('/DragonTiger/fly_dargon/dargon_fly.png')
+const _dragonFlyImg   = _mkImg('/DragonTiger/fly_dargon/dargon_fly.png')
+const _dragonFlyImgPc = _mkImg('/DragonTiger/pc-dargon-fly/gold-dragon-video-sequence-16frames-noglow-2x-sheet.png')
 const _tigerWalkImg  = _mkImg('/DragonTiger/tiger_walk/tiger_walk.png')
 const _tigerHandImg  = _mkImg('/DragonTiger/win/tiger_hand.png')
 
@@ -364,56 +365,64 @@ function ZoneBetDisplay({ placements, totalBet, myBet, small }) {
   )
 }
 
+const _dragonHandImg = _mkImg('/DragonTiger/pc-dargon-fly/dargon-hand.png')
+
 function DragonWinAnim({ onDone }) {
   const canvasRef = useRef(null)
   const onDoneRef = useRef(onDone)
+  const [phase, setPhase] = useState('fly')
 
   useEffect(() => {
-    playSfx('dt_dragonWin')
+    const sfxTimer = setTimeout(() => playSfx('dt_dragonWin'), 500)
 
-    const img = _dragonFlyImg
-    const FRAME_W = 540, FRAME_H = 960, COLS = 2, TOTAL = 16
+    const img = _dragonFlyImgPc
+    const FRAME_W = 337, FRAME_H = 600, COLS = 2
+    const TOTAL = 16
     let frame = 0, animId = null, last = 0
-    const INTERVAL = 80
+    const INTERVAL = 100
 
     function tick(now) {
       if (!canvasRef.current) return
       if (now - last >= INTERVAL) {
         last = now
         const canvas = canvasRef.current
-        // Sync canvas buffer to its CSS size so it fills the overlay
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
           canvas.width  = canvas.clientWidth
           canvas.height = canvas.clientHeight
         }
         const ctx = canvas.getContext('2d')
         ctx.clearRect(0, 0, canvas.width, canvas.height)
-        if (img.complete) {
-          const col = frame % COLS
-          const row = Math.floor(frame / COLS)
-          // Contain: maintain aspect ratio, centred
-          const scale = Math.min(canvas.width / FRAME_W, canvas.height / FRAME_H)
-          const dw = FRAME_W * scale, dh = FRAME_H * scale
-          const dx = (canvas.width - dw) / 2, dy = (canvas.height - dh) / 2
-          ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy, dw, dh)
-        }
+        if (!img.complete) { animId = requestAnimationFrame(tick); return }
+        const col = frame % COLS
+        const row = Math.floor(frame / COLS)
+        ctx.imageSmoothingEnabled = true
+        ctx.imageSmoothingQuality = 'high'
+        const scale = Math.max(canvas.width / FRAME_W, canvas.height / FRAME_H)
+        const dw = FRAME_W * scale, dh = FRAME_H * scale
+        const dx = (canvas.width - dw) / 2, dy = (canvas.height - dh) / 2
+        ctx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy, dw, dh)
         frame++
-        if (frame >= TOTAL) {
-          cancelAnimationFrame(animId)
-          onDoneRef.current?.()
-          return
-        }
+        if (frame >= 11) { cancelAnimationFrame(animId); setPhase('final'); return }
       }
       animId = requestAnimationFrame(tick)
     }
     animId = requestAnimationFrame(tick)
 
-    return () => { cancelAnimationFrame(animId) }
+    return () => { cancelAnimationFrame(animId); clearTimeout(sfxTimer) }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (phase !== 'final') return
+    const t = setTimeout(() => onDoneRef.current?.(), 1500)
+    return () => clearTimeout(t)
+  }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="dt-dragon-win-overlay">
-      <canvas ref={canvasRef} className="dt-dragon-canvas" />
+      {phase === 'fly'
+        ? <canvas ref={canvasRef} className="dt-dragon-canvas" />
+        : <img src="/DragonTiger/pc-dargon-fly/dargon-hand.png" alt="" className="dt-tiger-final" draggable={false} />
+      }
     </div>
   )
 }
@@ -425,7 +434,6 @@ function TigerWinAnim({ onDone }) {
 
   // Phase 1: sprite walk-in
   useEffect(() => {
-    playSfx('dt_tigerWin')
 
     const img = _tigerWalkImg
     const FRAME_W = 540, FRAME_H = 960, COLS = 2, TOTAL = 16
@@ -457,8 +465,9 @@ function TigerWinAnim({ onDone }) {
     }
     animId = requestAnimationFrame(tick)
 
+    const sfxT = setTimeout(() => playSfx('dt_tigerWin'), 2500)
     const t = setTimeout(() => { cancelAnimationFrame(animId); setPhase('final') }, 3000)
-    return () => { cancelAnimationFrame(animId); clearTimeout(t) }
+    return () => { cancelAnimationFrame(animId); clearTimeout(t); clearTimeout(sfxT) }
   }, [])
 
   // Phase 2: final image burst (2s) then done
