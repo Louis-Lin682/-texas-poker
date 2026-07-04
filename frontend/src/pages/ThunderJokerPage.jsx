@@ -1416,7 +1416,7 @@ export default function ThunderJokerPage({ auth }) {
           <span className="tj-mult-label"><img src="/slot-imgs/multiplier.webp" alt="" /></span>
           <img
             className="tj-mult-val"
-            src={`/slot-imgs/lightningx${[2,3].includes(displayMult) ? displayMult : 1}.png`}
+            src={`/slot-imgs/lightningx${[2,3].includes(displayMult) ? displayMult : 1}.webp`}
             alt={`×${displayMult}`}
           />
         </div>
@@ -1701,7 +1701,7 @@ export default function ThunderJokerPage({ auth }) {
                   </div>
                 </div>
                 <div className="tj-info-row">
-                  <img src="/slot-imgs/lightningx2.png" alt="lightning" />
+                  <img src="/slot-imgs/lightningx2.webp" alt="lightning" />
                   <div>
                     <strong>閃電乘倍</strong>
                     <p>每局隨機一格出現閃電加成（×2/×3/×5/×10）；中獎時套用至本局總贏分</p>
