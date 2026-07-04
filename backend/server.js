@@ -76,7 +76,7 @@ function getCheckInReward(cycleDay) {
 }
 
 const _AVATAR_DIR = process.env.AVATAR_DIR
-  ?? path.join(path.dirname(fileURLToPath(import.meta.url)), '../frontend/public/player')
+  ?? path.join(path.dirname(fileURLToPath(import.meta.url)), 'public', 'player')
 const _AVATAR_FALLBACK = [
   '/notice-angel.png',
   '/player/player-avatar-01.png',
