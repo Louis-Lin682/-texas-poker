@@ -75,10 +75,23 @@ function getCheckInReward(cycleDay) {
   return 800
 }
 
-const _AVATAR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '../frontend/public/player')
+const _AVATAR_DIR = process.env.AVATAR_DIR
+  ?? path.join(path.dirname(fileURLToPath(import.meta.url)), '../frontend/public/player')
+const _AVATAR_FALLBACK = [
+  '/notice-angel.png',
+  '/player/player-avatar-01.png',
+  '/player/player-avatar-02.png',
+  '/player/player-avatar-03.png',
+  '/player/player-avatar-04.png',
+  '/player/player-avatar-05.png',
+]
 function getAllowedAvatars() {
-  const files = readdirSync(_AVATAR_DIR).filter(f => /\.(png|jpe?g|webp)$/i.test(f))
-  return new Set(['/notice-angel.png', ...files.map(f => `/player/${f}`)])
+  try {
+    const files = readdirSync(_AVATAR_DIR).filter(f => /\.(png|jpe?g|webp)$/i.test(f))
+    return new Set(['/notice-angel.png', ...files.map(f => `/player/${f}`)])
+  } catch {
+    return new Set(_AVATAR_FALLBACK)
+  }
 }
 
 function toPublicUser(user) {
