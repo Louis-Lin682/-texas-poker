@@ -78,6 +78,7 @@ export const adminApi = {
   saveSlotConfig:       (config, note)  => req('/slot-config', { method: 'PUT', body: { config, note } }),
   getSlotConfigHistory: ()              => req('/slot-config/history'),
   getSlotRtp:           (since)         => req('/slot-rtp' + (since != null ? `?since=${since}` : '')),
+  getSlotVolatility:    ()              => req('/slot-volatility'),
 
   getRooms:       ()            => req('/rooms'),
   closeRoom:      (id)          => req(`/rooms/${id}`,                { method: 'DELETE' }),

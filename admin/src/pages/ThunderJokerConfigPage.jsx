@@ -77,6 +77,8 @@ export default function ThunderJokerConfigPage() {
   const [histOpen, setHistOpen] = useState(false)
   const [rtp,      setRtp]      = useState(null)
   const [rtpSince, setRtpSince] = useState(null)
+  const [vol,      setVol]      = useState(null)
+  const [volLoading, setVolLoading] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -86,6 +88,13 @@ export default function ThunderJokerConfigPage() {
       .finally(() => setLoading(false))
     adminApi.getSlotRtp().then(d => { setRtp(d); setRtpSince(null) }).catch(() => {})
   }, [form])
+
+  async function loadVolatility() {
+    setVolLoading(true)
+    try { setVol(await adminApi.getSlotVolatility()) }
+    catch { message.error('波動計算失敗') }
+    finally { setVolLoading(false) }
+  }
 
   async function onFinish(values) {
     const { note, ...rest } = values
@@ -157,6 +166,28 @@ export default function ThunderJokerConfigPage() {
           </Row>
         </Card>
       )}
+
+      <Card style={{ marginBottom: 16 }}>
+        <Space style={{ marginBottom: vol ? 12 : 0 }} align="center">
+          <Text strong>波動分析（模擬）</Text>
+          <Button size="small" loading={volLoading} onClick={loadVolatility}>
+            {vol ? '重新計算' : '計算波動'}
+          </Button>
+          {vol && <Text type="secondary">基於 {vol.spinsSimulated.toLocaleString()} 次模擬</Text>}
+        </Space>
+        {vol && (
+          <Row gutter={16}>
+            <Col>
+              <Statistic title="波動等級" value={vol.volatility}
+                valueStyle={{ color: vol.volatility === '低' ? '#52c41a' : vol.volatility === '中' ? '#1677ff' : vol.volatility === '高' ? '#fa8c16' : '#f5222d' }} />
+            </Col>
+            <Col><Statistic title="命中率"     value={vol.hitRate}        suffix="%" /></Col>
+            <Col><Statistic title="最大倍數"   value={vol.maxWin}         suffix="x" /></Col>
+            <Col><Statistic title="模擬 RTP"   value={vol.simulatedRtp}   suffix="%" /></Col>
+            <Col><Statistic title="標準差"     value={vol.stdDev}         suffix="x" /></Col>
+          </Row>
+        )}
+      </Card>
 
       <Card loading={loading}>
         <Form form={form} layout="vertical" onFinish={onFinish}>

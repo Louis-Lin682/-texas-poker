@@ -40,6 +40,53 @@ const CONFIG = {
 
 const thunderJoker = new ThunderJokerGame({ getConfig: getSlotConfig })
 
+function calcSlotVolatility(cfg, spins = 100_000) {
+  const PAYLINES = [
+    [0,0,0,0,0],[1,1,1,1,1],[2,2,2,2,2],[3,3,3,3,3],[4,4,4,4,4],
+    [0,1,2,3,4],[4,3,2,1,0],[0,1,2,1,0],[0,2,4,2,0],[2,3,4,3,2],
+    [4,3,2,3,4],[4,2,0,2,4],[2,1,0,1,2],[0,2,0,2,0],[4,2,4,2,4],
+  ]
+  const pool = []
+  const symKeys = Object.keys(cfg).filter(k => k.startsWith('weight.')).map(k => k.slice(7))
+  for (const sym of symKeys) {
+    const w = cfg[`weight.${sym}`] ?? 0
+    for (let i = 0; i < w; i++) pool.push(sym)
+  }
+  const rnd = arr => arr[Math.floor(Math.random() * arr.length)]
+  const genGrid = () => Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => rnd(pool)))
+  const calcLine = grid => {
+    let t = 0
+    for (const line of PAYLINES) {
+      const syms = line.map((row, reel) => grid[reel][row])
+      const key = syms.find(s => s !== 'wild' && s !== 'scatter') ?? 'wild'
+      let c = 0; for (const s of syms) { if (s === key || s === 'wild') c++; else break }
+      if (c >= 3) { const m = (cfg[`payout.${key}`] ?? [])[c - 1] ?? 0; if (m > 0) t += m }
+    }
+    return t
+  }
+  const countSc = g => { let n = 0; for (let r = 0; r < 5; r++) for (let row = 0; row < 5; row++) if (g[r][row] === 'scatter') n++; return n }
+  const runFree = left => {
+    let w = 0; const r3 = cfg['free.retrigger_3scatter'] ?? 4, r4 = cfg['free.retrigger_4scatter'] ?? 6, r5 = cfg['free.retrigger_5scatter'] ?? 8, max = cfg['free.max_total'] ?? 30
+    while (left > 0) { left--; const g = genGrid(); w += calcLine(g); const s = countSc(g); if (s >= 3) left = Math.min(left + (s === 3 ? r3 : s === 4 ? r4 : r5), max) }
+    return w
+  }
+  let hits = 0, maxW = 0; const nets = []
+  const fs3 = cfg['free.spins_3scatter'] ?? 6, fs4 = cfg['free.spins_4scatter'] ?? 9, fs5 = cfg['free.spins_5scatter'] ?? 12
+  for (let i = 0; i < spins; i++) {
+    const g = genGrid(); const w = calcLine(g); const s = countSc(g)
+    const total = w + (s >= 3 ? runFree(s === 3 ? fs3 : s === 4 ? fs4 : fs5) : 0)
+    if (total > 0) hits++
+    if (total > maxW) maxW = total
+    nets.push(total - 1)
+  }
+  const mean = nets.reduce((a, b) => a + b, 0) / spins
+  const stdDev = Math.sqrt(nets.reduce((a, b) => a + (b - mean) ** 2, 0) / spins)
+  const hitRate = Number((hits / spins * 100).toFixed(1))
+  const rtp = Number(((mean + 1) * 100).toFixed(1))
+  const vol = stdDev < 3 ? '低' : stdDev < 8 ? '中' : stdDev < 20 ? '高' : '極高'
+  return { hitRate, stdDev: Number(stdDev.toFixed(2)), maxWin: maxW, simulatedRtp: rtp, volatility: vol, spinsSimulated: spins }
+}
+
 const slotSessions = new Map() // userId → { freeSpinsLeft, jokerMult }  (write-through cache)
 
 async function loadSlotSession(userId, dbClient) {
@@ -1746,6 +1793,13 @@ const server = http.createServer(async (request, response) => {
         const actualRtp   = totalBet > 0 ? (totalPayout / totalBet * 100).toFixed(2) : null
         const currentVersion = getSlotVersion()
         sendJson(response, 200, { totalBet, totalPayout, spins: Number(r.spins), actualRtp, currentVersion }, effectiveCors)
+        return
+      }
+
+      if (pathname === '/admin/slot-volatility' && request.method === 'GET') {
+        const cfg = getSlotConfig()
+        const result = calcSlotVolatility(cfg, 100_000)
+        sendJson(response, 200, result, effectiveCors)
         return
       }
 
