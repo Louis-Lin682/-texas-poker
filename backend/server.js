@@ -110,7 +110,7 @@ function sendJson(response, statusCode, payload, allowOrigin = corsOrigin) {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS, PATCH',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
   })
   response.end(JSON.stringify(payload))
 }
@@ -212,7 +212,9 @@ const server = http.createServer(async (request, response) => {
   const pathname = url.pathname
 
   const reqOrigin = request.headers.origin || ''
-  const effectiveCors = reqOrigin.startsWith('http://localhost:') ? reqOrigin : corsOrigin
+  const effectiveCors = reqOrigin.startsWith('http://localhost:')
+    ? reqOrigin
+    : (reqOrigin === adminCorsOrigin ? adminCorsOrigin : corsOrigin)
 
   if (request.method === 'OPTIONS') {
     sendJson(response, 200, { ok: true }, effectiveCors)
