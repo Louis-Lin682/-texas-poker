@@ -8,3 +8,10 @@ backend/export*.sql
 backend/data/users*.json
 backend/data/sessions*.json
 backend/data/favorites*.json
+
+# local dev / test tools — not deployed
+scripts/
+e2e/
+playwright-report/
+test-results/
+playwright.config.js
