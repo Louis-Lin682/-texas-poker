@@ -76,6 +76,7 @@ export default function ThunderJokerConfigPage() {
   const [history,  setHistory]  = useState([])
   const [histOpen, setHistOpen] = useState(false)
   const [rtp,      setRtp]      = useState(null)
+  const [rtpSince, setRtpSince] = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -83,7 +84,7 @@ export default function ThunderJokerConfigPage() {
       .then(d => form.setFieldsValue({ ...cfgToForm(d.config), note: '' }))
       .catch(() => message.error('讀取設定失敗'))
       .finally(() => setLoading(false))
-    adminApi.getSlotRtp().then(setRtp).catch(() => {})
+    adminApi.getSlotRtp().then(d => { setRtp(d); setRtpSince(null) }).catch(() => {})
   }, [form])
 
   async function onFinish(values) {
@@ -93,6 +94,13 @@ export default function ThunderJokerConfigPage() {
       await adminApi.saveSlotConfig(formToCfg(rest), note ?? '')
       message.success('已儲存，立即生效（次回合）')
       form.setFieldValue('note', '')
+      // 存檔後切換到新版本統計
+      const fresh = await adminApi.getSlotRtp().catch(() => null)
+      if (fresh?.currentVersion != null) {
+        const sinceData = await adminApi.getSlotRtp(fresh.currentVersion).catch(() => null)
+        setRtp(sinceData ?? fresh)
+        setRtpSince(fresh.currentVersion)
+      }
     } catch (e) {
       message.error(e.message)
     } finally {
@@ -123,12 +131,31 @@ export default function ThunderJokerConfigPage() {
       </Space>
 
       {rtp && (
-        <Row gutter={16} style={{ marginBottom: 16 }}>
-          <Col><Statistic title="累計下注"    value={rtp.totalBet}    suffix="籌碼" /></Col>
-          <Col><Statistic title="累計派彩"    value={rtp.totalPayout} suffix="籌碼" /></Col>
-          <Col><Statistic title="實際 RTP"   value={rtp.actualRtp ?? '—'} suffix="%" /></Col>
-          <Col><Statistic title="總轉數"      value={rtp.spins} /></Col>
-        </Row>
+        <Card style={{ marginBottom: 16 }}>
+          <Space style={{ marginBottom: 12 }}>
+            <Text type="secondary">
+              統計範圍：{rtpSince != null ? `v${rtpSince} 起（新 config）` : '全部時間'}
+            </Text>
+            {rtpSince != null && (
+              <Button size="small" onClick={async () => {
+                const d = await adminApi.getSlotRtp().catch(() => null)
+                if (d) { setRtp(d); setRtpSince(null) }
+              }}>顯示全部</Button>
+            )}
+            {rtpSince == null && rtp.currentVersion != null && (
+              <Button size="small" onClick={async () => {
+                const d = await adminApi.getSlotRtp(rtp.currentVersion).catch(() => null)
+                if (d) { setRtp(d); setRtpSince(rtp.currentVersion) }
+              }}>僅看 v{rtp.currentVersion}（目前版本）</Button>
+            )}
+          </Space>
+          <Row gutter={16}>
+            <Col><Statistic title="累計下注"  value={rtp.totalBet}        suffix="籌碼" /></Col>
+            <Col><Statistic title="累計派彩"  value={rtp.totalPayout}     suffix="籌碼" /></Col>
+            <Col><Statistic title="實際 RTP" value={rtp.actualRtp ?? '—'} suffix="%" /></Col>
+            <Col><Statistic title="總轉數"    value={rtp.spins} /></Col>
+          </Row>
+        </Card>
       )}
 
       <Card loading={loading}>
