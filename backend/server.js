@@ -51,8 +51,8 @@ async function loadSlotSession(userId, dbClient) {
   const cfg = getSlotConfig()
   const jMax = cfg['joker.max'] ?? 10
   const session = rows.length > 0
-    ? { freeSpinsLeft: rows[0].free_spins_left, jokerMult: Math.min(rows[0].joker_mult, jMax) }
-    : { freeSpinsLeft: 0, jokerMult: 1 }
+    ? { freeSpinsLeft: rows[0].free_spins_left, jokerMult: Math.min(rows[0].joker_mult, jMax), freeWinAccum: 0 }
+    : { freeSpinsLeft: 0, jokerMult: 1, freeWinAccum: 0 }
   slotSessions.set(userId, session)
   return session
 }
@@ -750,10 +750,12 @@ const server = http.createServer(async (request, response) => {
         )
 
         const netAmount = isFree ? winTotal : winTotal - bet
-        if (netAmount !== 0) {
+        if (!isFree && netAmount === 0) {
+          // base spin 0 win/loss: skip
+        } else {
           await client.query(
             `INSERT INTO ledger (user_id, type, amount, bet, game, config_version) VALUES ($1, $2, $3, $4, $5, $6)`,
-            [user.id, winTotal > 0 ? 'win' : 'loss', netAmount, bet, 'thunder-joker', getSlotVersion()]
+            [user.id, isFree ? 'win' : (winTotal > 0 ? 'win' : 'loss'), netAmount, isFree ? 0 : bet, 'thunder-joker', getSlotVersion()]
           )
         }
 

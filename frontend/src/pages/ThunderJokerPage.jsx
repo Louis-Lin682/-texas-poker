@@ -456,6 +456,22 @@ export default function ThunderJokerPage({ auth }) {
   const startFsEndSequence = useCallback((totalWon) => {
     const snd = sndRef.current
     coinLayerRef.current?.stopRain()
+
+    if (totalWon === 0) {
+      coinLayerRef.current?.clear()
+      snd.play('lightning-appear')
+      inFsRef.current = false; setInFreeSpins(false)
+      jokerMultRef.current = 1; setJokerMult(1)
+      fsSessionWinRef.current = 0; setFsSessionWin(0)
+      setScene('base')
+      if (autoRef.current) {
+        if (balRef.current >= betRef.current) {
+          const at = setTimeout(() => spinRef.current?.(), 800); tmRefs.current.push(at)
+        } else { autoRef.current = false; setIsAuto(false); autoCountRef.current = null; setAutoCount(null) }
+      }
+      return
+    }
+
     setFsEndPhase('appear')
     setFsCountDisplay(0)
     setFsWinBadge(null)
