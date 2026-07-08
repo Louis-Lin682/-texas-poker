@@ -179,7 +179,7 @@ export default function ThunderJokerConfigPage() {
           <Row gutter={16}>
             <Col>
               <Statistic title="波動等級" value={vol.volatility}
-                valueStyle={{ color: vol.volatility === '低' ? '#52c41a' : vol.volatility === '中' ? '#1677ff' : vol.volatility === '高' ? '#fa8c16' : '#f5222d' }} />
+                styles={{ content: { color: vol.volatility === '低' ? '#52c41a' : vol.volatility === '中' ? '#1677ff' : vol.volatility === '高' ? '#fa8c16' : '#f5222d' } }} />
             </Col>
             <Col><Statistic title="命中率"     value={vol.hitRate}        suffix="%" /></Col>
             <Col><Statistic title="最大倍數"   value={vol.maxWin}         suffix="x" /></Col>
