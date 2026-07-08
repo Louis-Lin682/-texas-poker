@@ -602,8 +602,6 @@ export default function ThunderJokerPage({ auth }) {
     }
     resultRef.current = null   // clear previous result
     setSpinning(true)
-    setLastWin(0)
-    setDisplayWin(0)
     setWinHits([])
     setLinePhase(null)
     setWinOverlay(null)
