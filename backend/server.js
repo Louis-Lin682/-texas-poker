@@ -214,7 +214,7 @@ const server = http.createServer(async (request, response) => {
   const reqOrigin = request.headers.origin || ''
   const effectiveCors = reqOrigin.startsWith('http://localhost:')
     ? reqOrigin
-    : (reqOrigin === adminCorsOrigin ? adminCorsOrigin : corsOrigin)
+    : (adminCorsOrigin === '*' ? '*' : reqOrigin === adminCorsOrigin ? adminCorsOrigin : corsOrigin)
 
   if (request.method === 'OPTIONS') {
     sendJson(response, 200, { ok: true }, effectiveCors)
