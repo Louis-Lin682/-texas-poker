@@ -9,7 +9,7 @@ import { WebSocketServer } from 'ws'
 import pool, { initDb, query } from './db.js'
 import { RoomManager, HOUSE_USERNAME } from './game/RoomManager.js'
 import { loadConfig as loadDtConfig, saveConfig as saveDtConfig, getConfig as getDtConfig } from './game/dragonTigerConfig.js'
-import { loadConfig as loadSlotConfig, saveConfig as saveSlotConfig, getConfig as getSlotConfig } from './game/thunderJokerConfig.js'
+import { loadConfig as loadSlotConfig, saveConfig as saveSlotConfig, getConfig as getSlotConfig, getVersion as getSlotVersion } from './game/thunderJokerConfig.js'
 import { ThunderJokerGame } from './game/ThunderJokerGame.js'
 import { BotManager } from './game/BotManager.js'
 
@@ -752,8 +752,8 @@ const server = http.createServer(async (request, response) => {
         const netAmount = isFree ? winTotal : winTotal - bet
         if (netAmount !== 0) {
           await client.query(
-            `INSERT INTO ledger (user_id, type, amount, bet, game) VALUES ($1, $2, $3, $4, $5)`,
-            [user.id, winTotal > 0 ? 'win' : 'loss', netAmount, bet, 'thunder-joker']
+            `INSERT INTO ledger (user_id, type, amount, bet, game, config_version) VALUES ($1, $2, $3, $4, $5, $6)`,
+            [user.id, winTotal > 0 ? 'win' : 'loss', netAmount, bet, 'thunder-joker', getSlotVersion()]
           )
         }
 
@@ -1726,18 +1726,24 @@ const server = http.createServer(async (request, response) => {
       }
 
       if (pathname === '/admin/slot-rtp' && request.method === 'GET') {
+        const sinceVersion = url.searchParams.get('since')
+        const versionFilter = sinceVersion ? 'AND config_version >= $1' : ''
+        const params = sinceVersion ? [Number(sinceVersion)] : []
         const { rows } = await query(
           `SELECT
-             COALESCE(SUM(bet), 0)                     AS total_bet,
-             COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) AS total_payout,
-             COUNT(*)                                   AS spins
-           FROM ledger WHERE game = 'thunder-joker' AND type IN ('win','loss')`
+             COALESCE(SUM(bet), 0)                                          AS total_bet,
+             COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0)  AS total_payout,
+             COUNT(*)                                                        AS spins
+           FROM ledger
+           WHERE game = 'thunder-joker' AND type IN ('win','loss') ${versionFilter}`,
+          params
         )
         const r = rows[0]
         const totalBet    = Number(r.total_bet)
         const totalPayout = Number(r.total_payout)
         const actualRtp   = totalBet > 0 ? (totalPayout / totalBet * 100).toFixed(2) : null
-        sendJson(response, 200, { totalBet, totalPayout, spins: Number(r.spins), actualRtp }, effectiveCors)
+        const currentVersion = getSlotVersion()
+        sendJson(response, 200, { totalBet, totalPayout, spins: Number(r.spins), actualRtp, currentVersion }, effectiveCors)
         return
       }
 

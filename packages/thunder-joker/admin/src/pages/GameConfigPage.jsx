@@ -73,13 +73,14 @@ function Input({ form, k, type = 'number', placeholder }) {
 }
 
 export default function GameConfigPage() {
-  const [form,    setForm]    = useState({})
-  const [loading, setLoading] = useState(true)
-  const [saving,  setSaving]  = useState(false)
-  const [status,  setStatus]  = useState(null)
-  const [rtp,     setRtp]     = useState(null)
-  const [history, setHistory] = useState([])
-  const [histOpen, setHistOpen] = useState(false)
+  const [form,      setForm]      = useState({})
+  const [loading,   setLoading]   = useState(true)
+  const [saving,    setSaving]    = useState(false)
+  const [status,    setStatus]    = useState(null)
+  const [rtp,       setRtp]       = useState(null)
+  const [rtpSince,  setRtpSince]  = useState(null)  // null = 全部時間
+  const [history,   setHistory]   = useState([])
+  const [histOpen,  setHistOpen]  = useState(false)
 
   function setField(k, v) {
     setForm(f => ({ ...f, [k]: v }))
@@ -89,7 +90,7 @@ export default function GameConfigPage() {
     setLoading(true)
     Promise.all([
       api.getConfig().then(d => setForm({ ...cfgToForm(d.config), note: '' })),
-      api.getRtp().then(setRtp).catch(() => {}),
+      api.getRtp().then(d => { setRtp(d); setRtpSince(null) }).catch(() => {}),
     ])
       .catch(() => setStatus('讀取設定失敗'))
       .finally(() => setLoading(false))
@@ -104,6 +105,13 @@ export default function GameConfigPage() {
       await api.putConfig({ config: formToCfg(rest), note: note ?? '' })
       setStatus('ok')
       setTimeout(() => setStatus(null), 2500)
+      // 存檔後自動切換到新版本統計
+      const newRtp = await api.getRtp().catch(() => null)
+      if (newRtp) {
+        const newVersion = newRtp.currentVersion
+        setRtp(await api.getRtp(newVersion).catch(() => newRtp))
+        setRtpSince(newVersion)
+      }
     } catch (err) {
       setStatus(err.message)
     } finally {
@@ -136,11 +144,30 @@ export default function GameConfigPage() {
       </div>
 
       {rtp && (
-        <div className="admin-card" style={{ marginBottom: '1.5rem', display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-          <div><div className="admin-label">累計下注</div><strong>{Number(rtp.totalBet).toLocaleString()}</strong></div>
-          <div><div className="admin-label">累計派彩</div><strong>{Number(rtp.totalPayout).toLocaleString()}</strong></div>
-          <div><div className="admin-label">實際 RTP</div><strong>{rtp.actualRtp ?? '—'}%</strong></div>
-          <div><div className="admin-label">總轉數</div><strong>{rtp.spins}</strong></div>
+        <div className="admin-card" style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+            <span className="admin-label" style={{ margin: 0 }}>
+              統計範圍：{rtpSince != null ? `v${rtpSince} 起（新 config）` : '全部時間'}
+            </span>
+            {rtpSince != null && (
+              <button type="button" className="admin-btn-outline" style={{ padding: '2px 10px', fontSize: '0.8rem' }}
+                onClick={async () => { const d = await api.getRtp().catch(()=>null); if(d){setRtp(d);setRtpSince(null)} }}>
+                顯示全部
+              </button>
+            )}
+            {rtpSince == null && rtp.currentVersion != null && (
+              <button type="button" className="admin-btn-outline" style={{ padding: '2px 10px', fontSize: '0.8rem' }}
+                onClick={async () => { const d = await api.getRtp(rtp.currentVersion).catch(()=>null); if(d){setRtp(d);setRtpSince(rtp.currentVersion)} }}>
+                僅看 v{rtp.currentVersion}（目前版本）
+              </button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+            <div><div className="admin-label">累計下注</div><strong>{Number(rtp.totalBet).toLocaleString()}</strong></div>
+            <div><div className="admin-label">累計派彩</div><strong>{Number(rtp.totalPayout).toLocaleString()}</strong></div>
+            <div><div className="admin-label">實際 RTP</div><strong>{rtp.actualRtp ?? '—'}%</strong></div>
+            <div><div className="admin-label">總轉數</div><strong>{rtp.spins}</strong></div>
+          </div>
         </div>
       )}
 

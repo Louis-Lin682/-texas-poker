@@ -2,7 +2,7 @@ import 'dotenv/config'
 import http from 'node:http'
 import bcrypt from 'bcryptjs'
 import { query, initDb } from './core/db.js'
-import { getConfig, saveConfig, loadConfig } from './core/config.js'
+import { getConfig, saveConfig, loadConfig, getVersion } from './core/config.js'
 
 const PORT        = Number(process.env.ADMIN_PORT || 4201)
 const GAME_PORT   = Number(process.env.PORT       || 4200)
@@ -118,16 +118,19 @@ const server = http.createServer(async (req, res) => {
 
     // ── RTP stats ─────────────────────────────────────────────────────────────
 
-    if (req.method === 'GET' && path === '/admin/rtp') {
+    if (req.method === 'GET' && path.startsWith('/admin/rtp')) {
       const admin = await requireRole('super_admin', 'finance')(req, res, origin)
       if (!admin) return
+      const sinceVersion = new URL('http://x' + path).searchParams.get('since')
+      const versionFilter = sinceVersion ? 'AND config_version >= $1' : ''
+      const params = sinceVersion ? [Number(sinceVersion)] : []
       const { rows } = await query(`
         SELECT
           COALESCE(SUM(CASE WHEN type = 'win'  THEN amount ELSE 0 END), 0) AS total_payout,
           COALESCE(SUM(bet), 0)                                             AS total_bet,
           COUNT(*)                                                          AS spins
-        FROM ledger WHERE game = 'thunder-joker' AND type IN ('win', 'loss')
-      `)
+        FROM ledger WHERE game = 'thunder-joker' AND type IN ('win', 'loss') ${versionFilter}
+      `, params)
       const r = rows[0]
       const totalBet    = Number(r.total_bet)
       const totalPayout = Number(r.total_payout)
@@ -135,6 +138,7 @@ const server = http.createServer(async (req, res) => {
         totalBet, totalPayout,
         actualRtp: totalBet > 0 ? ((totalPayout / totalBet) * 100).toFixed(2) : null,
         spins: Number(r.spins),
+        currentVersion: getVersion(),
       }, origin)
     }
 

@@ -21,7 +21,7 @@ export const api = {
   getConfig:        ()             => req('GET',  '/config'),
   putConfig:        (body)         => req('PUT',  '/config',           body),
   getConfigHistory: ()             => req('GET',  '/config/history'),
-  getRtp:           ()             => req('GET',  '/rtp'),
+  getRtp:           (since)        => req('GET',  '/rtp' + (since != null ? `?since=${since}` : '')),
   getMembers:       (params = {})  => req('GET',  '/members?' + new URLSearchParams(params)),
   putMember:        (id, body)     => req('PUT',  `/members/${id}`,    body),
   getLedger:        (params = {})  => req('GET',  '/ledger?'  + new URLSearchParams(params)),

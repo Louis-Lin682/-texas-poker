@@ -58,20 +58,23 @@ export const DEFAULT_CONFIG = {
   'win_level.super': 200,
 }
 
-let _cache = { ...DEFAULT_CONFIG }
+let _cache   = { ...DEFAULT_CONFIG }
+let _version = 0
 
-export function getConfig() { return _cache }
+export function getConfig()  { return _cache   }
+export function getVersion() { return _version }
 
 export async function loadConfig() {
   const { rows } = await query(
-    `SELECT gcv.config
+    `SELECT gcv.config, gcv.version
      FROM game_config_current gcc
      JOIN game_config_versions gcv ON gcv.id = gcc.version_id
      WHERE gcc.game = $1`,
     [GAME]
   )
   if (rows.length > 0) {
-    _cache = { ...DEFAULT_CONFIG, ...rows[0].config }
+    _cache   = { ...DEFAULT_CONFIG, ...rows[0].config }
+    _version = rows[0].version ?? 0
   }
 }
 
@@ -98,7 +101,8 @@ export async function saveConfig(config, changedBy, note = '') {
     [GAME, newId]
   )
 
-  _cache = merged
+  _cache   = merged
+  _version = prevVersion + 1
   configBus.emit('updated', _cache)
   return newId
 }
