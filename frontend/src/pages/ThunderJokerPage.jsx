@@ -248,6 +248,22 @@ export default function ThunderJokerPage({ auth }) {
   const [showBrokeModal,    setShowBrokeModal]    = useState(false)
 
   const [showSuspendModal, setShowSuspendModal] = useState(false)
+  const [splashDone,     setSplashDone]     = useState(false)
+  const [splashProgress, setSplashProgress] = useState(0)
+
+  useEffect(() => {
+    const start = Date.now()
+    const id = setInterval(() => {
+      const ms = Date.now() - start
+      let p
+      if (ms < 1500)      p = (ms / 1500) * 80
+      else if (ms < 2500) p = 80 + ((ms - 1500) / 1000) * 15
+      else if (ms < 3000) p = 95 + ((ms - 2500) / 500) * 5
+      else                { p = 100; clearInterval(id) }
+      setSplashProgress(Math.round(p))
+    }, 30)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     if (!auth?.token) navigate('/auth')
@@ -1167,6 +1183,33 @@ export default function ThunderJokerPage({ auth }) {
   return (
     <div className={`tj-page${screenShake ? ' is-shake' : ''}`} ref={pageRef}>
       <img className="tj-bg" src={bgSrc} alt="" key={scene} />
+
+      {!splashDone && (
+        <div className="tj-splash" onClick={() => setSplashDone(true)}>
+          <img
+            className="tj-splash-back"
+            src="/arrow.webp"
+            alt="返回"
+            onClick={e => { e.stopPropagation(); navigate('/') }}
+          />
+          <img className="tj-splash-bg" src="/slot-imgs/TJ-publicity.webp" alt="" />
+          <div className="tj-splash-bottom">
+            <div className="tj-splash-vol">
+              <span className="tj-splash-vol-label">波動率</span>
+              <div className="tj-splash-vol-blocks">
+                <img className="tj-splash-vol-dark" src="/slot-imgs/volatility-12345-dark.webp" alt="" />
+                <img className="tj-splash-vol-circle" src="/slot-imgs/volatility-level-3-circle.webp" alt="" />
+              </div>
+            </div>
+            <div className="tj-splash-bar-wrap">
+              <div className="tj-splash-bar" style={{ width: `${splashProgress}%` }} />
+            </div>
+            {splashProgress >= 100 && (
+              <div className="tj-splash-enter">點擊進入遊戲</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {(gameStatus?.status === 'maintenance' || gameStatus?.status === 'updating') && (
         <div className="game-maint-overlay">

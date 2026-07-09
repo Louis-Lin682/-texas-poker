@@ -10276,6 +10276,107 @@ button.is-pressing {
 }
 .tj-page.is-shake { animation: tjScreenShake 0.45s ease-in-out; }
 
+
+/* Splash screen */
+.tj-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  user-select: none;
+  background: #000;
+  max-width: 450px;
+  margin: auto;
+}
+.tj-splash-back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  cursor: pointer;
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+}
+.tj-splash-bg {
+  flex: 1;
+  width: 100%;
+  object-fit: contain;
+  object-position: center top;
+  min-height: 0;
+}
+.tj-splash-bottom {
+  background: rgba(10, 5, 30, 0.92);
+  padding: 14px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+.tj-splash-vol {
+  display: flex;
+  align-items: center;
+}
+.tj-splash-vol-label {
+  color: #f5d87a;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.tj-splash-vol-blocks {
+  position: relative;
+  display: inline-block;
+}
+.tj-splash-vol-dark {
+  height: 85px;
+  width: auto;
+  display: block;
+}
+.tj-splash-vol-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 85px;
+  width: auto;
+  pointer-events: none;
+  animation: tj-vol-pulse 1.6s ease-in-out infinite;
+}
+@keyframes tj-vol-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1);    filter: drop-shadow(0 0 6px rgba(255, 180, 0, 0.6)); }
+  50%       { transform: translate(-50%, -50%) scale(1.12); filter: drop-shadow(0 0 16px rgba(255, 200, 0, 1));   }
+}
+.tj-splash-bar-wrap {
+  width: 85%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.tj-splash-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f5a623, #e8431a);
+  border-radius: 6px;
+  transition: width 0.03s linear;
+}
+.tj-splash-enter {
+  color: #ffe066;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  animation: tj-splash-blink 0.9s ease-in-out infinite alternate;
+}
+@keyframes tj-splash-blink {
+  from { opacity: 1; }
+  to   { opacity: 0.3; }
+}
 /* ?? Win overlay + phases ?????????????????????????????????????????????????? */
 .tj-overlay-win {
   position: absolute;
@@ -12585,6 +12686,18 @@ div.settings-slider::after {
   display: none;
 }
 
+@media (min-width: 1536px){
+  .pc-angel-float {
+    display: block;
+    position: fixed;
+    right: 6%;
+    top: 60%;
+    transform: translateY(-50%) rotate(-12deg);
+    z-index: 5;
+    pointer-events: none;
+  }
+}
+
 @media (min-width: 768px) {
   .pc-top-bar {
     display: flex;
@@ -12825,16 +12938,6 @@ div.settings-slider::after {
     cursor: pointer;
     position: relative;
     transition: background 120ms ease;
-  }
-
-  .pc-angel-float {
-    display: block;
-    position: fixed;
-    right: 6%;
-    top: 60%;
-    transform: translateY(-50%) rotate(-12deg);
-    z-index: 5;
-    pointer-events: none;
   }
 
   /* 手機版元素在 PC 上隱藏 */

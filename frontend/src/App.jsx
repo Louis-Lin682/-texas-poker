@@ -47,7 +47,8 @@ function RouteChangeWatcher() {
   useEffect(() => {
     const path = location.pathname
     // Navigating TO lobby is instant (keep-alive), no loading needed
-    if (path !== '/' && prevPath.current !== path) {
+    // Thunder Joker has its own splash screen, skip global angel overlay
+    if (path !== '/' && path !== '/thunder-joker' && prevPath.current !== path) {
       show()
     }
     prevPath.current = path
