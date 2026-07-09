@@ -10333,6 +10333,7 @@ button.is-pressing {
 .tj-splash-vol-blocks {
   position: relative;
   display: inline-block;
+  flex: 0 0 auto;
 }
 .tj-splash-vol-dark {
   height: 85px;
