@@ -1,40 +1,65 @@
-# Texas Holdem Workspace
+# Texas Hold'em Workspace
 
-目前專案已整理成：
+多人德州撲克遊戲平台，採前後端分離架構。
 
-```txt
+## Tech Stack
+
+### Frontend
+- React
+- Vite
+- JavaScript
+- WebSocket
+
+### Backend
+- Node.js
+- Express
+- WebSocket
+
+---
+
+## Features
+
+- 玩家登入
+- 建立 / 加入房間
+- 即時多人同步
+- 發牌流程
+- Betting Flow
+- Dealer 控制
+- 收藏功能 API
+- RWD 支援
+
+---
+
+## Project Structure
+
 Texas_Holdem/
-  frontend/
-  backend/
-```
+├── frontend/   React + Vite
+└── backend/    Node.js API
 
-## 啟動指令
+---
 
-在根目錄執行：
+## Run
 
-```bash
+npm install
+
+前端：
+
 npm run frontend
-```
 
-或：
+後端：
 
-```bash
-npm run start
-```
-
-啟動後端：
-
-```bash
 npm run backend
-```
 
-前端 build：
+全部：
 
-```bash
+npm run start
+
+Build：
+
 npm run build
-```
 
-## 目錄說明
+---
 
-- `frontend/`：React + Vite 前端
-- `backend/`：登入與收藏 API
+## Author
+
+Louis Lin
